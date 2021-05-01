@@ -92,38 +92,21 @@ namespace CollisionFlow
 
 			if (-1 < projectionLine.Slope && projectionLine.Slope < 1)
 			{
-				return Offset(currentLineProjection.X, nextLineProjection.X - currentLineProjection.X, currentPointProjection.X, nextPointProjection.X - currentPointProjection.X, offset);
+				return Offset(Moved.Create(currentLineProjection.X, nextLineProjection.X - currentLineProjection.X), Moved.Create(currentPointProjection.X, nextPointProjection.X - currentPointProjection.X), offset);
 			}
 			else
 			{
-				return Offset(currentLineProjection.Y, nextLineProjection.Y - currentLineProjection.Y, currentPointProjection.Y, nextPointProjection.Y - currentPointProjection.Y, offset);
+				return Offset(Moved.Create(currentLineProjection.Y, nextLineProjection.Y - currentLineProjection.Y), Moved.Create(currentPointProjection.Y, nextPointProjection.Y - currentPointProjection.Y), offset);
 			}
 		}
-		private static double Offset(double value1, double vector1, double value2, double vector2, double offset)
+		private static double Offset(Moved<double, double> value1, Moved<double, double> value2, double offset)
 		{
-			double min;
-			double minVector;
-			double max;
-			double maxVector;
-			if (value1 < value2)
-			{
-				min = value1;
-				minVector = vector1;
-				max = value2;
-				maxVector = vector2;
-			}
-			else
-			{
-				min = value2;
-				minVector = vector2;
-				max = value1;
-				maxVector = vector1;
-			}
+			var (min, max) = value1.Target < value2.Target ? (value1, value2) : (value2, value1);
 
-			var speed = minVector - maxVector;
+			var speed = min.Course - max.Course;
 			if (speed > 0)
 			{
-				var distance = max - min;
+				var distance = max.Target - min.Target;
 				var localOffset = distance / speed;
 				return localOffset < 1 ? localOffset * offset : offset;
 			}

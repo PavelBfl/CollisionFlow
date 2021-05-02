@@ -7,7 +7,6 @@ namespace CollisionFlow
 {
 	public class CollisionDispatcher
 	{
-		private static bool IsZero(double value) => Math.Abs(value) < 0.000001;
 		public static CollisionResult Offset(IEnumerable<CollisionPolygon> polygons, double offset)
 		{
 			var result = new CollisionResult(offset);
@@ -23,7 +22,7 @@ namespace CollisionFlow
 						var otherToMain = Offset(other, main, result.Offset);
 						result = otherToMain.Offset < result.Offset ? otherToMain : result;
 
-						if (IsZero(result.Offset))
+						if (NumberUnitComparer.Instance.Equals(result.Offset, 0))
 						{
 							return result;
 						}
@@ -38,6 +37,7 @@ namespace CollisionFlow
 
 			return result;
 		}
+
 		private static CollisionResult Offset(CollisionPolygon main, CollisionPolygon other, double offset)
 		{
 			var result = new CollisionResult(offset);
@@ -66,7 +66,7 @@ namespace CollisionFlow
 							InRange(point.Y, beginPoint.Y, endPoint.Y);
 						if (inRange)
 						{
-							if (!IsZero(localOffset))
+							if (!NumberUnitComparer.Instance.Equals(localOffset, 0))
 							{
 								result = new CollisionResult(main, other, localOffset);
 							}
@@ -85,7 +85,7 @@ namespace CollisionFlow
 			var projectionLine = line.Target.Perpendicular();
 
 			var currentLineProjection = line.Target.Crossing(projectionLine);
-			var nextLineProjection = line.Target.OffsetByVector(new Vector128(freePoin.Course.ToVector() * offset)).Crossing(projectionLine);
+			var nextLineProjection = line.Target.OffsetByVector(new Vector128(line.Course.ToVector() * offset)).Crossing(projectionLine);
 
 			var currentPointProjection = line.Target.OffsetToPoint(freePoin.Target).Crossing(projectionLine);
 			var nextPointProjection = line.Target.OffsetToPoint(new Vector128(freePoin.Target.ToVector() + freePoin.Course.ToVector() * offset)).Crossing(projectionLine);

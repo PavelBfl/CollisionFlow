@@ -10,11 +10,28 @@ namespace CollisionFlow
 
 		public LineFunction(Vector128 begin, Vector128 end)
 		{
-			var beginCalc = begin.ToVector();
-			var endCalc = end.ToVector();
-			var difference = endCalc - beginCalc;
-			Slope = difference.GetY() / difference.GetX();
-			Offset = begin.Y - (begin.X * Slope);
+			if (NumberUnitComparer.Instance.Equals(begin.X, end.X) && NumberUnitComparer.Instance.Equals(begin.Y, end.Y))
+			{
+				throw new InvalidOperationException();
+			}
+			else if (NumberUnitComparer.Instance.Equals(begin.X, end.X))
+			{
+				Slope = double.PositiveInfinity;
+				Offset = begin.X;
+			}
+			else if (NumberUnitComparer.Instance.Equals(begin.Y, end.Y))
+			{
+				Slope = 0;
+				Offset = begin.Y;
+			}
+			else
+			{
+				var beginCalc = begin.ToVector();
+				var endCalc = end.ToVector();
+				var difference = endCalc - beginCalc;
+				Slope = difference.GetY() / difference.GetX();
+				Offset = begin.Y - (begin.X * Slope); 
+			}
 		}
 		public LineFunction(double slope, double offset)
 		{
@@ -67,24 +84,39 @@ namespace CollisionFlow
 		}
 		public LineFunction OffsetByVector(Vector128 vector)
 		{
-			return OffsetToPoint(new Vector128(Vector128.Create(0, GetY(0)) + vector.ToVector()));
-		}
-		public Vector128 Crossing(LineFunction lineFunction)
-		{
-			double x;
 			if (IsVertical())
 			{
-				x = Offset;
+				return AsVertical(Offset + vector.X);
 			}
-			else if (lineFunction.IsVertical())
+			else if (IsHorizontal())
 			{
-				x = lineFunction.Offset;
+				return AsHorisontal(Offset + vector.Y);
 			}
 			else
 			{
-				x = (Offset - lineFunction.Offset) / (lineFunction.Slope - Slope);
+				return OffsetToPoint(new Vector128(Vector128.Create(0, GetY(0)) + vector.ToVector())); 
 			}
-			return new Vector128(x, GetY(x));
+		}
+		public Vector128 Crossing(LineFunction lineFunction)
+		{
+			if ((IsVertical() && lineFunction.IsVertical()) || (IsHorizontal() && lineFunction.IsHorizontal()))
+			{
+				throw new InvalidOperationException();
+			}
+
+			if (IsVertical())
+			{
+				return new Vector128(Offset, lineFunction.GetY(Offset));
+			}
+			else if (lineFunction.IsVertical())
+			{
+				return new Vector128(lineFunction.Offset, GetY(lineFunction.Offset));
+			}
+			else
+			{
+				var x = (Offset - lineFunction.Offset) / (lineFunction.Slope - Slope);
+				return new Vector128(x, GetY(x));
+			}
 		}
 	}
 }

@@ -7,7 +7,7 @@ namespace CollisionFlow
 		private const int X_INDEX = 0;
 		private const int Y_INDEX = 1;
 
-		public static Vector<double> Create(double x, double y) => new Vector<double>(new[] { x, x, 0, 0 });
+		public static Vector<double> Create(double x, double y) => new Vector<double>(new[] { x, y, 0, 0 });
 
 		public Vector128(double x, double y)
 		{

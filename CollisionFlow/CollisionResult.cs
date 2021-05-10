@@ -1,21 +1,20 @@
 ﻿namespace CollisionFlow
 {
-	public struct CollisionResult
+	public class CollisionResult
 	{
-		public CollisionResult(double offset)
-			: this(null, null, offset)
+		public CollisionResult(CollisionPolygon main, Moved<LineFunction, Vector128> mainLine, CollisionPolygon other, Moved<Vector128, Vector128> otherPoint, double offset)
 		{
-
-		}
-		public CollisionResult(CollisionPolygon polygon1, CollisionPolygon polygon2, double offset)
-		{
-			Polygon1 = polygon1;
-			Polygon2 = polygon2;
+			Main = main;
+			MainLine = mainLine;
+			Other = other;
+			OtherPoint = otherPoint;
 			Offset = offset;
 		}
 
-		public CollisionPolygon Polygon1 { get; }
-		public CollisionPolygon Polygon2 { get; }
+		public CollisionPolygon Main { get; }
+		public Moved<LineFunction, Vector128> MainLine { get; }
+		public CollisionPolygon Other { get; }
+		public Moved<Vector128, Vector128> OtherPoint { get; }
 		public double Offset { get; }
 	}
 }

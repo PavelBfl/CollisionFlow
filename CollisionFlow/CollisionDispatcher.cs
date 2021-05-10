@@ -9,7 +9,7 @@ namespace CollisionFlow
 	{
 		public static CollisionResult Offset(IEnumerable<CollisionPolygon> polygons, double offset)
 		{
-			var result = new CollisionResult(offset);
+			CollisionResult result = null;
 			var localPolygons = polygons.ToArray();
 			foreach (var main in localPolygons)
 			{
@@ -17,12 +17,14 @@ namespace CollisionFlow
 				{
 					if (!ReferenceEquals(main, other))
 					{
-						var mainToOther = Offset(main, other, result.Offset);
-						result = mainToOther.Offset < result.Offset ? mainToOther : result;
-						var otherToMain = Offset(other, main, result.Offset);
-						result = otherToMain.Offset < result.Offset ? otherToMain : result;
+						if (IsCollision(main, other))
+						{
+							return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
+						}
+						result = Offset(main, other, result, offset);
+						result = Offset(other, main, result, offset);
 
-						if (NumberUnitComparer.Instance.Equals(result.Offset, 0))
+						if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
 						{
 							return result;
 						}
@@ -30,25 +32,46 @@ namespace CollisionFlow
 				}
 			}
 
+			var currentOffset = result?.Offset ?? offset;
 			foreach (var polygon in localPolygons)
 			{
-				polygon.Offset(result.Offset);
+				polygon.Offset(currentOffset);
 			}
 
 			return result;
 		}
+		private static CollisionResult Offset(CollisionPolygon main, CollisionPolygon other, CollisionResult prevResult, double offset)
+		{
+			if (prevResult is null)
+			{
+				return Offset(main, other, offset);
+			}
+			else
+			{
+				var currentResult = Offset(main, other, prevResult.Offset);
+				if (currentResult is null)
+				{
+					return prevResult;
+				}
+				else
+				{
+					return prevResult.Offset < currentResult.Offset ? prevResult : currentResult;
+				}
+			}
+		}
 
 		private static CollisionResult Offset(CollisionPolygon main, CollisionPolygon other, double offset)
 		{
-			var result = new CollisionResult(offset);
+			CollisionResult result = null;
 			var mainLines = main.Lines.ToArray();
 			for (int i = 0; i < mainLines.Length; i++)
 			{
 				var mainLine = mainLines[i];
 				foreach (var otherPoint in other.GetPoints())
 				{
-					var localOffset = Offset(mainLine, otherPoint, result.Offset);
-					if (localOffset < result.Offset)
+					var currentOffset = result?.Offset ?? offset;
+					var localOffset = Offset(mainLine, otherPoint, currentOffset);
+					if (localOffset < currentOffset)
 					{
 						var prevMainLine = mainLines[i == 0 ? mainLines.Length - 1 : i - 1];
 						var nextMainLine = mainLines[i == mainLines.Length - 1 ? 0 : i + 1];
@@ -68,11 +91,11 @@ namespace CollisionFlow
 						{
 							if (!NumberUnitComparer.Instance.Equals(localOffset, 0))
 							{
-								result = new CollisionResult(main, other, localOffset);
+								result = new CollisionResult(main, mainLine, other, otherPoint, localOffset);
 							}
 							else
 							{
-								return new CollisionResult(main, other, 0);
+								return new CollisionResult(main, mainLine, other, otherPoint, 0);
 							}
 						}
 					}
@@ -119,6 +142,69 @@ namespace CollisionFlow
 		{
 			var (min, max) = begin < end ? (begin, end) : (end, begin);
 			return min <= value && value <= max;
+		}
+
+		private static bool IsCollision(CollisionPolygon polygon1, CollisionPolygon polygon2)
+		{
+			var points1 = polygon1.GetPoints().Select(x => x.Target).ToArray();
+			var points2 = polygon2.GetPoints().Select(x => x.Target).ToArray();
+			var result = points1.Any(x => IsContainsPoint(points2, x)) ||
+				points2.Any(x => IsContainsPoint(points1, x));
+
+			if (result)
+			{
+				return result;
+			}
+
+			var prev1 = points1.Length - 1;
+			for (int i = 0; i < points1.Length; i++)
+			{
+				var prev2 = points2.Length - 1;
+				for (int j = 0; j < points2.Length; j++)
+				{
+					if (IsCrossing(points1[i], points1[prev1], points2[j], points2[prev2]))
+					{
+						return true;
+					}
+					prev2 = j;
+				}
+				prev1 = i;
+			}
+			return false;
+		}
+		private static bool IsCrossing(Vector128 begin1, Vector128 end1, Vector128 begin2, Vector128 end2)
+		{
+			var line = new LineFunction(begin1, end1);
+			var projectLine = line.Perpendicular();
+
+			var projectPoint = line.Crossing(projectLine);
+
+			var projectBegin = line.OffsetToPoint(begin2).Crossing(projectLine);
+			var projectEnd = line.OffsetToPoint(end2).Crossing(projectLine);
+
+			return -1 < projectLine.Slope && projectLine.Slope < 1 ?
+				InRange(projectPoint.X, projectBegin.X, projectEnd.X) :
+				InRange(projectPoint.Y, projectBegin.Y, projectEnd.Y);
+		}
+		private static bool IsContainsPoint(IEnumerable<Vector128> polygon, Vector128 point)
+		{
+			var result = false;
+			var polygonInstance = polygon.ToArray();
+			var prevIndex = polygonInstance.Length - 1;
+			for (int i = 0; i < polygonInstance.Length; i++)
+			{
+				var prevPoint = polygonInstance[prevIndex];
+				var currentPoint = polygonInstance[i];
+				if (currentPoint.Y < point.Y && prevPoint.Y >= point.Y || prevPoint.Y < point.Y && currentPoint.Y > point.Y)
+				{
+					if (currentPoint.X + (point.Y - currentPoint.Y) / (prevPoint.Y - currentPoint.Y) * (prevPoint.X - currentPoint.X) < point.X)
+					{
+						result = !result;
+					}
+				}
+				prevIndex = i;
+			}
+			return result;
 		}
 	}
 }

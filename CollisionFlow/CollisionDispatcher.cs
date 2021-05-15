@@ -17,10 +17,10 @@ namespace CollisionFlow
 				{
 					if (!ReferenceEquals(main, other))
 					{
-						if (IsCollision(main, other))
-						{
-							return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
-						}
+						//if (IsCollision(main, other))
+						//{
+						//	return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
+						//}
 						result = Offset(main, other, result, offset);
 						result = Offset(other, main, result, offset);
 
@@ -146,31 +146,10 @@ namespace CollisionFlow
 
 		private static bool IsCollision(CollisionPolygon polygon1, CollisionPolygon polygon2)
 		{
-			var points1 = polygon1.GetPoints().Select(x => x.Target).ToArray();
-			var points2 = polygon2.GetPoints().Select(x => x.Target).ToArray();
-			var result = points1.Any(x => IsContainsPoint(points2, x)) ||
-				points2.Any(x => IsContainsPoint(points1, x));
-
-			if (result)
-			{
-				return result;
-			}
-
-			var prev1 = points1.Length - 1;
-			for (int i = 0; i < points1.Length; i++)
-			{
-				var prev2 = points2.Length - 1;
-				for (int j = 0; j < points2.Length; j++)
-				{
-					if (IsCrossing(points1[i], points1[prev1], points2[j], points2[prev2]))
-					{
-						return true;
-					}
-					prev2 = j;
-				}
-				prev1 = i;
-			}
-			return false;
+			return IsCollision(
+				polygon1.GetPoints().Select(x => x.Target),
+				polygon2.GetPoints().Select(x => x.Target)
+			);
 		}
 		private static bool IsCrossing(Vector128 begin1, Vector128 end1, Vector128 begin2, Vector128 end2)
 		{
@@ -195,7 +174,7 @@ namespace CollisionFlow
 			{
 				var prevPoint = polygonInstance[prevIndex];
 				var currentPoint = polygonInstance[i];
-				if (currentPoint.Y < point.Y && prevPoint.Y >= point.Y || prevPoint.Y < point.Y && currentPoint.Y > point.Y)
+				if (currentPoint.Y < point.Y && prevPoint.Y >= point.Y || prevPoint.Y < point.Y && currentPoint.Y >= point.Y)
 				{
 					if (currentPoint.X + (point.Y - currentPoint.Y) / (prevPoint.Y - currentPoint.Y) * (prevPoint.X - currentPoint.X) < point.X)
 					{
@@ -205,6 +184,41 @@ namespace CollisionFlow
 				prevIndex = i;
 			}
 			return result;
+		}
+
+		public static bool IsCollision(IEnumerable<Vector128> polygon1, IEnumerable<Vector128> polygon2)
+		{
+			var polygon1Instance = polygon1?.ToArray() ?? throw new ArgumentNullException(nameof(polygon1));
+			if (polygon1Instance.Length < 3)
+			{
+				throw new InvalidOperationException();
+			}
+			var polygon2Instance = polygon2?.ToArray() ?? throw new ArgumentNullException(nameof(polygon2));
+			if (polygon2Instance.Length < 3)
+			{
+				throw new InvalidOperationException();
+			}
+
+			if (polygon1Instance.Any(x => IsContainsPoint(polygon2Instance, x)) || polygon2Instance.Any(x => IsContainsPoint(polygon1Instance, x)))
+			{
+				return true;
+			}
+
+			var prev1 = polygon1Instance.Length - 1;
+			for (int i = 0; i < polygon1Instance.Length; i++)
+			{
+				var prev2 = polygon2Instance.Length - 1;
+				for (int j = 0; j < polygon2Instance.Length; j++)
+				{
+					if (IsCrossing(polygon1Instance[i], polygon1Instance[prev1], polygon2Instance[j], polygon2Instance[prev2]))
+					{
+						return true;
+					}
+					prev2 = j;
+				}
+				prev1 = i;
+			}
+			return false;
 		}
 	}
 }

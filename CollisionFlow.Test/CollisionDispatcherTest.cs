@@ -206,10 +206,10 @@ namespace CollisionFlow.Test
 		public static IEnumerable<object[]> GetStaticPolygons()
 		{
 			const float FULL_ROTATION = 360;
-			const float ROTATE_OFFSET = 5.123f;
+			const float ROTATE_OFFSET = 50.123f;
 			const float MIN_SCALE = 0.1f;
 			const float MAX_SCALE = 2;
-			const float SCALE_OFFSET = 0.1f;
+			const float SCALE_OFFSET = 0.3f;
 
 			foreach (var data in GetStaticData())
 			{

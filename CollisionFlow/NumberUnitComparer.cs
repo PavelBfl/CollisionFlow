@@ -4,24 +4,38 @@ using System.Text;
 
 namespace CollisionFlow
 {
-	class NumberUnitComparer : IEqualityComparer<double>
+	class NumberUnitComparer : IEqualityComparer<double>, IComparer<double>
 	{
-		public const double PRECISION = 0.000001;
+		private const long OFFSET_PRECISION = 1000000000;
+
 		public static NumberUnitComparer Instance { get; } = new NumberUnitComparer();
+
+		private static long Offset(double value) => (long)(value * OFFSET_PRECISION);
 
 		private NumberUnitComparer()
 		{
 
 		}
 
-		public bool Equals(double x, double y)
-		{
-			return Math.Abs(x - y) < PRECISION;
-		}
+		public bool Equals(double x, double y) => Offset(x) == Offset(y);
 
-		public int GetHashCode(double obj)
+		public int GetHashCode(double obj) => Offset(obj).GetHashCode();
+
+		public int Compare(double x, double y)
 		{
-			throw new NotImplementedException();
+			var result = Offset(x) - Offset(y);
+			if (result <= int.MinValue)
+			{
+				return int.MinValue;
+			}
+			else if (result >= int.MaxValue)
+			{
+				return int.MaxValue;
+			}
+			else
+			{
+				return (int)result;
+			}
 		}
 	}
 }

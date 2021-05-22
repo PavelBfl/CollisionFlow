@@ -17,10 +17,10 @@ namespace CollisionFlow
 				{
 					if (!ReferenceEquals(main, other))
 					{
-						//if (IsCollision(main, other))
-						//{
-						//	return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
-						//}
+						if (IsCollision(main, other))
+						{
+							return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
+						}
 						result = Offset(main, other, result, offset);
 						result = Offset(other, main, result, offset);
 
@@ -138,10 +138,21 @@ namespace CollisionFlow
 				return offset;
 			}
 		}
+
+		private static (double min, double max) BinarySort(double value1, double value2)
+		{
+			return NumberUnitComparer.Instance.Compare(value1, value2) < 0 ? (value1, value2) : (value2, value1);
+		}
 		private static bool InRange(double value, double begin, double end)
 		{
-			var (min, max) = begin < end ? (begin, end) : (end, begin);
+			var (min, max) = BinarySort(begin, end);
 			return min <= value && value <= max;
+		}
+		private static bool IsCrossing(double begin1, double end1, double begin2, double end2)
+		{
+			var (min1, max1) = BinarySort(begin1, end1);
+			var (min2, max2) = BinarySort(begin2, end2);
+			return NumberUnitComparer.Instance.Compare(min2, max1) <= 0 && NumberUnitComparer.Instance.Compare(min1, max2) <= 0;
 		}
 
 		private static bool IsCollision(CollisionPolygon polygon1, CollisionPolygon polygon2)
@@ -153,18 +164,28 @@ namespace CollisionFlow
 		}
 		private static bool IsCrossing(Vector128 begin1, Vector128 end1, Vector128 begin2, Vector128 end2)
 		{
-			var line = new LineFunction(begin1, end1);
+			if (!IsCrossing(begin1.X, end1.X, begin2.X, end2.X) || !IsCrossing(begin1.Y, end1.Y, begin2.Y, end2.Y))
+			{
+				return false;
+			}
+
+			return IsCrossingTo(begin1, end1, begin2, end2) && IsCrossingTo(begin2, end2, begin1, end1);
+		}
+		private static bool IsCrossingTo(Vector128 mainBegin1, Vector128 mainEnd1, Vector128 subBegin2, Vector128 subEnd2)
+		{
+			var line = new LineFunction(mainBegin1, mainEnd1);
 			var projectLine = line.Perpendicular();
 
 			var projectPoint = line.Crossing(projectLine);
 
-			var projectBegin = line.OffsetToPoint(begin2).Crossing(projectLine);
-			var projectEnd = line.OffsetToPoint(end2).Crossing(projectLine);
+			var projectBegin = line.OffsetToPoint(subBegin2).Crossing(projectLine);
+			var projectEnd = line.OffsetToPoint(subEnd2).Crossing(projectLine);
 
 			return -1 < projectLine.Slope && projectLine.Slope < 1 ?
 				InRange(projectPoint.X, projectBegin.X, projectEnd.X) :
 				InRange(projectPoint.Y, projectBegin.Y, projectEnd.Y);
 		}
+
 		private static bool IsContainsPoint(IEnumerable<Vector128> polygon, Vector128 point)
 		{
 			var result = false;

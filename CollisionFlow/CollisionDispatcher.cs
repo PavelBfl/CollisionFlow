@@ -241,5 +241,25 @@ namespace CollisionFlow
 			}
 			return false;
 		}
+
+		public static IEnumerable<Vector128> RegularPolygon(double radius, int verticesCount)
+		{
+			const double FULL_ROUND = 360;
+
+			if (verticesCount < 3)
+			{
+				throw new InvalidOperationException();
+			}
+
+			for (int i = 0; i < verticesCount; i++)
+			{
+				var angleStep = FULL_ROUND / verticesCount * i;
+
+				var x = Math.Cos(angleStep) * radius;
+				var y = Math.Sin(angleStep) * radius;
+
+				yield return new Vector128(x, y);
+			}
+		}
 	}
 }

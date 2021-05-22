@@ -245,5 +245,37 @@ namespace CollisionFlow.Test
 
 			Assert.Equal(expected, result);
 		}
+
+		[Theory]
+		[InlineData(3)]
+		[InlineData(4)]
+		[InlineData(5)]
+		[InlineData(100)]
+		public void RegularPolygon_VerticesCount_InitCount(int verticesCount)
+		{
+			var vertices = CollisionDispatcher.RegularPolygon(1, verticesCount);
+
+			Assert.Equal(verticesCount, vertices.Count());
+		}
+
+		[Theory]
+		[InlineData(2d,3)]
+		[InlineData(2.5d, 4)]
+		[InlineData(4.73d, 5)]
+		[InlineData(100.001d, 100)]
+		public void RegularPolygon_Distance_InitRadius(double radius, int verticesCount)
+		{
+			var vertices = CollisionDispatcher.RegularPolygon(radius, verticesCount);
+
+			foreach (var vertex in vertices)
+			{
+				var distance = Math.Sqrt(vertex.X * vertex.X + vertex.Y * vertex.Y);
+				if (!NumberUnitComparer.Instance.Equals(radius, distance))
+				{
+
+				}
+				Assert.Equal(radius, distance, NumberUnitComparer.Instance);
+			}
+		}
 	}
 }

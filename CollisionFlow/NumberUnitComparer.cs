@@ -4,17 +4,17 @@ using System.Text;
 
 namespace CollisionFlow
 {
-	class NumberUnitComparer : IEqualityComparer<double>, IComparer<double>
+	public class NumberUnitComparer : IEqualityComparer<double>, IComparer<double>
 	{
 		private const long OFFSET_PRECISION = 1000000000;
 
 		public static NumberUnitComparer Instance { get; } = new NumberUnitComparer();
 
-		private static long Offset(double value) => (long)(value * OFFSET_PRECISION);
+		private static long Offset(double value) => (long)Math.Round(value * OFFSET_PRECISION);
 
 		private NumberUnitComparer()
 		{
-
+			
 		}
 
 		public bool Equals(double x, double y) => Offset(x) == Offset(y);

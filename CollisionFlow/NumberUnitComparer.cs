@@ -6,7 +6,7 @@ namespace CollisionFlow
 {
 	public class NumberUnitComparer : IEqualityComparer<double>, IComparer<double>
 	{
-		private const long OFFSET_PRECISION = 1000000000;
+		private const long OFFSET_PRECISION = 10000;
 
 		public static NumberUnitComparer Instance { get; } = new NumberUnitComparer();
 

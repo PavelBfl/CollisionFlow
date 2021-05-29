@@ -145,15 +145,11 @@ namespace CollisionFlow.Test
 
 		public static IEnumerable<object[]> GetPolygons()
 		{
-			const float FULL_ROTATION = 360;
-			const float ROTATE_OFFSET = 5.123f;
-
 			foreach (var collisionData in GetCollisionsData())
 			{
-				for (var i = 0f; i < FULL_ROTATION; i += ROTATE_OFFSET)
+				foreach (var matrix in GetTransforms())
 				{
-					var transformMatrix = Matrix3x2.CreateRotation(i);
-					var transformData = collisionData.Transform(transformMatrix);
+					var transformData = collisionData.Transform(matrix);
 
 					yield return new object[]
 					{
@@ -205,27 +201,53 @@ namespace CollisionFlow.Test
 
 		public static IEnumerable<object[]> GetStaticPolygons()
 		{
-			const float FULL_ROTATION = 360;
-			const float ROTATE_OFFSET = 50.123f;
-			const float MIN_SCALE = 0.1f;
-			const float MAX_SCALE = 2;
-			const float SCALE_OFFSET = 0.3f;
-
 			foreach (var data in GetStaticData())
 			{
-				for (var iRotate = 0f; iRotate < FULL_ROTATION; iRotate += ROTATE_OFFSET)
+				foreach (var matrix in GetTransforms())
 				{
-					for (var iScale = MIN_SCALE; iScale < MAX_SCALE; iScale += SCALE_OFFSET)
-					{
-						var rorateMatrix = Matrix3x2.CreateRotation(iRotate);
-						var scaleMatrix = Matrix3x2.CreateScale(iScale);
-
-						var transfomMatrix = rorateMatrix * scaleMatrix;
-						var result = data.Transform(transfomMatrix);
-						yield return new object[] { result.Points1.Select(x => new Vector128(x.X, x.Y)), result.Points2.Select(x => new Vector128(x.X, x.Y)), result.IsCollision };
-					}
-				} 
+					var result = data.Transform(matrix);
+					yield return new object[] { result.Points1.Select(x => new Vector128(x.X, x.Y)), result.Points2.Select(x => new Vector128(x.X, x.Y)), result.IsCollision };
+				}
 			}
+		}
+
+		private static IEnumerable<Matrix3x2> GetTransforms()
+		{
+			const float SMALL_VALUE = 0.1f;
+			const float LARGE_VALUE = 100f;
+			var rotations = new[]
+			{
+				Matrix3x2.CreateRotation(0),
+				Matrix3x2.CreateRotation(SMALL_VALUE),
+				Matrix3x2.CreateRotation(SMALL_VALUE, new Vector2(1)),
+				Matrix3x2.CreateRotation(SMALL_VALUE, new Vector2(5, 10)),
+				Matrix3x2.CreateRotation(MathF.PI / 2),
+				Matrix3x2.CreateRotation(MathF.PI / 4),
+			};
+			var scales = new[]
+			{
+				Matrix3x2.CreateScale(1),
+				Matrix3x2.CreateScale(SMALL_VALUE),
+				Matrix3x2.CreateScale(LARGE_VALUE),
+				Matrix3x2.CreateScale(1, 2),
+				Matrix3x2.CreateScale(2, 1),
+				Matrix3x2.CreateScale(2),
+				Matrix3x2.CreateScale(2, 3, new Vector2(4, 5)),
+			};
+			var translates = new[]
+			{
+				Matrix3x2.CreateTranslation(0, 0),
+				Matrix3x2.CreateTranslation(SMALL_VALUE, SMALL_VALUE),
+				Matrix3x2.CreateTranslation(1, 1),
+				Matrix3x2.CreateTranslation(1, 2),
+				Matrix3x2.CreateTranslation(2, 1),
+				Matrix3x2.CreateTranslation(LARGE_VALUE, 0),
+			};
+
+			return from rotate in rotations
+				   from scale in scales
+				   from translate in translates
+				   select rotate * scale * translate;
 		}
 
 		[Theory]
@@ -234,7 +256,7 @@ namespace CollisionFlow.Test
 		{
 			var result = CollisionDispatcher.Offset(polygons, offset);
 
-			Assert.Equal(expectedOffset, result.Offset, 5);
+			Assert.Equal(expectedOffset, result.Offset, NumberUnitComparer.Instance);
 		}
 
 		[Theory]
@@ -244,38 +266,6 @@ namespace CollisionFlow.Test
 			var result = CollisionDispatcher.IsCollision(points1, points2);
 
 			Assert.Equal(expected, result);
-		}
-
-		[Theory]
-		[InlineData(3)]
-		[InlineData(4)]
-		[InlineData(5)]
-		[InlineData(100)]
-		public void RegularPolygon_VerticesCount_InitCount(int verticesCount)
-		{
-			var vertices = CollisionDispatcher.RegularPolygon(1, verticesCount);
-
-			Assert.Equal(verticesCount, vertices.Count());
-		}
-
-		[Theory]
-		[InlineData(2d,3)]
-		[InlineData(2.5d, 4)]
-		[InlineData(4.73d, 5)]
-		[InlineData(100.001d, 100)]
-		public void RegularPolygon_Distance_InitRadius(double radius, int verticesCount)
-		{
-			var vertices = CollisionDispatcher.RegularPolygon(radius, verticesCount);
-
-			foreach (var vertex in vertices)
-			{
-				var distance = Math.Sqrt(vertex.X * vertex.X + vertex.Y * vertex.Y);
-				if (!NumberUnitComparer.Instance.Equals(radius, distance))
-				{
-
-				}
-				Assert.Equal(radius, distance, NumberUnitComparer.Instance);
-			}
 		}
 	}
 }

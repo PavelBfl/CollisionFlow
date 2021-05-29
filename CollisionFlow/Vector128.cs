@@ -7,6 +7,7 @@ namespace CollisionFlow
 	{
 		private const int X_INDEX = 0;
 		private const int Y_INDEX = 1;
+		private const string DISPLAY_FORMAT = "{0}; {1}";
 
 		public static Vector<double> Create(double x, double y) => new Vector<double>(new[] { x, y, 0, 0 });
 		public static Vector128 Zero { get; } = new Vector128(Vector<double>.Zero);
@@ -30,12 +31,17 @@ namespace CollisionFlow
 
 		public bool Equals(Vector128 other)
 		{
-			return X == other.X && Y == other.Y;
+			return NumberUnitComparer.Instance.Equals(X ,other.X) && NumberUnitComparer.Instance.Equals(Y, other.Y);
 		}
 		public override bool Equals(object obj)
 		{
 			return obj is Vector128 other && Equals(other);
 		}
-		public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode();
+		public override int GetHashCode() => NumberUnitComparer.Instance.GetHashCode(X) ^ NumberUnitComparer.Instance.GetHashCode(Y);
+
+		public override string ToString()
+		{
+			return string.Format(DISPLAY_FORMAT, X, Y);
+		}
 	}
 }

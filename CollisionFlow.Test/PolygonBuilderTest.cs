@@ -70,5 +70,15 @@ namespace CollisionFlow.Test
 				Assert.Equal(radius, distance, NumberUnitComparer.Instance);
 			}
 		}
+
+		[Theory]
+		[InlineData(-1)]
+		[InlineData(0)]
+		[InlineData(1)]
+		[InlineData(2)]
+		public void RegularPolygon_InvalidVerticesCount_InvalidOperationException(int verticesCount)
+		{
+			Assert.Throws<InvalidOperationException>(() => PolygonBuilder.RegularPolygon(1, verticesCount).ToArray());
+		}
 	}
 }

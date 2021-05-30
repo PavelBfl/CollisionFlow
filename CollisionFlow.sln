@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CollisionFlow", "CollisionFlow\CollisionFlow.csproj", "{FA8A3825-635D-4BD9-9071-372F3DD2BDC2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollisionFlow.Test", "CollisionFlow.Test\CollisionFlow.Test.csproj", "{2607920C-C751-40BD-8153-EFCC3E3603BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CollisionFlow.Test", "CollisionFlow.Test\CollisionFlow.Test.csproj", "{2607920C-C751-40BD-8153-EFCC3E3603BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenchmarkTest", "BenchmarkTest\BenchmarkTest.csproj", "{59AE4611-2592-4317-83D0-8ADE3B84FAA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{2607920C-C751-40BD-8153-EFCC3E3603BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2607920C-C751-40BD-8153-EFCC3E3603BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2607920C-C751-40BD-8153-EFCC3E3603BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59AE4611-2592-4317-83D0-8ADE3B84FAA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59AE4611-2592-4317-83D0-8ADE3B84FAA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59AE4611-2592-4317-83D0-8ADE3B84FAA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59AE4611-2592-4317-83D0-8ADE3B84FAA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

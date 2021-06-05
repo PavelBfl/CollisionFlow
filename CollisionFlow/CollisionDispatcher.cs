@@ -11,22 +11,34 @@ namespace CollisionFlow
 		{
 			CollisionResult result = null;
 			var localPolygons = polygons.ToArray();
-			foreach (var main in localPolygons)
+			for (var iMain = 0; iMain < localPolygons.Length; iMain++)
 			{
-				foreach (var other in localPolygons)
+				var main = localPolygons[iMain];
+				for (var iOther = iMain + 1; iOther < localPolygons.Length; iOther++)
 				{
+					var other = localPolygons[iOther];
 					if (!ReferenceEquals(main, other))
 					{
 						if (IsCollision(main, other))
 						{
 							return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
 						}
-						result = Offset(main, other, result, offset);
-						result = Offset(other, main, result, offset);
+						var mainFuture = main.Clone();
+						mainFuture.Offset(result?.Offset ?? offset);
+						var otherFuture = main.Clone();
+						otherFuture.Offset(result?.Offset ?? offset);
+						var mainFullBounds = main.Bounds.Union(mainFuture.Bounds);
+						var otherFullBounds = other.Bounds.Union(otherFuture.Bounds);
 
-						if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
+						if (mainFullBounds.Intersect(otherFullBounds))
 						{
-							return result;
+							result = Offset(main, other, result, offset);
+							result = Offset(other, main, result, offset);
+
+							if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
+							{
+								return result;
+							}
 						}
 					}
 				}
@@ -67,7 +79,7 @@ namespace CollisionFlow
 			for (int i = 0; i < mainLines.Length; i++)
 			{
 				var mainLine = mainLines[i];
-				foreach (var otherPoint in other.GetPoints())
+				foreach (var otherPoint in other.Points)
 				{
 					var currentOffset = result?.Offset ?? offset;
 					var localOffset = Offset(mainLine, otherPoint, currentOffset);
@@ -157,9 +169,14 @@ namespace CollisionFlow
 
 		private static bool IsCollision(CollisionPolygon polygon1, CollisionPolygon polygon2)
 		{
+			if (!polygon1.Bounds.Intersect(polygon2.Bounds))
+			{
+				return false;
+			}
+
 			return IsCollision(
-				polygon1.GetPoints().Select(x => x.Target),
-				polygon2.GetPoints().Select(x => x.Target)
+				polygon1.Points.Select(x => x.Target),
+				polygon2.Points.Select(x => x.Target)
 			);
 		}
 		private static bool IsCrossing(Vector128 begin1, Vector128 end1, Vector128 begin2, Vector128 end2)
@@ -241,7 +258,5 @@ namespace CollisionFlow
 			}
 			return false;
 		}
-
-		
 	}
 }

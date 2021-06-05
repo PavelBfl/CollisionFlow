@@ -9,7 +9,14 @@ namespace CollisionFlow
 		private const int Y_INDEX = 1;
 		private const string DISPLAY_FORMAT = "{0}; {1}";
 
-		public static Vector<double> Create(double x, double y) => new Vector<double>(new[] { x, y, 0, 0 });
+		private static double[] container = new double[4];
+		public static Vector<double> Create(double x, double y)
+		{
+			container[0] = x;
+			container[1] = y;
+			return new Vector<double>(container);
+		}
+
 		public static Vector128 Zero { get; } = new Vector128(Vector<double>.Zero);
 		public static Vector128 One { get; } = new Vector128(Vector<double>.One);
 

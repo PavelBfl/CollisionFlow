@@ -36,7 +36,9 @@ namespace CollisionFlow
 		public IEnumerable<Moved<LineFunction, Vector128>> Lines => lines;
 		private Moved<LineFunction, Vector128>[] lines;
 
-		public IEnumerable<Moved<Vector128, Vector128>> GetPoints()
+		private IEnumerable<Moved<Vector128, Vector128>> points;
+		public IEnumerable<Moved<Vector128, Vector128>> Points => points ?? (points = GetPoints().ToArray());
+		private IEnumerable<Moved<Vector128, Vector128>> GetPoints()
 		{
 			for (int i = 0; i < lines.Length; i++)
 			{
@@ -54,12 +56,27 @@ namespace CollisionFlow
 			}
 		}
 
+		private Rect? bounds;
+		public Rect Bounds => (bounds ?? (bounds = GetBounds())).GetValueOrDefault();
+
+		private Rect GetBounds()
+		{
+			return new Rect(Points.Select(x => x.Target));
+		}
+
 		public void Offset(double value)
 		{
 			for (int i = 0; i < lines.Length; i++)
 			{
 				lines[i] = lines[i].Offset(value);
 			}
+			points = null;
+			bounds = null;
+		}
+
+		public CollisionPolygon Clone()
+		{
+			return new CollisionPolygon(Lines);
 		}
 	}
 }

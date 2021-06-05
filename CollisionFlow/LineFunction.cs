@@ -3,10 +3,32 @@ using System.Numerics;
 
 namespace CollisionFlow
 {
+	public enum LineState
+	{
+		None,
+		Vectical,
+		Horisontal
+	}
 	public struct LineFunction
 	{
 		public static LineFunction AsVertical(double offset) => new LineFunction(double.PositiveInfinity, offset);
 		public static LineFunction AsHorisontal(double offset) => new LineFunction(0, offset);
+
+		private static LineState GetState(double slope)
+		{
+			if (double.IsInfinity(slope))
+			{
+				return LineState.Vectical;
+			}
+			else if (NumberUnitComparer.Instance.Equals(slope, 0))
+			{
+				return LineState.Horisontal;
+			}
+			else
+			{
+				return LineState.None;
+			}
+		}
 
 		public LineFunction(Vector128 begin, Vector128 end)
 		{
@@ -32,21 +54,25 @@ namespace CollisionFlow
 				Slope = difference.GetY() / difference.GetX();
 				Offset = begin.Y - (begin.X * Slope); 
 			}
+			State = GetState(Slope);
 		}
 		public LineFunction(double slope, double offset)
 		{
 			Slope = slope;
 			Offset = offset;
+			State = GetState(Slope);
 		}
 
 		public double Slope { get; }
 		public double Offset { get; }
+		public LineState State { get; }
+
 		public bool IsVertical() => double.IsInfinity(Slope);
 		public bool IsHorizontal() => Slope == 0;
 
 		public double GetY(double x)
 		{
-			if (IsVertical())
+			if (State == LineState.Vectical)
 			{
 				throw new InvalidOperationException();
 			}
@@ -99,16 +125,16 @@ namespace CollisionFlow
 		}
 		public Vector128 Crossing(LineFunction lineFunction)
 		{
-			if ((IsVertical() && lineFunction.IsVertical()) || (IsHorizontal() && lineFunction.IsHorizontal()))
+			if (State == lineFunction.State && State != LineState.None)
 			{
 				throw new InvalidOperationException();
 			}
 
-			if (IsVertical())
+			if (State == LineState.Vectical)
 			{
 				return new Vector128(Offset, lineFunction.GetY(Offset));
 			}
-			else if (lineFunction.IsVertical())
+			else if (lineFunction.State == LineState.Vectical)
 			{
 				return new Vector128(lineFunction.Offset, GetY(lineFunction.Offset));
 			}

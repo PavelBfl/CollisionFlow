@@ -66,7 +66,7 @@ namespace CollisionFlow
 		public PolygonBuilder OffsetY(double y, Vector128 course) => Offset(new Vector128(0, y), course);
 		public PolygonBuilder OffsetY(double y) => OffsetY(y, DefaultCourse);
 
-		private IEnumerable<Moved<LineFunction, Vector128>> GetLines()
+		public IEnumerable<Moved<LineFunction, Vector128>> GetLines()
 		{
 			if (Points.Count < 3)
 			{
@@ -82,6 +82,5 @@ namespace CollisionFlow
 				prevIndex = i;
 			}
 		}
-		public CollisionPolygon Build() => new CollisionPolygon(GetLines());
 	}
 }

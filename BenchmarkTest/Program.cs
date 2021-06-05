@@ -7,53 +7,65 @@ using System.Linq;
 
 namespace BenchmarkTest
 {
+
 	class Program
 	{
-
 		static void Main(string[] args)
 		{
-			for (int i = 0; i < 100; i++)
-			{
-				var result = CollisionDispatcher.Offset(Test.Polygons, 1);
-				if (result is { Offset: < 1 })
-				{
-					Console.WriteLine($"{i, 2}: Херня");
-				}
-				else
-				{
-					Console.WriteLine($"{i, 2}: Нормально");
-				}
-			}
+			BenchmarkRunner.Run<Test>();
+			//for (int i = 0; i < 100; i++)
+			//{
+			//	CollisionDispatcher.Offset(Test.Polygons100, 1);
+			//	Console.WriteLine($"{i, -2} Success");
+			//}
 		}
 	}
 
 	public class Test
 	{
-		public static CollisionPolygon[] Polygons { get; } = GetPolygons().ToArray();
+		public static CollisionPolygon[] Polygons2 { get; } = GetPolygons(2, 1).ToArray();
+		public static CollisionPolygon[] Polygons100 { get; } = GetPolygons(10, 10).ToArray();
+		public static CollisionPolygon[] Polygons1000 { get; } = GetPolygons(10, 100).ToArray();
 
-		public static IEnumerable<CollisionPolygon> GetPolygons()
+		public static IEnumerable<CollisionPolygon> GetPolygons(int rowsCount, int columnsCount)
 		{
-			const int ROWS_COUNT = 10;
-			const int COLUMNS_COUNT = 10;
-
-			for (int iRow = 0; iRow < ROWS_COUNT; iRow++)
+			if (rowsCount < 1)
 			{
-				for (int iColumn = 0; iColumn < COLUMNS_COUNT; iColumn++)
+				throw new InvalidOperationException();
+			}
+			if (columnsCount < 1)
+			{
+				throw new InvalidOperationException();
+			}
+
+			for (int iRow = 0; iRow < rowsCount; iRow++)
+			{
+				for (int iColumn = 0; iColumn < columnsCount; iColumn++)
 				{
-					yield return new PolygonBuilder(new Vector128(1, 0))
+					yield return new CollisionPolygon(new PolygonBuilder(new Vector128(1, 0))
 						.Add(new Vector128(iColumn, iRow))
 						.OffsetX(0.9)
 						.OffsetY(0.9)
 						.OffsetX(-0.9)
-						.Build();
+						.GetLines());
 				}
 			}
 		}
 
 		[Benchmark]
-		public void Common()
+		public void Common2()
 		{
-			CollisionDispatcher.Offset(Polygons, 1);
+			CollisionDispatcher.Offset(Polygons2, 1);
+		}
+		[Benchmark]
+		public void Common100()
+		{
+			CollisionDispatcher.Offset(Polygons100, 1);
+		}
+		[Benchmark]
+		public void Common1000()
+		{
+			CollisionDispatcher.Offset(Polygons1000, 1);
 		}
 	}
 }

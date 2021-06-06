@@ -23,14 +23,8 @@ namespace CollisionFlow
 						{
 							return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
 						}
-						var mainFuture = main.Clone();
-						mainFuture.Offset(result?.Offset ?? offset);
-						var otherFuture = main.Clone();
-						otherFuture.Offset(result?.Offset ?? offset);
-						var mainFullBounds = main.Bounds.Union(mainFuture.Bounds);
-						var otherFullBounds = other.Bounds.Union(otherFuture.Bounds);
 
-						if (mainFullBounds.Intersect(otherFullBounds))
+						if (!Flat.TryOffset(main.Points, other.Points, offset))
 						{
 							result = Offset(main, other, result, offset);
 							result = Offset(other, main, result, offset);
@@ -142,8 +136,8 @@ namespace CollisionFlow
 			if (speed > 0)
 			{
 				var distance = max.Target - min.Target;
-				var localOffset = distance / speed;
-				return localOffset < 1 ? localOffset * offset : offset;
+				var localOffset = distance / speed * offset;
+				return localOffset < 1 ? localOffset : offset;
 			}
 			else
 			{

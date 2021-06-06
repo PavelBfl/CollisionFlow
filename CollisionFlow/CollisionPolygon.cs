@@ -36,8 +36,8 @@ namespace CollisionFlow
 		public IEnumerable<Moved<LineFunction, Vector128>> Lines => lines;
 		private Moved<LineFunction, Vector128>[] lines;
 
-		private IEnumerable<Moved<Vector128, Vector128>> points;
-		public IEnumerable<Moved<Vector128, Vector128>> Points => points ?? (points = GetPoints().ToArray());
+		private Moved<Vector128, Vector128>[] points;
+		public Moved<Vector128, Vector128>[] Points => points ?? (points = GetPoints().ToArray());
 		private IEnumerable<Moved<Vector128, Vector128>> GetPoints()
 		{
 			for (int i = 0; i < lines.Length; i++)

@@ -65,7 +65,37 @@ namespace BenchmarkTest
 		}
 
 		[Benchmark]
-		public bool Control()
+		public int ControlFor()
+		{
+			var result = 0;
+
+			for (int i = 0; i < ControlObjects.Length; i++)
+			{
+				for (int j = i + 1; j < ControlObjects.Length; j++)
+				{
+					result++;
+				}
+			}
+
+			return result;
+		}
+		[Benchmark]
+		public long ControlBinaryAnd()
+		{
+			var result = ~0L;
+
+			for (long i = 0; i < ControlObjects.Length; i++)
+			{
+				for (long j = i + 1; j < ControlObjects.Length; j++)
+				{
+					result &= i & j;
+				}
+			}
+
+			return result;
+		}
+		[Benchmark]
+		public bool ControlRectCollision()
 		{
 			var result = true;
 

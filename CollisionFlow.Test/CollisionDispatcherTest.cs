@@ -39,7 +39,7 @@ namespace CollisionFlow.Test
 				);
 			}
 
-			private static Vector128 ToVector128(Vector2 vector) => new Vector128(vector.X, vector.Y);
+			private static Vector128 ToVector128(Vector2 vector) => new(vector.X, vector.Y);
 			public CollisionPolygon ToCollisionPolygon()
 			{
 				var lines = new List<Moved<LineFunction, Vector128>>();
@@ -141,22 +141,52 @@ namespace CollisionFlow.Test
 				offset: 1,
 				expectedOffset: 0.5
 			);
+			yield return new CollisionData(
+				polygons: new[]
+				{
+					new PolygonData(
+						new Vector2[] { new(0, 0), new(-1, 0), new(-1, 1), new(0, 1) },
+						new Vector2(1, 0)
+					),
+					new PolygonData(
+						new Vector2[] { new(1, 2), new(1, -1), new(0, -1), new(0, -2), new(2, -2), new(2, 3), new(0, 3), new(0, 2) },
+						new Vector2(1, 0)
+					),
+				},
+				offset: 1,
+				expectedOffset: 1
+			);
 		}
 
 		public static IEnumerable<object[]> GetPolygons()
 		{
+			var offsetEpsilons = new[] { 1, 2, 5 };
 			foreach (var collisionData in GetCollisionsData())
 			{
 				foreach (var matrix in GetTransforms())
 				{
 					var transformData = collisionData.Transform(matrix);
-
-					yield return new object[]
+					if (NumberUnitComparer.Instance.Equals(collisionData.Offset, collisionData.ExpectedOffset))
 					{
-						transformData.Polygons.Select(x => x.ToCollisionPolygon()),
-						transformData.Offset,
-						transformData.ExpectedOffset,
-					};
+						yield return new object[]
+						{
+							transformData.Polygons.Select(x => x.ToCollisionPolygon()),
+							transformData.Offset,
+							transformData.ExpectedOffset,
+						};
+					}
+					else
+					{
+						foreach (var offsetEpsilon in offsetEpsilons)
+						{
+							yield return new object[]
+							{
+								transformData.Polygons.Select(x => x.ToCollisionPolygon()),
+								transformData.Offset * offsetEpsilon,
+								transformData.ExpectedOffset,
+							};
+						}
+					}
 				}
 			}
 		}
@@ -256,7 +286,7 @@ namespace CollisionFlow.Test
 		{
 			var result = CollisionDispatcher.Offset(polygons, offset);
 
-			Assert.Equal(expectedOffset, result.Offset, NumberUnitComparer.Instance);
+			Assert.Equal(expectedOffset, result?.Offset ?? offset, NumberUnitComparer.Instance);
 		}
 
 		[Theory]

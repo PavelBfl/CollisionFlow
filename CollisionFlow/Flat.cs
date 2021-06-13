@@ -14,8 +14,8 @@ namespace CollisionFlow
 			if (speed > 0)
 			{
 				var distance = max.Target - min.Target;
-				var localOffset = distance / speed * offset;
-				return localOffset < 1 ? localOffset: offset;
+				var localOffset = distance / speed;
+				return localOffset < offset ? localOffset : offset;
 			}
 			else
 			{
@@ -33,8 +33,8 @@ namespace CollisionFlow
 			if (speed > 0)
 			{
 				var distance = max.Target - min.Target;
-				var localOffset = distance / speed * offset;
-				return NumberUnitComparer.Instance.Compare(localOffset, 1) >= 0;
+				var localOffset = distance / speed;
+				return NumberUnitComparer.Instance.Compare(localOffset, offset) >= 0;
 			}
 			else
 			{
@@ -78,6 +78,21 @@ namespace CollisionFlow
 				}
 			}
 			return true;
+		}
+
+		public static long Group(double gloabalMin, double globalMax, double rangeMin, double rangeMax)
+		{
+			var globalSize = globalMax - gloabalMin;
+			var groupSize = globalSize / 64;
+
+			var result = 0L;
+			for (double i = rangeMin - gloabalMin; i < rangeMax - gloabalMin; i += groupSize)
+			{
+				result |= (long)(i / groupSize);
+			}
+			result |= (long)((rangeMax - gloabalMin) / groupSize);
+
+			return result;
 		}
 	}
 }

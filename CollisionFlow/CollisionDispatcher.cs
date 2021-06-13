@@ -114,34 +114,18 @@ namespace CollisionFlow
 			var projectionLine = line.Target.Perpendicular();
 
 			var currentLineProjection = line.Target.Crossing(projectionLine);
-			var nextLineProjection = line.Target.OffsetByVector(new Vector128(line.Course.ToVector() * offset)).Crossing(projectionLine);
+			var nextLineProjection = line.Target.OffsetByVector(new Vector128(line.Course.ToVector())).Crossing(projectionLine);
 
 			var currentPointProjection = line.Target.OffsetToPoint(freePoin.Target).Crossing(projectionLine);
-			var nextPointProjection = line.Target.OffsetToPoint(new Vector128(freePoin.Target.ToVector() + freePoin.Course.ToVector() * offset)).Crossing(projectionLine);
+			var nextPointProjection = line.Target.OffsetToPoint(new Vector128(freePoin.Target.ToVector() + freePoin.Course.ToVector())).Crossing(projectionLine);
 
 			if (-1 < projectionLine.Slope && projectionLine.Slope < 1)
 			{
-				return Offset(Moved.Create(currentLineProjection.X, nextLineProjection.X - currentLineProjection.X), Moved.Create(currentPointProjection.X, nextPointProjection.X - currentPointProjection.X), offset);
+				return Flat.Offset(Moved.Create(currentLineProjection.X, nextLineProjection.X - currentLineProjection.X), Moved.Create(currentPointProjection.X, nextPointProjection.X - currentPointProjection.X), offset);
 			}
 			else
 			{
-				return Offset(Moved.Create(currentLineProjection.Y, nextLineProjection.Y - currentLineProjection.Y), Moved.Create(currentPointProjection.Y, nextPointProjection.Y - currentPointProjection.Y), offset);
-			}
-		}
-		private static double Offset(Moved<double, double> value1, Moved<double, double> value2, double offset)
-		{
-			var (min, max) = value1.Target < value2.Target ? (value1, value2) : (value2, value1);
-
-			var speed = min.Course - max.Course;
-			if (speed > 0)
-			{
-				var distance = max.Target - min.Target;
-				var localOffset = distance / speed * offset;
-				return localOffset < 1 ? localOffset : offset;
-			}
-			else
-			{
-				return offset;
+				return Flat.Offset(Moved.Create(currentLineProjection.Y, nextLineProjection.Y - currentLineProjection.Y), Moved.Create(currentPointProjection.Y, nextPointProjection.Y - currentPointProjection.Y), offset);
 			}
 		}
 

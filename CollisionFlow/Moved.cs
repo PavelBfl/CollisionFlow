@@ -8,8 +8,8 @@
 			Course = course;
 		}
 
-		public TTarget Target;
-		public TCourse Course;
+		public TTarget Target { get; }
+		public TCourse Course { get; }
 
 		public Moved<TTarget, TCourse> SetTarget(TTarget target) => new Moved<TTarget, TCourse>(target, Course);
 		public Moved<TTarget, TCourse> SetCourse(TCourse course) => new Moved<TTarget, TCourse>(Target, course);

@@ -14,9 +14,10 @@ namespace BenchmarkTest
 		static void Main(string[] args)
 		{
 			BenchmarkRunner.Run<Test>();
+			//var disparcher = Test.Dispatcher100;
 			//for (int i = 0; i < 200; i++)
 			//{
-			//	var result = CollisionDispatcher.Offset(Test.Polygons100, 1);
+			//	var result = disparcher.Offset(1);
 
 			//	if (result is { Offset: < 1 })
 			//	{
@@ -32,14 +33,14 @@ namespace BenchmarkTest
 
 	public class Test
 	{
-		public static CollisionPolygon[] Polygons2 { get; } = GetPolygons(2, 1).ToArray();
-		public static CollisionPolygon[] Polygons100 { get; } = GetPolygons(10, 10).ToArray();
-		public static CollisionPolygon[] Polygons1000 { get; } = GetPolygons(10, 100).ToArray();
+		public static CollisionDispatcher Dispatcher2 { get; } = GetDispatcher(2, 1);
+		public static CollisionDispatcher Dispatcher100 { get; } = GetDispatcher(10, 10);
+		public static CollisionDispatcher Dispatcher1000 { get; } = GetDispatcher(10, 100);
 		public static Rect[] ControlObjects { get; } = Enumerable.Range(0, 1000)
 			.Select(x => new Rect(0, 10, 10, 0))
 			.ToArray();
 
-		public static IEnumerable<CollisionPolygon> GetPolygons(int rowsCount, int columnsCount)
+		public static CollisionDispatcher GetDispatcher(int rowsCount, int columnsCount)
 		{
 			if (rowsCount < 1)
 			{
@@ -50,11 +51,12 @@ namespace BenchmarkTest
 				throw new InvalidOperationException();
 			}
 
+			var result = new CollisionDispatcher();
 			for (int iRow = 0; iRow < rowsCount; iRow++)
 			{
 				for (int iColumn = 0; iColumn < columnsCount; iColumn++)
 				{
-					yield return new CollisionPolygon(new PolygonBuilder(new Vector128(1, 0))
+					result.Add(new PolygonBuilder(new Vector128(1, 0))
 						.Add(new Vector128(iColumn, iRow))
 						.Add(new Vector128(iColumn + 0.5, iRow + 0.5))
 						.Add(new Vector128(iColumn, iRow + 0.9))
@@ -62,6 +64,7 @@ namespace BenchmarkTest
 						.GetLines());
 				}
 			}
+			return result;
 		}
 
 		[Benchmark]
@@ -115,17 +118,17 @@ namespace BenchmarkTest
 		[Benchmark]
 		public void Common2()
 		{
-			CollisionDispatcher.Offset(Polygons2, 1);
+			Dispatcher2.Offset(1);
 		}
 		[Benchmark]
 		public void Common100()
 		{
-			CollisionDispatcher.Offset(Polygons100, 1);
+			Dispatcher100.Offset(1);
 		}
 		[Benchmark]
 		public void Common1000()
 		{
-			CollisionDispatcher.Offset(Polygons1000, 1);
+			Dispatcher1000.Offset(1);
 		}
 	}
 }

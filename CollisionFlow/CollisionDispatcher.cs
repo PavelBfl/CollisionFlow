@@ -2,15 +2,34 @@
 using System.Text;
 using System;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace CollisionFlow
 {
 	public class CollisionDispatcher
 	{
-		public static CollisionResult Offset(IEnumerable<CollisionPolygon> polygons, double offset)
+		private readonly Dictionary<IPolygonHandler, Polygon> polygons = new Dictionary<IPolygonHandler, Polygon>();
+		public IEnumerable<IPolygonHandler> Polygons => polygons.Keys;
+
+		public IPolygonHandler Add(IEnumerable<Moved<LineFunction, Vector128>> lines)
+		{
+			var polygon = Polygon.Create(lines);
+			polygons.Add(polygon, polygon);
+			return polygon;
+		}
+		public bool Remove(IPolygonHandler handler)
+		{
+			if (handler is null)
+			{
+				throw new ArgumentNullException(nameof(handler));
+			}
+			return polygons.Remove(handler);
+		}
+
+		public CollisionResult Offset(double value)
 		{
 			CollisionResult result = null;
-			var localPolygons = polygons.ToArray();
+			var localPolygons = polygons.Values.ToArray();
 			for (var iMain = 0; iMain < localPolygons.Length; iMain++)
 			{
 				var main = localPolygons[iMain];
@@ -24,10 +43,10 @@ namespace CollisionFlow
 							return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
 						}
 
-						if (!Flat.TryOffset(main.Points, other.Points, offset))
+						if (!Flat.TryOffset(main.Points, other.Points, value))
 						{
-							result = Offset(main, other, result, offset);
-							result = Offset(other, main, result, offset);
+							result = Offset(main, other, result, value);
+							result = Offset(other, main, result, value);
 
 							if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
 							{
@@ -38,7 +57,7 @@ namespace CollisionFlow
 				}
 			}
 
-			var currentOffset = result?.Offset ?? offset;
+			var currentOffset = result?.Offset ?? value;
 			foreach (var polygon in localPolygons)
 			{
 				polygon.Offset(currentOffset);
@@ -46,7 +65,7 @@ namespace CollisionFlow
 
 			return result;
 		}
-		private static CollisionResult Offset(CollisionPolygon main, CollisionPolygon other, CollisionResult prevResult, double offset)
+		private static CollisionResult Offset(Polygon main, Polygon other, CollisionResult prevResult, double offset)
 		{
 			if (prevResult is null)
 			{
@@ -66,7 +85,7 @@ namespace CollisionFlow
 			}
 		}
 
-		private static CollisionResult Offset(CollisionPolygon main, CollisionPolygon other, double offset)
+		private static CollisionResult Offset(Polygon main, Polygon other, double offset)
 		{
 			CollisionResult result = null;
 			var mainLines = main.Lines.ToArray();
@@ -145,7 +164,7 @@ namespace CollisionFlow
 			return NumberUnitComparer.Instance.Compare(min2, max1) <= 0 && NumberUnitComparer.Instance.Compare(min1, max2) <= 0;
 		}
 
-		private static bool IsCollision(CollisionPolygon polygon1, CollisionPolygon polygon2)
+		private static bool IsCollision(Polygon polygon1, Polygon polygon2)
 		{
 			if (!polygon1.Bounds.Intersect(polygon2.Bounds))
 			{
@@ -236,5 +255,125 @@ namespace CollisionFlow
 			}
 			return false;
 		}
+	}
+
+	public class InvalidCollisiopnException : InvalidOperationException
+	{
+		public InvalidCollisiopnException()
+		{
+		}
+
+		public InvalidCollisiopnException(string message) : base(message)
+		{
+		}
+
+		public InvalidCollisiopnException(string message, Exception innerException) : base(message, innerException)
+		{
+		}
+
+		protected InvalidCollisiopnException(SerializationInfo info, StreamingContext context) : base(info, context)
+		{
+		}
+	}
+	enum PolygonType
+	{
+		None,
+		Static
+	}
+	abstract class Polygon : IPolygonHandler
+	{
+		public static Polygon Create(IEnumerable<Moved<LineFunction, Vector128>> lines)
+		{
+			return new CommonPolygon(lines);
+		}
+
+		public PolygonType Type { get; } = PolygonType.None;
+		public abstract IEnumerable<Moved<LineFunction, Vector128>> Lines { get; }
+		public abstract Moved<Vector128, Vector128>[] Points { get; }
+		public abstract Rect Bounds { get; }
+		public abstract void Offset(double value);
+
+		public IEnumerable<Moved<Vector128, Vector128>> GetPoints() => Points;
+	}
+	class CommonPolygon : Polygon
+	{
+		private const int POLYGOM_MIN_VERTICIES = 3;
+
+		public CommonPolygon(IEnumerable<Moved<LineFunction, Vector128>> lines)
+		{
+			if (lines is null)
+			{
+				throw new ArgumentNullException(nameof(lines));
+			}
+
+			var linesInstance = lines.ToArray();
+			if (linesInstance.Length < POLYGOM_MIN_VERTICIES)
+			{
+				throw new InvalidCollisiopnException();
+			}
+
+			this.lines = linesInstance;
+		}
+
+		private readonly Moved<LineFunction, Vector128>[] lines;
+		public override IEnumerable<Moved<LineFunction, Vector128>> Lines => lines;
+
+		private Moved<Vector128, Vector128>[] points;
+		public override Moved<Vector128, Vector128>[] Points
+		{
+			get
+			{
+				if (points is null)
+				{
+					points = new Moved<Vector128, Vector128>[lines.Length];
+					var prevIndex = lines.Length - 1;
+					for (var index = 0; index < lines.Length; index++)
+					{
+						var prevLine = lines[prevIndex];
+						var currentLine = lines[index];
+
+						var prevLineOffset = prevLine.Target.OffsetByVector(prevLine.Course);
+						var currentLineOffset = currentLine.Target.OffsetByVector(currentLine.Course);
+
+						var currentPoint = prevLine.Target.Crossing(currentLine.Target);
+
+						points[index] = Moved.Create(
+							currentPoint,
+							new Vector128(prevLineOffset.Crossing(currentLineOffset).ToVector() - currentPoint.ToVector())
+						);
+						prevIndex = index;
+					}
+				}
+				return points;
+			}
+		}
+
+		private Rect? bounds;
+		public override Rect Bounds
+		{
+			get
+			{
+				if (bounds is null)
+				{
+					bounds = new Rect(Points.Select(x => x.Target));
+				}
+				return bounds.GetValueOrDefault();
+			}
+		}
+
+		public override void Offset(double value)
+		{
+			for (int i = 0; i < lines.Length; i++)
+			{
+				lines[i] = lines[i].Offset(value);
+			}
+			points = null;
+			bounds = null;
+		}
+	}
+
+	public interface IPolygonHandler
+	{
+		IEnumerable<Moved<Vector128, Vector128>> GetPoints();
 	}
 }

@@ -88,9 +88,9 @@ namespace CollisionFlow
 			var result = 0L;
 			for (double i = rangeMin - gloabalMin; i < rangeMax - gloabalMin; i += groupSize)
 			{
-				result |= (long)(i / groupSize);
+				result |= 1L << (int)(i / groupSize);
 			}
-			result |= (long)((rangeMax - gloabalMin) / groupSize);
+			result |= 1L << (int)((rangeMax - gloabalMin) / groupSize);
 
 			return result;
 		}

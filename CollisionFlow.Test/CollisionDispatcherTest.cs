@@ -40,7 +40,7 @@ namespace CollisionFlow.Test
 			}
 
 			private static Vector128 ToVector128(Vector2 vector) => new(vector.X, vector.Y);
-			public CollisionPolygon ToCollisionPolygon()
+			public IEnumerable<Moved<LineFunction, Vector128>> ToLines()
 			{
 				var lines = new List<Moved<LineFunction, Vector128>>();
 				for (int i = 0; i < Points.Length; i++)
@@ -54,7 +54,7 @@ namespace CollisionFlow.Test
 						ToVector128(vector)
 					));
 				}
-				return new CollisionPolygon(lines);
+				return lines;
 			}
 		}
 		struct CollisionData
@@ -170,7 +170,7 @@ namespace CollisionFlow.Test
 					{
 						yield return new object[]
 						{
-							transformData.Polygons.Select(x => x.ToCollisionPolygon()),
+							transformData.Polygons.Select(x => x.ToLines()),
 							transformData.Offset,
 							transformData.ExpectedOffset,
 						};
@@ -181,7 +181,7 @@ namespace CollisionFlow.Test
 						{
 							yield return new object[]
 							{
-								transformData.Polygons.Select(x => x.ToCollisionPolygon()),
+								transformData.Polygons.Select(x => x.ToLines()),
 								transformData.Offset * offsetEpsilon,
 								transformData.ExpectedOffset,
 							};
@@ -282,9 +282,14 @@ namespace CollisionFlow.Test
 
 		[Theory]
 		[MemberData(nameof(GetPolygons))]
-		public void Offset_ResultOffset_Expected(IEnumerable<CollisionPolygon> polygons, double offset, double expectedOffset)
+		public void Offset_ResultOffset_Expected(IEnumerable<IEnumerable<Moved<LineFunction, Vector128>>> polygons, double offset, double expectedOffset)
 		{
-			var result = CollisionDispatcher.Offset(polygons, offset);
+			var dispatcher = new CollisionDispatcher();
+			foreach (var polygon in polygons)
+			{
+				dispatcher.Add(polygon);
+			}
+			var result = dispatcher.Offset(offset);
 
 			Assert.Equal(expectedOffset, result?.Offset ?? offset, NumberUnitComparer.Instance);
 		}

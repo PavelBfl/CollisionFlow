@@ -6,5 +6,8 @@
 
 		public static Moved<LineFunction, Vector128> Offset(this Moved<LineFunction, Vector128> moved, double value)
 			=> moved.SetTarget(moved.Target.OffsetByVector(new Vector128(moved.Course.ToVector() * value)));
+
+		public static Moved<double, double> Offset(this Moved<double, double> moved, double value)
+			=> moved.SetTarget(moved.Target + moved.Course * value);
 	}
 }

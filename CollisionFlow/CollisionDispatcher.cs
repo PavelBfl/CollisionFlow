@@ -43,7 +43,8 @@ namespace CollisionFlow
 							return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
 						}
 
-						if (!Flat.TryOffset(main.Points, other.Points, value))
+						if (main.GetProjectionX().IsAllowedOffset(other.GetProjectionX(), value) == AllowedOffset.Collision ||
+							main.GetProjectionY().IsAllowedOffset(other.GetProjectionY(), value) == AllowedOffset.Collision)
 						{
 							result = Offset(main, other, result, value);
 							result = Offset(other, main, result, value);
@@ -275,10 +276,12 @@ namespace CollisionFlow
 		{
 		}
 	}
+	
+
 	enum PolygonType
 	{
 		None,
-		Static
+		Static,
 	}
 	abstract class Polygon : IPolygonHandler
 	{
@@ -292,6 +295,8 @@ namespace CollisionFlow
 		public abstract Moved<Vector128, Vector128>[] Points { get; }
 		public abstract Rect Bounds { get; }
 		public abstract void Offset(double value);
+		public abstract Flat GetProjectionX();
+		public abstract Flat GetProjectionY();
 
 		public IEnumerable<Moved<Vector128, Vector128>> GetPoints() => Points;
 	}
@@ -369,6 +374,28 @@ namespace CollisionFlow
 			}
 			points = null;
 			bounds = null;
+			projectionX?.Offset(value);
+			projectionY?.Offset(value);
+		}
+
+		private Flat projectionX;
+		public override Flat GetProjectionX()
+		{
+			if (projectionX is null)
+			{
+				projectionX = new Flat(Points.Select(x => Moved.Create(x.Target.X, x.Course.X)));
+			}
+			return projectionX;
+		}
+
+		private Flat projectionY;
+		public override Flat GetProjectionY()
+		{
+			if (projectionY is null)
+			{
+				projectionY = new Flat(Points.Select(x => Moved.Create(x.Target.Y, x.Course.Y)));
+			}
+			return projectionY;
 		}
 	}
 

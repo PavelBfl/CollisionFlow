@@ -44,7 +44,7 @@ namespace CollisionFlow
 						}
 
 						if (main.GetProjectionX().IsAllowedOffset(other.GetProjectionX(), value) == AllowedOffset.Collision ||
-							main.GetProjectionY().IsAllowedOffset(other.GetProjectionY(), value) == AllowedOffset.Collision)
+											main.GetProjectionY().IsAllowedOffset(other.GetProjectionY(), value) == AllowedOffset.Collision)
 						{
 							result = Offset(main, other, result, value);
 							result = Offset(other, main, result, value);
@@ -53,7 +53,7 @@ namespace CollisionFlow
 							{
 								return result;
 							}
-						}
+						} 
 					}
 				}
 			}

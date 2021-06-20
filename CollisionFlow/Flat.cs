@@ -33,21 +33,26 @@ namespace CollisionFlow
 				throw new InvalidCollisiopnException();
 			}
 
-			Group = GetGroup();
+			Group = GetGroup(0);
 		}
 
 		public Moved<double, double>[] Points { get; }
 		public ulong Group { get; private set; }
 
-		private ulong GetGroup()
+		public ulong GetFullGroup(double value)
 		{
-			return 0;
+			return UnionGroup(Group, GetGroup(value));
+		}
+
+		private ulong GetGroup(double value)
+		{
 			var max = double.NegativeInfinity;
 			var min = double.PositiveInfinity;
 			foreach (var point in Points)
 			{
-				max = Math.Max(max, point.Target);
-				min = Math.Min(min, point.Target);
+				var offsetPoint = point.Target + point.Course * value;
+				max = Math.Max(max, offsetPoint);
+				min = Math.Min(min, offsetPoint);
 			}
 
 			return GetGroup(GLOBAL_BEGIN, GLOBAL_LENGTH, min, max - min);
@@ -59,7 +64,7 @@ namespace CollisionFlow
 			{
 				Points[i] = Points[i].Offset(value);
 			}
-			Group = GetGroup();
+			Group = GetGroup(0);
 		}
 		public double GetAllowedOffset(Flat other, double value)
 		{
@@ -221,7 +226,8 @@ namespace CollisionFlow
 		private static ulong GroupSide(double localLength, double globalLength)
 		{
 			var offset = (int)(localLength * ACTIVE_RANGE / globalLength);
-			return RIGHT >> offset;
+			var result = LEFT >> offset;
+			return result;
 		}
 
 		public static ulong UnionGroup(ulong group1, ulong group2)

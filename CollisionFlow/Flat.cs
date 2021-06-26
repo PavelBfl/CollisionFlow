@@ -11,10 +11,32 @@ namespace CollisionFlow
 		Never,
 		Collision,
 	}
-	class Flat
+
+	struct FlatDelta
+	{
+		public FlatDelta(Flat current, double offset)
+		{
+			Offset = offset;
+			Current = current ?? throw new ArgumentNullException(nameof(current));
+			Next = Current.Step(offset);
+			Group = Flat.UnionGroup(Current.Group, Next.Group);
+		}
+
+		public double Offset { get; }
+		public Flat Current { get; }
+		public Flat Next { get; }
+		public ulong Group { get; }
+	}
+	interface IWalking<T>
+	{
+		T Step(double offset);
+	}
+	class Flat : IWalking<Flat>
 	{
 		private const ulong RIGHT = 1;
 		private const ulong LEFT = 1UL << 63;
+		private const ulong RIGHT16 = 65535;
+		private const ulong LEFT16 = RIGHT16 << 47;
 		private const int ACTIVE_RANGE = 62;
 
 		private const double GLOBAL_BEGIN = -200;
@@ -33,39 +55,35 @@ namespace CollisionFlow
 				throw new InvalidCollisiopnException();
 			}
 
-			Group = GetGroup(0);
+			Group = GetGroup();
+		}
+
+		public Flat Step(double offset)
+		{
+			var pointsOffset = new Moved<double, double>[Points.Length];
+			for (int i = 0; i < Points.Length; i++)
+			{
+				pointsOffset[i] = Points[i].Offset(offset);
+			}
+			return new Flat(pointsOffset);
 		}
 
 		public Moved<double, double>[] Points { get; }
 		public ulong Group { get; private set; }
 
-		public ulong GetFullGroup(double value)
-		{
-			return UnionGroup(Group, GetGroup(value));
-		}
-
-		private ulong GetGroup(double value)
+		private ulong GetGroup()
 		{
 			var max = double.NegativeInfinity;
 			var min = double.PositiveInfinity;
 			foreach (var point in Points)
 			{
-				var offsetPoint = point.Target + point.Course * value;
-				max = Math.Max(max, offsetPoint);
-				min = Math.Min(min, offsetPoint);
+				max = Math.Max(max, point.Target);
+				min = Math.Min(min, point.Target);
 			}
 
 			return GetGroup(GLOBAL_BEGIN, GLOBAL_LENGTH, min, max - min);
 		}
 
-		public void Offset(double value)
-		{
-			for (int i = 0; i < Points.Length; i++)
-			{
-				Points[i] = Points[i].Offset(value);
-			}
-			Group = GetGroup(0);
-		}
 		public double GetAllowedOffset(Flat other, double value)
 		{
 			if (other is null)
@@ -236,20 +254,37 @@ namespace CollisionFlow
 			{
 				throw new InvalidCollisiopnException();
 			}
-			else if ((group1 & group2) != 0)
+			else if (
+				(group1 & group2) != 0 ||
+				((group1 << 1) & group2) != 0 ||
+				((group1 >> 1) & group2) != 0
+			)
 			{
 				return group1 | group2;
 			}
 			else
 			{
 				ulong gap = group1 | group2;
+
 				ulong rightOffset = RIGHT;
+				if ((gap & RIGHT16) == 0)
+				{
+					gap |= RIGHT16;
+					rightOffset <<= 16;
+				}
 				while ((gap & rightOffset) == 0)
 				{
 					gap |= rightOffset;
 					rightOffset <<= 1;
 				}
+
+
 				ulong leftOffset = LEFT;
+				if ((gap & LEFT16) == 0)
+				{
+					gap |= LEFT16;
+					leftOffset >>= 16;
+				}
 				while ((gap & leftOffset) == 0)
 				{
 					gap |= leftOffset;

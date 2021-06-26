@@ -14,8 +14,8 @@ namespace BenchmarkTest
 		static void Main(string[] args)
 		{
 			//BenchmarkRunner.Run<Test>();
-			var disparcher = Test.Dispatcher100;
-			for (int i = 0; i < 200; i++)
+			var disparcher = Test.Dispatcher1000;
+			for (int i = 0; i < 100; i++)
 			{
 				var result = disparcher.Offset(1);
 

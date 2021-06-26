@@ -29,7 +29,7 @@ namespace CollisionFlow
 		public CollisionResult Offset(double value)
 		{
 			CollisionResult result = null;
-			var localPolygons = polygons.Values.ToArray();
+			var localPolygons = polygons.Values.Select(x => new PolygonDelta(x, value)).ToArray();
 			for (var iMain = 0; iMain < localPolygons.Length; iMain++)
 			{
 				var main = localPolygons[iMain];
@@ -38,22 +38,25 @@ namespace CollisionFlow
 					var other = localPolygons[iOther];
 					if (!ReferenceEquals(main, other))
 					{
-						if (IsCollision(main, other))
+						if (IsCollision(main.Current, other.Current))
 						{
-							return new CollisionResult(main, new Moved<LineFunction, Vector128>(), other, new Moved<Vector128, Vector128>(), 0);
+							return new CollisionResult(main.Current, new Moved<LineFunction, Vector128>(), other.Current, new Moved<Vector128, Vector128>(), 0);
 						}
 
-						if (main.GetProjectionX().IsAllowedOffset(other.GetProjectionX(), value) == AllowedOffset.Collision ||
-											main.GetProjectionY().IsAllowedOffset(other.GetProjectionY(), value) == AllowedOffset.Collision)
+						if ((main.GroupX & other.GroupX) != 0 && (main.GroupY & other.GroupY) != 0)
 						{
-							result = Offset(main, other, result, value);
-							result = Offset(other, main, result, value);
-
-							if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
+							if (main.Current.GetProjectionX().IsAllowedOffset(other.Current.GetProjectionX(), value) == AllowedOffset.Collision ||
+													main.Current.GetProjectionY().IsAllowedOffset(other.Current.GetProjectionY(), value) == AllowedOffset.Collision)
 							{
-								return result;
-							}
-						} 
+								result = Offset(main.Current, other.Current, result, value);
+								result = Offset(other.Current, main.Current, result, value);
+
+								if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
+								{
+									return result;
+								}
+							} 
+						}
 					}
 				}
 			}
@@ -61,7 +64,7 @@ namespace CollisionFlow
 			var currentOffset = result?.Offset ?? value;
 			foreach (var polygon in localPolygons)
 			{
-				polygon.Offset(currentOffset);
+				polygon.Current.Offset(currentOffset);
 			}
 
 			return result;
@@ -276,14 +279,63 @@ namespace CollisionFlow
 		{
 		}
 	}
-	
 
+	class PolygonDelta
+	{
+		public PolygonDelta(Polygon current, double offset)
+		{
+			Offset = offset;
+			Current = current ?? throw new ArgumentNullException(nameof(current));
+		}
+
+		public double Offset { get; }
+		public Polygon Current { get; }
+
+		private Polygon next;
+		public Polygon Next
+		{
+			get
+			{
+				if (next is null)
+				{
+					next = Current.Step(Offset);
+				}
+				return next;
+			}
+		}
+
+		private ulong? groupX;
+		public ulong GroupX
+		{
+			get
+			{
+				if (groupX is null)
+				{
+					groupX = Flat.UnionGroup(Current.GetProjectionX().Group, Next.GetProjectionX().Group);
+				}
+				return groupX.GetValueOrDefault();
+			}
+		}
+
+		private ulong? groupY;
+		public ulong GroupY
+		{
+			get
+			{
+				if (groupY is null)
+				{
+					groupY = Flat.UnionGroup(Current.GetProjectionY().Group, Next.GetProjectionY().Group);
+				}
+				return groupY.GetValueOrDefault();
+			}
+		}
+	}
 	enum PolygonType
 	{
 		None,
 		Static,
 	}
-	abstract class Polygon : IPolygonHandler
+	abstract class Polygon : IPolygonHandler, IWalking<Polygon>
 	{
 		public static Polygon Create(IEnumerable<Moved<LineFunction, Vector128>> lines)
 		{
@@ -299,6 +351,7 @@ namespace CollisionFlow
 		public abstract Flat GetProjectionY();
 
 		public IEnumerable<Moved<Vector128, Vector128>> GetPoints() => Points;
+		public abstract Polygon Step(double offset);
 	}
 	class CommonPolygon : Polygon
 	{
@@ -366,18 +419,6 @@ namespace CollisionFlow
 			}
 		}
 
-		public override void Offset(double value)
-		{
-			for (int i = 0; i < lines.Length; i++)
-			{
-				lines[i] = lines[i].Offset(value);
-			}
-			points = null;
-			bounds = null;
-			projectionX?.Offset(value);
-			projectionY?.Offset(value);
-		}
-
 		private Flat projectionX;
 		public override Flat GetProjectionX()
 		{
@@ -396,6 +437,28 @@ namespace CollisionFlow
 				projectionY = new Flat(Points.Select(x => Moved.Create(x.Target.Y, x.Course.Y)));
 			}
 			return projectionY;
+		}
+
+		public override Polygon Step(double offset)
+		{
+			var linesOffset = new Moved<LineFunction, Vector128>[lines.Length];
+			for (int i = 0; i < lines.Length; i++)
+			{
+				linesOffset[i] = lines[i].Offset(offset);
+			}
+			return new CommonPolygon(linesOffset);
+		}
+
+		public override void Offset(double value)
+		{
+			for (int i = 0; i < lines.Length; i++)
+			{
+				lines[i] = lines[i].Offset(value);
+			}
+			points = null;
+			bounds = null;
+			projectionX = null;
+			projectionY = null;
 		}
 	}
 

@@ -8,13 +8,25 @@ namespace CollisionFlow
 {
 	public class CollisionDispatcher
 	{
-		private readonly Dictionary<IPolygonHandler, Polygon> polygons = new Dictionary<IPolygonHandler, Polygon>();
-		public IEnumerable<IPolygonHandler> Polygons => polygons.Keys;
+		private readonly List<List<AllowedOffset?>> links = new List<List<AllowedOffset?>>();
+
+		private readonly List<Polygon> polygons = new List<Polygon>();
+		public IEnumerable<IPolygonHandler> Polygons => polygons;
 
 		public IPolygonHandler Add(IEnumerable<Moved<LineFunction, Vector128>> lines)
 		{
 			var polygon = Polygon.Create(lines);
-			polygons.Add(polygon, polygon);
+			polygon.GlobalIndex = polygons.Count;
+			polygons.Add(polygon);
+
+			if (polygons.Count > 1)
+			{
+				links.Add(new List<AllowedOffset?>());
+				foreach (var row in links)
+				{
+					row.Add(null);
+				} 
+			}
 			return polygon;
 		}
 		public bool Remove(IPolygonHandler handler)
@@ -23,30 +35,34 @@ namespace CollisionFlow
 			{
 				throw new ArgumentNullException(nameof(handler));
 			}
-			return polygons.Remove(handler);
+			return polygons.Remove((Polygon)handler);
 		}
 
 		public CollisionResult Offset(double value)
 		{
 			CollisionResult result = null;
-			var localPolygons = polygons.Values.Select(x => new PolygonDelta(x, value)).ToArray();
+			var localPolygons = polygons.Select(x => new PolygonDelta(x, value)).ToArray();
 			for (var iMain = 0; iMain < localPolygons.Length; iMain++)
 			{
 				var main = localPolygons[iMain];
 				for (var iOther = iMain + 1; iOther < localPolygons.Length; iOther++)
 				{
 					var other = localPolygons[iOther];
-					if (!ReferenceEquals(main, other))
-					{
-						if (IsCollision(main.Current, other.Current))
-						{
-							return new CollisionResult(main.Current, new Moved<LineFunction, Vector128>(), other.Current, new Moved<Vector128, Vector128>(), 0);
-						}
 
+					var row = links[main.Current.GlobalIndex];
+					var rowIndex = other.Current.GlobalIndex - (links.Count - row.Count + 1);
+					var aa = row[rowIndex];
+					if (aa != AllowedOffset.Never)
+					{
 						if ((main.GroupX & other.GroupX) != 0 && (main.GroupY & other.GroupY) != 0)
 						{
-							if (main.Current.GetProjectionX().IsAllowedOffset(other.Current.GetProjectionX(), value) == AllowedOffset.Collision ||
-													main.Current.GetProjectionY().IsAllowedOffset(other.Current.GetProjectionY(), value) == AllowedOffset.Collision)
+							if (IsCollision(main.Current, other.Current))
+							{
+								return new CollisionResult(main.Current, new Moved<LineFunction, Vector128>(), other.Current, new Moved<Vector128, Vector128>(), 0);
+							}
+
+							var allowX = main.Current.GetProjectionX().IsAllowedOffset(other.Current.GetProjectionX(), value);
+							if (allowX == AllowedOffset.Collision)
 							{
 								result = Offset(main.Current, other.Current, result, value);
 								result = Offset(other.Current, main.Current, result, value);
@@ -55,7 +71,25 @@ namespace CollisionFlow
 								{
 									return result;
 								}
-							} 
+							}
+							else
+							{
+								var allowY = main.Current.GetProjectionY().IsAllowedOffset(other.Current.GetProjectionY(), value);
+								if (allowY == AllowedOffset.Collision)
+								{
+									result = Offset(main.Current, other.Current, result, value);
+									result = Offset(other.Current, main.Current, result, value);
+
+									if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
+									{
+										return result;
+									}
+								}
+								else if (allowX == AllowedOffset.Never && allowY == AllowedOffset.Never)
+								{
+									row[rowIndex] = AllowedOffset.Never;
+								}
+							}
 						}
 					}
 				}
@@ -335,13 +369,14 @@ namespace CollisionFlow
 		None,
 		Static,
 	}
-	abstract class Polygon : IPolygonHandler, IWalking<Polygon>
+	abstract class Polygon : IPolygonHandler
 	{
 		public static Polygon Create(IEnumerable<Moved<LineFunction, Vector128>> lines)
 		{
 			return new CommonPolygon(lines);
 		}
 
+		public int GlobalIndex { get; set; }
 		public PolygonType Type { get; } = PolygonType.None;
 		public abstract IEnumerable<Moved<LineFunction, Vector128>> Lines { get; }
 		public abstract Moved<Vector128, Vector128>[] Points { get; }

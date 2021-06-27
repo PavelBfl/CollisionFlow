@@ -12,26 +12,7 @@ namespace CollisionFlow
 		Collision,
 	}
 
-	struct FlatDelta
-	{
-		public FlatDelta(Flat current, double offset)
-		{
-			Offset = offset;
-			Current = current ?? throw new ArgumentNullException(nameof(current));
-			Next = Current.Step(offset);
-			Group = Flat.UnionGroup(Current.Group, Next.Group);
-		}
-
-		public double Offset { get; }
-		public Flat Current { get; }
-		public Flat Next { get; }
-		public ulong Group { get; }
-	}
-	interface IWalking<T>
-	{
-		T Step(double offset);
-	}
-	class Flat : IWalking<Flat>
+	class Flat
 	{
 		private const ulong RIGHT = 1;
 		private const ulong LEFT = 1UL << 63;

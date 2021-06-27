@@ -13,21 +13,21 @@ namespace BenchmarkTest
 	{
 		static void Main(string[] args)
 		{
-			//BenchmarkRunner.Run<Test>();
-			var disparcher = Test.Dispatcher1000;
-			for (int i = 0; i < 100; i++)
-			{
-				var result = disparcher.Offset(1);
+			BenchmarkRunner.Run<Test>();
+			//var disparcher = Test.Dispatcher1000;
+			//for (int i = 0; i < 100; i++)
+			//{
+			//	var result = disparcher.Offset(1);
 
-				if (result is { Offset: < 1 })
-				{
-					Console.WriteLine($"{i,-2} Error: ({result.Offset})");
-				}
-				else
-				{
-					Console.WriteLine($"{i,-2} Success");
-				}
-			}
+			//	if (result is { Offset: < 1 })
+			//	{
+			//		Console.WriteLine($"{i,-2} Error: ({result.Offset})");
+			//	}
+			//	else
+			//	{
+			//		Console.WriteLine($"{i,-2} Success");
+			//	}
+			//}
 		}
 	}
 

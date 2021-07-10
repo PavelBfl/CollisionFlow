@@ -128,7 +128,22 @@ namespace CollisionFlow
 			}
 		}
 
+		public static double GetTime(Moved<double, double> point1, Moved<double, double> point2)
+		{
+			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);
 
+			var speed = min.Course - max.Course;
+			if (speed > 0)
+			{
+				var distance = max.Target - min.Target;
+				var localOffset = distance / speed;
+				return localOffset;
+			}
+			else
+			{
+				return double.NaN;
+			}
+		}
 		public static double Offset(Moved<double, double> point1, Moved<double, double> point2, double offset)
 		{
 			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);

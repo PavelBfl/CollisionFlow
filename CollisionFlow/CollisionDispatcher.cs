@@ -133,38 +133,67 @@ namespace CollisionFlow
 				foreach (var otherPoint in other.Points)
 				{
 					var currentOffset = result?.Offset ?? offset;
-					var localOffset = Offset(mainLine, otherPoint, currentOffset);
-					if (localOffset < currentOffset)
+					var prevMainLine = mainLines[i == 0 ? mainLines.Length - 1 : i - 1];
+					var nextMainLine = mainLines[i == mainLines.Length - 1 ? 0 : i + 1];
+					var time = GetTime(mainLine, prevMainLine, nextMainLine, otherPoint, currentOffset);
+					if (!double.IsNaN(time))
 					{
-						var prevMainLine = mainLines[i == 0 ? mainLines.Length - 1 : i - 1];
-						var nextMainLine = mainLines[i == mainLines.Length - 1 ? 0 : i + 1];
-
-						var prevLine = prevMainLine.Target.OffsetByVector(new Vector128(prevMainLine.Course.ToVector() * localOffset));
-						var currentLine = mainLine.Target.OffsetByVector(new Vector128(mainLine.Course.ToVector() * localOffset));
-						var nextLine = nextMainLine.Target.OffsetByVector(new Vector128(nextMainLine.Course.ToVector() * localOffset));
-
-						var point = new Vector128(otherPoint.Target.ToVector() + otherPoint.Course.ToVector() * localOffset);
-						var beginPoint = prevLine.Crossing(currentLine);
-						var endPoint = nextLine.Crossing(currentLine);
-
-						var inRange = -1 < currentLine.Slope && currentLine.Slope < 1 ?
-							InRange(point.X, beginPoint.X, endPoint.X) :
-							InRange(point.Y, beginPoint.Y, endPoint.Y);
-						if (inRange)
+						if (!NumberUnitComparer.Instance.Equals(time, 0))
 						{
-							if (!NumberUnitComparer.Instance.Equals(localOffset, 0))
-							{
-								result = new CollisionResult(main, mainLine, other, otherPoint, localOffset);
-							}
-							else
-							{
-								return new CollisionResult(main, mainLine, other, otherPoint, 0);
-							}
+							result = new CollisionResult(main, mainLine, other, otherPoint, time);
+						}
+						else
+						{
+							return new CollisionResult(main, mainLine, other, otherPoint, 0);
 						}
 					}
 				}
 			}
 			return result;
+		}
+
+		private static double GetTime(Moved<LineFunction, Vector128> mainLine, Moved<LineFunction, Vector128> prevMainLine, Moved<LineFunction, Vector128> nextMainLine, Moved<Vector128, Vector128> freePoin, double max = double.PositiveInfinity)
+		{
+			var time = GetTime(mainLine, freePoin);
+			if (!double.IsNaN(time) && NumberUnitComparer.Instance.Compare(time, max) < 0)
+			{
+				var prevLine = prevMainLine.Offset(time).Target;
+				var currentLine = mainLine.Offset(time).Target;
+				var nextLine = nextMainLine.Offset(time).Target;
+
+				var point = freePoin.Offset(time).Target;
+				var beginPoint = prevLine.Crossing(currentLine);
+				var endPoint = nextLine.Crossing(currentLine);
+
+				var inRange = -1 < currentLine.Slope && currentLine.Slope < 1 ?
+							InRange(point.X, beginPoint.X, endPoint.X) :
+							InRange(point.Y, beginPoint.Y, endPoint.Y);
+
+				return inRange ? time : double.NaN;
+			}
+			else
+			{
+				return double.NaN;
+			}
+		}
+		private static double GetTime(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin)
+		{
+			var projectionLine = line.Target.Perpendicular();
+
+			var currentLineProjection = line.Target.Crossing(projectionLine);
+			var nextLineProjection = line.Target.OffsetByVector(new Vector128(line.Course.ToVector())).Crossing(projectionLine);
+
+			var currentPointProjection = line.Target.OffsetToPoint(freePoin.Target).Crossing(projectionLine);
+			var nextPointProjection = line.Target.OffsetToPoint(new Vector128(freePoin.Target.ToVector() + freePoin.Course.ToVector())).Crossing(projectionLine);
+
+			if (-1 < projectionLine.Slope && projectionLine.Slope < 1)
+			{
+				return Flat.GetTime(Moved.Create(currentLineProjection.X, nextLineProjection.X - currentLineProjection.X), Moved.Create(currentPointProjection.X, nextPointProjection.X - currentPointProjection.X));
+			}
+			else
+			{
+				return Flat.GetTime(Moved.Create(currentLineProjection.Y, nextLineProjection.Y - currentLineProjection.Y), Moved.Create(currentPointProjection.Y, nextPointProjection.Y - currentPointProjection.Y));
+			}
 		}
 		private static double Offset(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin, double offset)
 		{

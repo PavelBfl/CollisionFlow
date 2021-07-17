@@ -302,5 +302,29 @@ namespace CollisionFlow.Test
 
 			Assert.Equal(expected, result);
 		}
+
+		[Fact]
+		public void Decolision_Base()
+		{
+			var polygon1 = new PolygonBuilder()
+				.Add(new Vector128(0, 0))
+				.OffsetY(1)
+				.OffsetX(1)
+				.OffsetY(-1)
+				.GetLines();
+			var polygon2 = new PolygonBuilder(new Vector128(1, 0))
+				.Add(new Vector128(0.5, 0))
+				.OffsetY(1)
+				.OffsetX(1)
+				.OffsetY(-1)
+				.GetLines();
+			var dispatcher = new CollisionDispatcher();
+			dispatcher.Add(polygon1);
+			dispatcher.Add(polygon2);
+
+			var result = dispatcher.Offset(1);
+
+			Assert.Equal(0.5, result.Offset, NumberUnitComparer.Instance);
+		}
 	}
 }

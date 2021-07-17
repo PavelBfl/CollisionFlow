@@ -8,7 +8,12 @@ namespace CollisionFlow
 {
 	public class CollisionDispatcher
 	{
-		private readonly List<List<AllowedOffset?>> links = new List<List<AllowedOffset?>>();
+		private class Link
+		{
+			public AllowedOffset? AllowedOffset { get; set; } = null;
+			public bool IsFindPrev { get; set; } = false;
+		}
+		private readonly List<List<Link>> links = new List<List<Link>>();
 
 		private readonly List<Polygon> polygons = new List<Polygon>();
 		public IEnumerable<IPolygonHandler> Polygons => polygons;
@@ -21,10 +26,10 @@ namespace CollisionFlow
 
 			if (polygons.Count > 1)
 			{
-				links.Add(new List<AllowedOffset?>());
+				links.Add(new List<Link>());
 				foreach (var row in links)
 				{
-					row.Add(null);
+					row.Add(new Link());
 				} 
 			}
 			return polygon;
@@ -41,6 +46,7 @@ namespace CollisionFlow
 		public CollisionResult Offset(double value)
 		{
 			CollisionResult result = null;
+			Link resultLink = null;
 			var localPolygons = polygons.Select(x => new PolygonDelta(x, value)).ToArray();
 			for (var iMain = 0; iMain < localPolygons.Length; iMain++)
 			{
@@ -52,42 +58,53 @@ namespace CollisionFlow
 					var row = links[main.Current.GlobalIndex];
 					var rowIndex = other.Current.GlobalIndex - (links.Count - row.Count + 1);
 					var aa = row[rowIndex];
-					if (aa != AllowedOffset.Never)
+					if (aa.AllowedOffset != AllowedOffset.Never && !aa.IsFindPrev)
 					{
 						if ((main.GroupX & other.GroupX) != 0 && (main.GroupY & other.GroupY) != 0)
 						{
 							if (IsCollision(main.Current, other.Current))
 							{
-								return new CollisionResult(main.Current, new Moved<LineFunction, Vector128>(), other.Current, new Moved<Vector128, Vector128>(), 0);
-							}
-
-							var allowX = main.Current.GetProjectionX().IsAllowedOffset(other.Current.GetProjectionX(), value);
-							if (allowX == AllowedOffset.Collision)
-							{
-								result = Offset(main.Current, other.Current, result, value);
-								result = Offset(other.Current, main.Current, result, value);
-
+								result = Offset(main.Current, other.Current, result, value, CourseResult.Max, ref resultLink, aa);
+								result = Offset(other.Current, main.Current, result, value, CourseResult.Max, ref resultLink, aa);
 								if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
 								{
+									aa.IsFindPrev = true;
 									return result;
 								}
 							}
 							else
 							{
-								var allowY = main.Current.GetProjectionY().IsAllowedOffset(other.Current.GetProjectionY(), value);
-								if (allowY == AllowedOffset.Collision)
+
+								var allowX = main.Current.GetProjectionX().IsAllowedOffset(other.Current.GetProjectionX(), value);
+								if (allowX == AllowedOffset.Collision)
 								{
-									result = Offset(main.Current, other.Current, result, value);
-									result = Offset(other.Current, main.Current, result, value);
+									result = Offset(main.Current, other.Current, result, value, CourseResult.Min, ref resultLink, aa);
+									result = Offset(other.Current, main.Current, result, value, CourseResult.Min, ref resultLink, aa);
 
 									if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
 									{
+										aa.IsFindPrev = true;
 										return result;
 									}
 								}
-								else if (allowX == AllowedOffset.Never && allowY == AllowedOffset.Never)
+								else
 								{
-									row[rowIndex] = AllowedOffset.Never;
+									var allowY = main.Current.GetProjectionY().IsAllowedOffset(other.Current.GetProjectionY(), value);
+									if (allowY == AllowedOffset.Collision)
+									{
+										result = Offset(main.Current, other.Current, result, value, CourseResult.Min, ref resultLink, aa);
+										result = Offset(other.Current, main.Current, result, value, CourseResult.Min, ref resultLink, aa);
+
+										if (!(result is null) && NumberUnitComparer.Instance.Equals(result.Offset, 0))
+										{
+											aa.IsFindPrev = true;
+											return result;
+										}
+									}
+									else if (allowX == AllowedOffset.Never && allowY == AllowedOffset.Never)
+									{
+										row[rowIndex].AllowedOffset = AllowedOffset.Never;
+									}
 								}
 							}
 						}
@@ -95,6 +112,17 @@ namespace CollisionFlow
 				}
 			}
 
+			foreach (var row in links)
+			{
+				foreach (var cell in row)
+				{
+					cell.IsFindPrev = false;
+				}
+			}
+			if (!(resultLink is null))
+			{
+				resultLink.IsFindPrev = true;
+			}
 			var currentOffset = result?.Offset ?? value;
 			foreach (var polygon in localPolygons)
 			{
@@ -103,27 +131,41 @@ namespace CollisionFlow
 
 			return result;
 		}
-		private static CollisionResult Offset(Polygon main, Polygon other, CollisionResult prevResult, double offset)
+		private static CollisionResult Offset(Polygon main, Polygon other, CollisionResult prevResult, double offset, CourseResult courseResult, ref Link resultLink, Link currentLink)
 		{
 			if (prevResult is null)
 			{
-				return Offset(main, other, offset);
+				resultLink = currentLink;
+				return Offset(main, other, offset, courseResult);
 			}
 			else
 			{
-				var currentResult = Offset(main, other, prevResult.Offset);
+				var currentResult = Offset(main, other, prevResult.Offset, courseResult);
 				if (currentResult is null)
 				{
 					return prevResult;
 				}
 				else
 				{
-					return prevResult.Offset < currentResult.Offset ? prevResult : currentResult;
+					if (prevResult.Offset < currentResult.Offset)
+					{
+						return prevResult;
+					}
+					else
+					{
+						resultLink = currentLink;
+						return currentResult;
+					}
 				}
 			}
 		}
 
-		private static CollisionResult Offset(Polygon main, Polygon other, double offset)
+		private enum CourseResult
+		{
+			Min,
+			Max
+		}
+		private static CollisionResult Offset(Polygon main, Polygon other, double offset, CourseResult courseResult)
 		{
 			CollisionResult result = null;
 			var mainLines = main.Lines.ToArray();
@@ -136,15 +178,34 @@ namespace CollisionFlow
 					var prevMainLine = mainLines[i == 0 ? mainLines.Length - 1 : i - 1];
 					var nextMainLine = mainLines[i == mainLines.Length - 1 ? 0 : i + 1];
 					var time = GetTime(mainLine, prevMainLine, nextMainLine, otherPoint, currentOffset);
-					if (!double.IsNaN(time))
+					if (time.HasValue)
 					{
-						if (!NumberUnitComparer.Instance.Equals(time, 0))
+						if (result is null)
 						{
-							result = new CollisionResult(main, mainLine, other, otherPoint, time);
+							result = new CollisionResult(main, mainLine, other, otherPoint, time.Value);
 						}
 						else
 						{
-							return new CollisionResult(main, mainLine, other, otherPoint, 0);
+							switch (courseResult)
+							{
+								case CourseResult.Min:
+									if (!NumberUnitComparer.Instance.Equals(time.Value, 0))
+									{
+										result = new CollisionResult(main, mainLine, other, otherPoint, time.Value);
+									}
+									else
+									{
+										return new CollisionResult(main, mainLine, other, otherPoint, 0);
+									}
+									break;
+								case CourseResult.Max:
+									if (result.Offset < time)
+									{
+										result = new CollisionResult(main, mainLine, other, otherPoint, time.Value);
+									}
+									break;
+								default: throw new InvalidCollisiopnException();
+							}
 						}
 					}
 				}
@@ -152,16 +213,16 @@ namespace CollisionFlow
 			return result;
 		}
 
-		private static double GetTime(Moved<LineFunction, Vector128> mainLine, Moved<LineFunction, Vector128> prevMainLine, Moved<LineFunction, Vector128> nextMainLine, Moved<Vector128, Vector128> freePoin, double max = double.PositiveInfinity)
+		private static double? GetTime(Moved<LineFunction, Vector128> mainLine, Moved<LineFunction, Vector128> prevMainLine, Moved<LineFunction, Vector128> nextMainLine, Moved<Vector128, Vector128> freePoin, double max = double.PositiveInfinity)
 		{
 			var time = GetTime(mainLine, freePoin);
-			if (!double.IsNaN(time) && NumberUnitComparer.Instance.Compare(time, max) < 0)
+			if (time.HasValue && NumberUnitComparer.Instance.Compare(time.Value, max) < 0)
 			{
-				var prevLine = prevMainLine.Offset(time).Target;
-				var currentLine = mainLine.Offset(time).Target;
-				var nextLine = nextMainLine.Offset(time).Target;
+				var prevLine = prevMainLine.Offset(time.Value).Target;
+				var currentLine = mainLine.Offset(time.Value).Target;
+				var nextLine = nextMainLine.Offset(time.Value).Target;
 
-				var point = freePoin.Offset(time).Target;
+				var point = freePoin.Offset(time.Value).Target;
 				var beginPoint = prevLine.Crossing(currentLine);
 				var endPoint = nextLine.Crossing(currentLine);
 
@@ -169,14 +230,14 @@ namespace CollisionFlow
 							InRange(point.X, beginPoint.X, endPoint.X) :
 							InRange(point.Y, beginPoint.Y, endPoint.Y);
 
-				return inRange ? time : double.NaN;
+				return inRange ? time : null;
 			}
 			else
 			{
-				return double.NaN;
+				return null;
 			}
 		}
-		private static double GetTime(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin)
+		private static double? GetTime(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin)
 		{
 			var projectionLine = line.Target.Perpendicular();
 

@@ -34,6 +34,12 @@ namespace CollisionFlow
 		public double X { get; }
 		public double Y { get; }
 
+		public Vector128 ToNormal()
+		{
+			var length = Math.Sqrt(X * X + Y * Y);
+			return new Vector128(X / length, Y / length);
+		}
+
 		public Vector<double> ToVector() => Create(X, Y);
 
 		public bool Equals(Vector128 other)

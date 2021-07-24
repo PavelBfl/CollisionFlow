@@ -17,6 +17,8 @@ namespace CollisionFlow
 			
 		}
 
+		public bool IsZero(double value) => Equals(value, 0);
+
 		public bool Equals(double x, double y) => Offset(x) == Offset(y);
 
 		public int GetHashCode(double obj) => Offset(obj).GetHashCode();

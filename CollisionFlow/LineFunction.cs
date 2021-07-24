@@ -11,7 +11,8 @@ namespace CollisionFlow
 	}
 	public struct LineFunction
 	{
-		public static LineFunction AsVertical(double offset) => new LineFunction(double.PositiveInfinity, offset);
+		public static LineFunction AsVerticalUp(double offset) => new LineFunction(double.PositiveInfinity, offset);
+		public static LineFunction AsVerticalDown(double offset) => new LineFunction(double.NegativeInfinity, offset);
 		public static LineFunction AsHorisontal(double offset) => new LineFunction(0, offset);
 
 		private static LineState GetState(double slope)
@@ -92,6 +93,8 @@ namespace CollisionFlow
 		}
 
 		public bool IsVertical() => double.IsInfinity(Slope);
+		public bool IsVerticalUp() => double.IsPositiveInfinity(Slope);
+		public bool IsVerticalDown() => double.IsNegativeInfinity(Slope);
 		public bool IsHorizontal() => Slope == 0;
 
 		public double GetY(double x)
@@ -117,9 +120,13 @@ namespace CollisionFlow
 		}
 		public LineFunction OffsetToPoint(Vector128 point)
 		{
-			if (IsVertical())
+			if (IsVerticalUp())
 			{
-				return AsVertical(point.X);
+				return AsVerticalUp(point.X);
+			}
+			else if (IsVerticalDown())
+			{
+				return AsVerticalDown(point.X);
 			}
 			else if (IsHorizontal())
 			{
@@ -136,7 +143,7 @@ namespace CollisionFlow
 		{
 			if (IsVertical())
 			{
-				return AsVertical(Offset + vector.X);
+				return AsVerticalUp(Offset + vector.X);
 			}
 			else if (IsHorizontal())
 			{
@@ -172,28 +179,34 @@ namespace CollisionFlow
 
 	public struct Segment
 	{
-		public Segment(Vector128 begin, double beginSpeed, Vector128 end, double endSpeed, Vector128 lineSpeed)
+		public Segment(Moved<LineFunction, Vector128> line, Moved<double, double> begin, Moved<double, double> end)
 		{
-			Line = Moved.Create(new LineFunction(begin, end), lineSpeed);
-			Projection = Line.Target.GetOptimalProjection();
-			var vector = Line.Target.GetVector().ToVector();
-			switch (Projection)
-			{
-				case LineState.Vectical:
-					Begin = Moved.Create(begin.Y, beginSpeed * vector.GetY());
-					End = Moved.Create(begin.Y, endSpeed * vector.GetY());
-					break;
-				case LineState.Horisontal:
-					Begin = Moved.Create(begin.X, beginSpeed * vector.GetX());
-					End = Moved.Create(begin.X, endSpeed * vector.GetX());
-					break;
-				default: throw new InvalidCollisiopnException();
-			}
+			Line = line;
+			Begin = begin;
+			End = end;
 		}
 
 		public Moved<LineFunction, Vector128> Line { get; }
-		public LineState Projection { get; }
 		public Moved<double, double> Begin { get; }
 		public Moved<double, double> End { get; }
+
+		public Vector128 GetBeginPoint() => GetPoint(Begin.Target);
+		public Vector128 GetEndPoint() => GetPoint(End.Target);
+		private Vector128 GetPoint(double value)
+		{
+			var zeroPoint = new Vector128(Line.Target.GetY(0), 0).ToVector();
+			var vector = Line.Target.GetVector().ToVector() * value;
+
+			return new Vector128(zeroPoint + vector);
+		}
+
+		public Segment Offset(double value)
+		{
+			return new Segment(
+				line: Line.Offset(value),
+				begin: Begin.Offset(value),
+				end: End.Offset(value)
+			);
+		}
 	}
 }

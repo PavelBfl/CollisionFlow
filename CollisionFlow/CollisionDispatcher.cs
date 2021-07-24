@@ -6,6 +6,155 @@ using System.Runtime.Serialization;
 
 namespace CollisionFlow
 {
+	class Relation
+	{
+		public Relation(Polygon first, Polygon second)
+		{
+			First = first ?? throw new ArgumentNullException(nameof(first));
+			Second = second ?? throw new ArgumentNullException(nameof(second));
+		}
+
+		public bool IsFindPrev { get; set; } = false;
+
+		public Polygon First { get; }
+		public Polygon Second { get; }
+
+		public double? Time => Result?.Offset;
+
+		private bool resultCalculate = false;
+		private CollisionResult result;
+
+		public CollisionResult Result
+		{
+			get
+			{
+				if (!resultCalculate)
+				{
+					result = GetTime();
+					resultCalculate = true;
+				}
+				return result;
+			}
+		}
+
+		private CollisionResult GetTime()
+		{
+			var collisions = GetTime(First, Second).Concat(GetTime(Second, First));
+			CollisionResult result = null;
+			if (First.IsCollision(Second))
+			{
+				foreach (var collision in collisions)
+				{
+					if (result is null || result.Offset < collision.Offset)
+					{
+						result = collision;
+					}
+				}
+			}
+			else
+			{
+				foreach (var collision in collisions)
+				{
+					if (result is null || result.Offset > collision.Offset)
+					{
+						result = collision;
+					}
+					if (NumberUnitComparer.Instance.IsZero(result.Offset))
+					{
+						return result;
+					}
+				}
+			}
+			return result;
+		}
+
+		private static IEnumerable<CollisionResult> GetTime(Polygon main, Polygon other)
+		{
+			var mainLines = main.Lines.ToArray();
+			for (int i = 0; i < mainLines.Length; i++)
+			{
+				var mainLine = mainLines[i];
+				foreach (var otherPoint in other.Points)
+				{
+					var prevMainLine = mainLines[i == 0 ? mainLines.Length - 1 : i - 1];
+					var nextMainLine = mainLines[i == mainLines.Length - 1 ? 0 : i + 1];
+					var time = GetTime(mainLine, prevMainLine, nextMainLine, otherPoint);
+					if (time.HasValue)
+					{
+						yield return new CollisionResult(main, mainLine, other, otherPoint, time.Value);
+					}
+				}
+			}
+		}
+
+		private static double? GetTime(Segment segment, Moved<Vector128, Vector128> freePoin)
+		{
+			var time = GetTime(segment.Line, freePoin);
+			if (time.HasValue)
+			{
+				var stepSegment = segment.Offset(time.Value);
+
+				var point = freePoin.Offset(time.Value).Target;
+				var beginPoint = stepSegment.GetBeginPoint();
+				var endPoint = stepSegment.GetEndPoint();
+
+				var inRange = stepSegment.Line.Target.GetOptimalProjection() == LineState.Horisontal ?
+					Range.Auto(beginPoint.X, endPoint.X).Contains(point.X) :
+					Range.Auto(beginPoint.Y, endPoint.Y).Contains(point.Y);
+
+				return inRange ? time : null;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		private static double? GetTime(Moved<LineFunction, Vector128> mainLine, Moved<LineFunction, Vector128> prevMainLine, Moved<LineFunction, Vector128> nextMainLine, Moved<Vector128, Vector128> freePoin)
+		{
+			var time = GetTime(mainLine, freePoin);
+			if (time.HasValue)
+			{
+				var prevLine = prevMainLine.Offset(time.Value).Target;
+				var currentLine = mainLine.Offset(time.Value).Target;
+				var nextLine = nextMainLine.Offset(time.Value).Target;
+
+				var point = freePoin.Offset(time.Value).Target;
+				var beginPoint = prevLine.Crossing(currentLine);
+				var endPoint = nextLine.Crossing(currentLine);
+
+				var inRange = currentLine.GetOptimalProjection() == LineState.Horisontal ?
+					Range.Auto(beginPoint.X, endPoint.X).Contains(point.X):
+					Range.Auto(beginPoint.Y, endPoint.Y).Contains(point.Y);
+
+				return inRange ? time : null;
+			}
+			else
+			{
+				return null;
+			}
+		}
+		private static double? GetTime(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin)
+		{
+			var projectionLine = line.Target.Perpendicular();
+
+			var currentLineProjection = line.Target.Crossing(projectionLine);
+			var nextLineProjection = line.Target.OffsetByVector(new Vector128(line.Course.ToVector())).Crossing(projectionLine);
+
+			var currentPointProjection = line.Target.OffsetToPoint(freePoin.Target).Crossing(projectionLine);
+			var nextPointProjection = line.Target.OffsetToPoint(new Vector128(freePoin.Target.ToVector() + freePoin.Course.ToVector())).Crossing(projectionLine);
+
+			if (projectionLine.GetOptimalProjection() == LineState.Horisontal)
+			{
+				return Flat.GetTime(Moved.Create(currentLineProjection.X, nextLineProjection.X - currentLineProjection.X), Moved.Create(currentPointProjection.X, nextPointProjection.X - currentPointProjection.X));
+			}
+			else
+			{
+				return Flat.GetTime(Moved.Create(currentLineProjection.Y, nextLineProjection.Y - currentLineProjection.Y), Moved.Create(currentPointProjection.Y, nextPointProjection.Y - currentPointProjection.Y));
+			}
+		}
+	}
+
 	public class CollisionDispatcher
 	{
 		private class Link
@@ -14,6 +163,7 @@ namespace CollisionFlow
 			public bool IsFindPrev { get; set; } = false;
 		}
 		private readonly List<List<Link>> links = new List<List<Link>>();
+		private readonly List<List<Relation>> relations = new List<List<Relation>>();
 
 		private readonly List<Polygon> polygons = new List<Polygon>();
 		public IEnumerable<IPolygonHandler> Polygons => polygons;
@@ -24,6 +174,7 @@ namespace CollisionFlow
 			polygon.GlobalIndex = polygons.Count;
 			polygons.Add(polygon);
 
+			// старая система связей
 			if (polygons.Count > 1)
 			{
 				links.Add(new List<Link>());
@@ -32,15 +183,75 @@ namespace CollisionFlow
 					row.Add(new Link());
 				} 
 			}
+
+			// новая система связей
+			if (polygons.Count > 1)
+			{
+				var row = new List<Relation>();
+				for (var i = 0; i < polygons.Count - 1; i++)
+				{
+					row.Add(new Relation(polygon, polygons[i]));
+				}
+				relations.Add(row);
+			}
 			return polygon;
 		}
-		public bool Remove(IPolygonHandler handler)
+		public void Remove(IPolygonHandler handler)
 		{
 			if (handler is null)
 			{
 				throw new ArgumentNullException(nameof(handler));
 			}
-			return polygons.Remove((Polygon)handler);
+			var polygon = (Polygon)handler;
+
+			relations.RemoveAt(polygon.GlobalIndex - 1);
+			foreach (var row in relations)
+			{
+				if (polygon.GlobalIndex < row.Count)
+				{
+					row.RemoveAt(polygon.GlobalIndex);
+				}
+			}
+
+			polygons.RemoveAt(polygon.GlobalIndex);
+			for (var i = polygon.GlobalIndex; i < polygons.Count; i++)
+			{
+				polygons[i].GlobalIndex = i;
+			}
+		}
+
+		public CollisionResult OffsetNew(double value)
+		{
+			CollisionResult resultMin = null;
+			foreach (var row in relations)
+			{
+				foreach (var cell in row)
+				{
+					var cellResult = cell.Result;
+					if (resultMin is null || (cellResult != null && cellResult.Offset < resultMin.Offset))
+					{
+						resultMin = cellResult;
+					}
+				}
+			}
+
+			var offset = resultMin?.Offset ?? value;
+			if (!NumberUnitComparer.Instance.IsZero(offset))
+			{
+				foreach (var row in relations)
+				{
+					foreach (var cell in row)
+					{
+						cell.Result?.Step(offset);
+					}
+				}
+				foreach (var polygon in polygons)
+				{
+					polygon.Offset(value);
+				}
+			}
+
+			return resultMin;
 		}
 
 		public CollisionResult Offset(double value)
@@ -474,6 +685,24 @@ namespace CollisionFlow
 		public abstract void Offset(double value);
 		public abstract Flat GetProjectionX();
 		public abstract Flat GetProjectionY();
+
+		public bool IsCollision(Polygon other)
+		{
+			if (other is null)
+			{
+				throw new ArgumentNullException(nameof(other));
+			}
+
+			if (!Bounds.Intersect(other.Bounds))
+			{
+				return false;
+			}
+
+			return CollisionDispatcher.IsCollision(
+				Points.Select(x => x.Target),
+				other.Points.Select(x => x.Target)
+			);
+		}
 
 		public IEnumerable<Moved<Vector128, Vector128>> GetPoints() => Points;
 		public abstract Polygon Step(double offset);

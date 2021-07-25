@@ -15,9 +15,9 @@ namespace BenchmarkTest
 		{
 			BenchmarkRunner.Run<Test>();
 			//var disparcher = Test.Dispatcher1000;
-			//for (int i = 0; i < 100; i++)
+			//for (int i = 0; i < 500; i++)
 			//{
-			//	var result = disparcher.Offset(1);
+			//	var result = disparcher.OffsetNew(1);
 
 			//	if (result is { Offset: < 1 })
 			//	{
@@ -129,6 +129,22 @@ namespace BenchmarkTest
 		public void Common1000()
 		{
 			Dispatcher1000.Offset(1);
+		}
+
+		[Benchmark]
+		public void CommonNew2()
+		{
+			Dispatcher2.OffsetNew(1);
+		}
+		[Benchmark]
+		public void CommonNew100()
+		{
+			Dispatcher100.OffsetNew(1);
+		}
+		[Benchmark]
+		public void CommonNew1000()
+		{
+			Dispatcher1000.OffsetNew(1);
 		}
 	}
 }

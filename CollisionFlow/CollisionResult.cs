@@ -15,11 +15,13 @@
 		public Moved<LineFunction, Vector128> MainLine { get; }
 		public IPolygonHandler Other { get; }
 		public Moved<Vector128, Vector128> OtherPoint { get; }
-		public double Offset { get; private set; }
+		public double Offset { get; set; }
 
 		public void Step(double value)
 		{
 			Offset -= value;
 		}
+
+		public CollisionResult Clone() => new CollisionResult(Main, MainLine, Other, OtherPoint, Offset);
 	}
 }

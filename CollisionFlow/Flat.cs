@@ -137,7 +137,7 @@ namespace CollisionFlow
 			{
 				var distance = max.Target - min.Target;
 				var localOffset = distance / speed;
-				return localOffset;
+				return NumberUnitComparer.Instance.InRange(localOffset) ? localOffset : new double?();
 			}
 			else
 			{

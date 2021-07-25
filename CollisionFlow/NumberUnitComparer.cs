@@ -7,6 +7,8 @@ namespace CollisionFlow
 	public class NumberUnitComparer : IEqualityComparer<double>, IComparer<double>
 	{
 		private const long OFFSET_PRECISION = 10000;
+		private const long MIN = long.MinValue / (OFFSET_PRECISION);
+		private const long MAX = long.MaxValue / (OFFSET_PRECISION);
 
 		public static NumberUnitComparer Instance { get; } = new NumberUnitComparer();
 
@@ -16,6 +18,8 @@ namespace CollisionFlow
 		{
 			
 		}
+
+		public bool InRange(double value) => MIN < value && value < MAX;
 
 		public bool IsZero(double value) => Equals(value, 0);
 

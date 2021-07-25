@@ -295,6 +295,25 @@ namespace CollisionFlow.Test
 		}
 
 		[Theory]
+		[MemberData(nameof(GetPolygons))]
+		public void OffsetNew_ResultOffset_Expected(IEnumerable<IEnumerable<Moved<LineFunction, Vector128>>> polygons, double offset, double expectedOffset)
+		{
+			var dispatcher = new CollisionDispatcher();
+			foreach (var polygon in polygons)
+			{
+				dispatcher.Add(polygon);
+			}
+			var result = dispatcher.OffsetNew(offset);
+
+			if (!NumberUnitComparer.Instance.Equals(expectedOffset, result?.Offset ?? offset))
+			{
+
+			}
+
+			Assert.Equal(expectedOffset, result?.Offset ?? offset, NumberUnitComparer.Instance);
+		}
+
+		[Theory]
 		[MemberData(nameof(GetStaticPolygons))]
 		public void IsCollision_Collision_Expected(IEnumerable<Vector128> points1, IEnumerable<Vector128> points2, bool expected)
 		{

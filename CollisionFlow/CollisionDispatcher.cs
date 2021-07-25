@@ -124,8 +124,8 @@ namespace CollisionFlow
 				var endPoint = nextLine.Crossing(currentLine);
 
 				var inRange = currentLine.GetOptimalProjection() == LineState.Horisontal ?
-					Range.Auto(beginPoint.X, endPoint.X).Contains(point.X):
-					Range.Auto(beginPoint.Y, endPoint.Y).Contains(point.Y);
+					Contains(beginPoint.X, endPoint.X, point.X):
+					Contains(beginPoint.Y, endPoint.Y, point.Y);
 
 				return inRange ? time : null;
 			}
@@ -134,6 +134,25 @@ namespace CollisionFlow
 				return null;
 			}
 		}
+		private static bool Contains(double first, double second, double value)
+		{
+			if (NumberUnitComparer.Instance.InRange(first) && NumberUnitComparer.Instance.InRange(second))
+			{
+				if (NumberUnitComparer.Instance.Equals(first, second))
+				{
+					return NumberUnitComparer.Instance.Equals(first, value);
+				}
+				else
+				{
+					return Range.Auto(first, second).Contains(value);
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 		private static double? GetTime(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin)
 		{
 			var projectionLine = line.Target.Perpendicular();
@@ -235,6 +254,14 @@ namespace CollisionFlow
 				}
 			}
 
+			if (resultMin != null)
+			{
+				resultMin = resultMin.Clone();
+				if (resultMin.Offset > value)
+				{
+					resultMin.Offset = value;
+				}
+			}
 			var offset = resultMin?.Offset ?? value;
 			if (!NumberUnitComparer.Instance.IsZero(offset))
 			{
@@ -250,7 +277,6 @@ namespace CollisionFlow
 					polygon.Offset(value);
 				}
 			}
-
 			return resultMin;
 		}
 

@@ -176,37 +176,4 @@ namespace CollisionFlow
 			}
 		}
 	}
-
-	public struct Segment
-	{
-		public Segment(Moved<LineFunction, Vector128> line, Moved<double, double> begin, Moved<double, double> end)
-		{
-			Line = line;
-			Begin = begin;
-			End = end;
-		}
-
-		public Moved<LineFunction, Vector128> Line { get; }
-		public Moved<double, double> Begin { get; }
-		public Moved<double, double> End { get; }
-
-		public Vector128 GetBeginPoint() => GetPoint(Begin.Target);
-		public Vector128 GetEndPoint() => GetPoint(End.Target);
-		private Vector128 GetPoint(double value)
-		{
-			var zeroPoint = new Vector128(Line.Target.GetY(0), 0).ToVector();
-			var vector = Line.Target.GetVector().ToVector() * value;
-
-			return new Vector128(zeroPoint + vector);
-		}
-
-		public Segment Offset(double value)
-		{
-			return new Segment(
-				line: Line.Offset(value),
-				begin: Begin.Offset(value),
-				end: End.Offset(value)
-			);
-		}
-	}
 }

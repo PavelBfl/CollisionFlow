@@ -282,20 +282,6 @@ namespace CollisionFlow.Test
 
 		[Theory]
 		[MemberData(nameof(GetPolygons))]
-		public void Offset_ResultOffset_Expected(IEnumerable<IEnumerable<Moved<LineFunction, Vector128>>> polygons, double offset, double expectedOffset)
-		{
-			var dispatcher = new CollisionDispatcher();
-			foreach (var polygon in polygons)
-			{
-				dispatcher.Add(polygon);
-			}
-			var result = dispatcher.Offset(offset);
-
-			Assert.Equal(expectedOffset, result?.Offset ?? offset, NumberUnitComparer.Instance);
-		}
-
-		[Theory]
-		[MemberData(nameof(GetPolygons))]
 		public void OffsetNew_ResultOffset_Expected(IEnumerable<IEnumerable<Moved<LineFunction, Vector128>>> polygons, double offset, double expectedOffset)
 		{
 			var dispatcher = new CollisionDispatcher();
@@ -303,7 +289,7 @@ namespace CollisionFlow.Test
 			{
 				dispatcher.Add(polygon);
 			}
-			var result = dispatcher.OffsetNew(offset);
+			var result = dispatcher.Offset(offset);
 
 			if (!NumberUnitComparer.Instance.Equals(expectedOffset, result?.Offset ?? offset))
 			{
@@ -320,30 +306,6 @@ namespace CollisionFlow.Test
 			var result = CollisionDispatcher.IsCollision(points1, points2);
 
 			Assert.Equal(expected, result);
-		}
-
-		[Fact]
-		public void Decolision_Base()
-		{
-			var polygon1 = new PolygonBuilder()
-				.Add(new Vector128(0, 0))
-				.OffsetY(1)
-				.OffsetX(1)
-				.OffsetY(-1)
-				.GetLines();
-			var polygon2 = new PolygonBuilder(new Vector128(1, 0))
-				.Add(new Vector128(0.5, 0))
-				.OffsetY(1)
-				.OffsetX(1)
-				.OffsetY(-1)
-				.GetLines();
-			var dispatcher = new CollisionDispatcher();
-			dispatcher.Add(polygon1);
-			dispatcher.Add(polygon2);
-
-			var result = dispatcher.Offset(1);
-
-			Assert.Equal(0.5, result.Offset, NumberUnitComparer.Instance);
 		}
 	}
 }

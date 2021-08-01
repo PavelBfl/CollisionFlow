@@ -8,7 +8,7 @@ namespace CollisionFlow
 
 		public Range(double min, double max)
 		{
-			if (NumberUnitComparer.Instance.Compare(min, max) >= 0)
+			if (NumberUnitComparer.Instance.Compare(min, max) > 0)
 			{
 				throw new InvalidOperationException();
 			}

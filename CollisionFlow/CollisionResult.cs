@@ -2,19 +2,21 @@
 {
 	public class CollisionResult
 	{
-		public CollisionResult(IPolygonHandler main, Moved<LineFunction, Vector128> mainLine, IPolygonHandler other, Moved<Vector128, Vector128> otherPoint, double offset)
+		public CollisionResult(IPolygonHandler edgePolygon, int edgeIndex, IPolygonHandler vertexPolygon, int vertexIndex, double offset)
 		{
-			Main = main;
-			MainLine = mainLine;
-			Other = other;
-			OtherPoint = otherPoint;
+			EdgePolygon = edgePolygon;
+			EdgeIndex = edgeIndex;
+			VertexPolygon = vertexPolygon;
+			VertexIndex = vertexIndex;
 			Offset = offset;
 		}
 
-		public IPolygonHandler Main { get; }
-		public Moved<LineFunction, Vector128> MainLine { get; }
-		public IPolygonHandler Other { get; }
-		public Moved<Vector128, Vector128> OtherPoint { get; }
+		public IPolygonHandler EdgePolygon { get; }
+		public int EdgeIndex { get; }
+		public Moved<LineFunction, Vector128> Edge => EdgePolygon.Edges[EdgeIndex];
+		public IPolygonHandler VertexPolygon { get; }
+		public int VertexIndex { get; }
+		public Moved<Vector128, Vector128> Vertex => VertexPolygon.Vertices[VertexIndex];
 		public double Offset { get; set; }
 
 		public void Step(double value)
@@ -22,6 +24,6 @@
 			Offset -= value;
 		}
 
-		public CollisionResult Clone() => new CollisionResult(Main, MainLine, Other, OtherPoint, Offset);
+		public CollisionResult Clone() => new CollisionResult(EdgePolygon, EdgeIndex, VertexPolygon, VertexIndex, Offset);
 	}
 }

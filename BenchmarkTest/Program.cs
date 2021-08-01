@@ -13,21 +13,21 @@ namespace BenchmarkTest
 	{
 		static void Main(string[] args)
 		{
-			BenchmarkRunner.Run<Test>();
-			//var disparcher = Test.Dispatcher1000;
-			//for (int i = 0; i < 500; i++)
-			//{
-			//	var result = disparcher.OffsetNew(1);
+			//BenchmarkRunner.Run<Test>();
+			var disparcher = Test.Dispatcher1000;
+			for (int i = 0; i < 500; i++)
+			{
+				var result = disparcher.Offset(1);
 
-			//	if (result is { Offset: < 1 })
-			//	{
-			//		Console.WriteLine($"{i,-2} Error: ({result.Offset})");
-			//	}
-			//	else
-			//	{
-			//		Console.WriteLine($"{i,-2} Success");
-			//	}
-			//}
+				if (result is { Offset: < 1 })
+				{
+					Console.WriteLine($"{i,-2} Error: ({result.Offset})");
+				}
+				else
+				{
+					Console.WriteLine($"{i,-2} Success");
+				}
+			}
 		}
 	}
 
@@ -116,35 +116,19 @@ namespace BenchmarkTest
 		}
 
 		[Benchmark]
-		public void Common2()
+		public void CommonNew2()
 		{
 			Dispatcher2.Offset(1);
 		}
 		[Benchmark]
-		public void Common100()
+		public void CommonNew100()
 		{
 			Dispatcher100.Offset(1);
 		}
 		[Benchmark]
-		public void Common1000()
-		{
-			Dispatcher1000.Offset(1);
-		}
-
-		[Benchmark]
-		public void CommonNew2()
-		{
-			Dispatcher2.OffsetNew(1);
-		}
-		[Benchmark]
-		public void CommonNew100()
-		{
-			Dispatcher100.OffsetNew(1);
-		}
-		[Benchmark]
 		public void CommonNew1000()
 		{
-			Dispatcher1000.OffsetNew(1);
+			Dispatcher1000.Offset(1);
 		}
 	}
 }

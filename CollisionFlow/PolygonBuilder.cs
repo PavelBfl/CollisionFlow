@@ -9,7 +9,7 @@ namespace CollisionFlow
 	{
 		public static IEnumerable<Vector128> RegularPolygon(double radius, int verticesCount)
 		{
-			const double FULL_ROUND = 360;
+			const double FULL_ROUND = Math.PI * 2;
 
 			if (verticesCount < 3)
 			{

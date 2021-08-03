@@ -21,7 +21,7 @@ namespace GuiTest.ViewModel
 			var random = new Random();
 			var radius = size / 4 + (size / 4 * random.NextDouble());
 			var points = PolygonBuilder.RegularPolygon(radius, random.Next(3, 10))
-				.Select(x => new Vector128(x.X + rect.X, x.Y + rect.Y)).ToArray();
+				.Select(x => new Vector128(x.X + rect.X + rect.Width / 2, x.Y + rect.Y + rect.Height / 2)).ToArray();
 
 			var builder = new PolygonBuilder(new Vector128(random.NextDouble(), random.NextDouble()));
 			foreach (var point in points)

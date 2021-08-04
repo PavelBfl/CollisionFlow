@@ -26,24 +26,25 @@ namespace GuiTest
 		public MainWindow()
 		{
 			InitializeComponent();
-
-			for (int iRow = 0; iRow < 5; iRow++)
+			var random = new Random(0);
+			for (int iRow = 0; iRow < 3; iRow++)
 			{
-				for (int iColumn = 0; iColumn < 5; iColumn++)
+				for (int iColumn = 0; iColumn < 3; iColumn++)
 				{
 					var polygonVm = new PolygonVm(
 						new System.Windows.Rect(iColumn * 100, iRow * 100, 100, 100),
-						CollisionDispatcher
+						CollisionDispatcher,
+						random
 					);
 					Polygons.Add(polygonVm);
 					CnvRoot.Children.Add(polygonVm.Polygon);
 				}
 			}
 
-			var left = new RectangleVm(new System.Windows.Rect(-10, 0, 10, 600), CollisionDispatcher);
-			var top = new RectangleVm(new System.Windows.Rect(0, -10, 600, 10), CollisionDispatcher);
-			var right = new RectangleVm(new System.Windows.Rect(600, 0, 10, 600), CollisionDispatcher);
-			var bottom = new RectangleVm(new System.Windows.Rect(0, 600, 600, 10), CollisionDispatcher);
+			var left = new RectangleVm(new System.Windows.Rect(-10, 0, 10, 350), CollisionDispatcher);
+			var top = new RectangleVm(new System.Windows.Rect(0, -10, 350, 10), CollisionDispatcher);
+			var right = new RectangleVm(new System.Windows.Rect(350, 0, 10, 350), CollisionDispatcher);
+			var bottom = new RectangleVm(new System.Windows.Rect(0, 350, 350, 10), CollisionDispatcher);
 			CnvRoot.Children.Add(left.Rectangle);
 			CnvRoot.Children.Add(right.Rectangle);
 			CnvRoot.Children.Add(top.Rectangle);
@@ -59,10 +60,26 @@ namespace GuiTest
 		{
 			var offset = 1d;
 			CollisionResult? result = CollisionDispatcher.Offset(offset);
-			while (result is not null)
+			while (result is not null && result.Offset < offset)
 			{
+				var edgePolygon = Polygons.FirstOrDefault(x => ReferenceEquals(x.PolygonHandler, result.EdgePolygon));
+				var vertexPolygon = Polygons.FirstOrDefault(x => ReferenceEquals(x.PolygonHandler, result.VertexPolygon));
+
+				if (edgePolygon is not null)
+				{
+					edgePolygon.Course = new Vector128(-edgePolygon.Course.ToVector());
+				}
+				if (vertexPolygon is not null)
+				{
+					vertexPolygon.Course = new Vector128(-vertexPolygon.Course.ToVector());
+				}
+
 				offset -= result.Offset;
 				result = CollisionDispatcher.Offset(offset);
+			}
+			foreach (var polygon in Polygons)
+			{
+				polygon.Update();
 			}
 		}
 

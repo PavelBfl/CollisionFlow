@@ -14,16 +14,18 @@ namespace GuiTest.ViewModel
 {
 	class PolygonVm
 	{
-		public PolygonVm(System.Windows.Rect rect, CollisionDispatcher collisionDispatcher)
+		public PolygonVm(System.Windows.Rect rect, CollisionDispatcher collisionDispatcher, Random random)
 		{
+			CollisionDispatcher = collisionDispatcher;
+
 			var size = Math.Min(rect.Height, rect.Width);
 
-			var random = new Random();
 			var radius = size / 4 + (size / 4 * random.NextDouble());
 			var points = PolygonBuilder.RegularPolygon(radius, random.Next(3, 10))
 				.Select(x => new Vector128(x.X + rect.X + rect.Width / 2, x.Y + rect.Y + rect.Height / 2)).ToArray();
 
-			var builder = new PolygonBuilder(new Vector128(random.NextDouble(), random.NextDouble()));
+			course = new Vector128(random.NextDouble(), random.NextDouble());
+			var builder = new PolygonBuilder(course);
 			foreach (var point in points)
 			{
 				builder.Add(point);
@@ -36,7 +38,26 @@ namespace GuiTest.ViewModel
 				Stroke = Brushes.Red,
 			};
 		}
-		private IPolygonHandler PolygonHandler { get; }
+
+		public CollisionDispatcher CollisionDispatcher { get; }
+
+		private Vector128 course;
+		public Vector128 Course
+		{
+			get => course;
+			set
+			{
+				course = value;
+				var polygonBuilder = new PolygonBuilder(Course);
+				for (int i = 0; i < PolygonHandler.Vertices.Count; i++)
+				{
+					polygonBuilder.Add(PolygonHandler.Vertices[i].Target);
+				}
+				CollisionDispatcher.Remove(PolygonHandler);
+				PolygonHandler = CollisionDispatcher.Add(polygonBuilder.GetLines());
+			}
+		}
+		public IPolygonHandler PolygonHandler { get; private set; }
 		public System.Windows.Shapes.Polygon Polygon { get; }
 
 		public void Update()

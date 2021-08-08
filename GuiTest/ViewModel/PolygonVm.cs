@@ -14,8 +14,9 @@ namespace GuiTest.ViewModel
 {
 	class PolygonVm
 	{
-		public PolygonVm(System.Windows.Rect rect, CollisionDispatcher collisionDispatcher, Random random)
+		public PolygonVm(System.Windows.Rect rect, CollisionDispatcher collisionDispatcher, Random random, bool isAdd)
 		{
+			IsAdd = isAdd;
 			CollisionDispatcher = collisionDispatcher;
 
 			var size = Math.Min(rect.Height, rect.Width);
@@ -31,14 +32,18 @@ namespace GuiTest.ViewModel
 				builder.Add(point);
 			}
 
-			PolygonHandler = collisionDispatcher.Add(builder.GetLines());
-			Polygon = new Polygon()
+			if (IsAdd)
 			{
-				Points = new PointCollection(PolygonHandler.Vertices.Select(x => new Point(x.Target.X, x.Target.Y))),
-				Stroke = Brushes.Red,
-			};
+				PolygonHandler = collisionDispatcher.Add(builder.GetLines());
+				Polygon = new Polygon()
+				{
+					Points = new PointCollection(PolygonHandler.Vertices.Select(x => new Point(x.Target.X, x.Target.Y))),
+					Stroke = Brushes.Red,
+				}; 
+			}
 		}
 
+		public bool IsAdd { get; }
 		public CollisionDispatcher CollisionDispatcher { get; }
 
 		private Vector128 course;
@@ -47,14 +52,18 @@ namespace GuiTest.ViewModel
 			get => course;
 			set
 			{
-				course = value;
-				var polygonBuilder = new PolygonBuilder(Course);
-				for (int i = 0; i < PolygonHandler.Vertices.Count; i++)
+				if (Polygon is not null)
 				{
-					polygonBuilder.Add(PolygonHandler.Vertices[i].Target);
+					var oldCourse = course;
+					course = value;
+					var polygonBuilder = new PolygonBuilder(Course);
+					for (int i = 0; i < PolygonHandler.Vertices.Count; i++)
+					{
+						polygonBuilder.Add(PolygonHandler.Vertices[i].Target);
+					}
+					CollisionDispatcher.Remove(PolygonHandler);
+					PolygonHandler = CollisionDispatcher.Add(polygonBuilder.GetLines()); 
 				}
-				CollisionDispatcher.Remove(PolygonHandler);
-				PolygonHandler = CollisionDispatcher.Add(polygonBuilder.GetLines());
 			}
 		}
 		public IPolygonHandler PolygonHandler { get; private set; }

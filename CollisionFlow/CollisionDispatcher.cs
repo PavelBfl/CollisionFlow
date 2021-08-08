@@ -36,10 +36,7 @@ namespace CollisionFlow
 			}
 			var polygon = (Polygon)handler;
 
-			if (polygon.GlobalIndex > 0)
-			{
-				relations.RemoveAt(polygon.GlobalIndex - 1);
-			}
+			relations.RemoveAt(polygon.GlobalIndex > 0 ? polygon.GlobalIndex - 1 : 0);
 			foreach (var row in relations)
 			{
 				if (polygon.GlobalIndex < row.Count)
@@ -90,7 +87,7 @@ namespace CollisionFlow
 				}
 				foreach (var polygon in polygons)
 				{
-					polygon.Offset(value);
+					polygon.Offset(offset);
 				}
 			}
 			return resultMin;

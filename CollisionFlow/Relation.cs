@@ -80,7 +80,7 @@ namespace CollisionFlow
 					var time = GetTime(mainLine, prevMainLine, nextMainLine, otherPoint);
 					if (time.HasValue)
 					{
-						yield return new CollisionResult(main, iEdge, other, iVertex, time.Value);
+						yield return new CollisionResult(main, iEdge, other, iVertex, time.Value - NumberUnitComparer.Instance.Epsilon);
 					}
 				}
 			}
@@ -151,6 +151,11 @@ namespace CollisionFlow
 
 		private static double? GetTime(Moved<double, double> point1, Moved<double, double> point2)
 		{
+			if(point1.Target == point2.Target)
+			//if (NumberUnitComparer.Instance.Equals(point1.Target, point2.Target))
+			{
+				throw new InvalidCollisiopnException();
+			}
 			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);
 
 			var speed = min.Course - max.Course;

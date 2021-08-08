@@ -8,6 +8,9 @@ namespace CollisionFlow
 	{
 		private const int POLYGOM_MIN_VERTICIES = 3;
 
+		private static int counter = 0;
+		public int StaticIndex { get; } = counter++;
+
 		public CommonPolygon(IEnumerable<Moved<LineFunction, Vector128>> edges)
 		{
 			if (edges is null)

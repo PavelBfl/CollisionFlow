@@ -2,6 +2,7 @@
 using GuiTest.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,13 +27,13 @@ namespace GuiTest
 		public MainWindow()
 		{
 			InitializeComponent();
-			var random = new Random(6);
-			for (int iRow = 0; iRow < 5; iRow++)
+			var random = new Random(0);
+			for (int iRow = 0; iRow < 10; iRow++)
 			{
-				for (int iColumn = 0; iColumn < 5; iColumn++)
+				for (int iColumn = 0; iColumn < 10; iColumn++)
 				{
 					var polygonVm = new PolygonVm(
-						new System.Windows.Rect(iColumn * 100, iRow * 100, 100, 100),
+						new System.Windows.Rect(iColumn * 10, iRow * 10, 10, 10),
 						CollisionDispatcher,
 						random,
 						true //iColumn == 0
@@ -45,14 +46,14 @@ namespace GuiTest
 				}
 			}
 
-			//var left = new RectangleVm(new System.Windows.Rect(-10, 0, 9, 350), CollisionDispatcher);
-			//var top = new RectangleVm(new System.Windows.Rect(0, -10, 350, 9), CollisionDispatcher);
-			//var right = new RectangleVm(new System.Windows.Rect(360, 0, 10, 350), CollisionDispatcher);
-			//var bottom = new RectangleVm(new System.Windows.Rect(0, 351, 350, 10), CollisionDispatcher);
-			//CnvRoot.Children.Add(left.Rectangle);
-			//CnvRoot.Children.Add(right.Rectangle);
-			//CnvRoot.Children.Add(top.Rectangle);
-			//CnvRoot.Children.Add(bottom.Rectangle);
+			var left = new RectangleVm(new System.Windows.Rect(-10, 0, 9, 350), CollisionDispatcher);
+			var top = new RectangleVm(new System.Windows.Rect(0, -10, 350, 9), CollisionDispatcher);
+			var right = new RectangleVm(new System.Windows.Rect(360, 0, 10, 350), CollisionDispatcher);
+			var bottom = new RectangleVm(new System.Windows.Rect(0, 351, 350, 10), CollisionDispatcher);
+			CnvRoot.Children.Add(left.Rectangle);
+			CnvRoot.Children.Add(right.Rectangle);
+			CnvRoot.Children.Add(top.Rectangle);
+			CnvRoot.Children.Add(bottom.Rectangle);
 
 			DispatcherTimer = new DispatcherTimer();
 			DispatcherTimer.Tick += FrameUpdate;
@@ -62,6 +63,7 @@ namespace GuiTest
 
 		private void FrameUpdate(object? sender, EventArgs e)
 		{
+			var sw = Stopwatch.StartNew();
 			var offset = 1d;
 			CollisionResult? result = CollisionDispatcher.Offset(offset);
 			while (result is not null && result.Offset < offset)
@@ -81,6 +83,10 @@ namespace GuiTest
 				offset -= result.Offset;
 				result = CollisionDispatcher.Offset(offset);
 			}
+			var elapsed = sw.Elapsed;
+			TbFrame.Text = elapsed.ToString();
+			TbFps.Text = (TimeSpan.FromSeconds(1) / elapsed).ToString("0.0");
+
 			foreach (var polygon in Polygons)
 			{
 				polygon.Update();

@@ -107,7 +107,7 @@ namespace CollisionFlow
 		}
 		public double GetX(double y)
 		{
-			if (IsHorizontal())
+			if (State == LineState.Horisontal)
 			{
 				throw new InvalidOperationException();
 			}
@@ -141,17 +141,12 @@ namespace CollisionFlow
 		}
 		public LineFunction OffsetByVector(Vector128 vector)
 		{
-			if (IsVertical())
+			switch (State)
 			{
-				return AsVerticalUp(Offset + vector.X);
-			}
-			else if (IsHorizontal())
-			{
-				return AsHorisontal(Offset + vector.Y);
-			}
-			else
-			{
-				return OffsetToPoint(new Vector128(Vector128.Create(0, GetY(0)) + vector.ToVector())); 
+				case LineState.Vectical: return AsVerticalUp(Offset + vector.X);
+				case LineState.Horisontal: return AsHorisontal(Offset + vector.Y);
+				case LineState.None: return new LineFunction(Slope, Offset - vector.X * Slope + vector.Y);
+				default: throw new InvalidCollisiopnException();
 			}
 		}
 		public Vector128 Crossing(LineFunction lineFunction)

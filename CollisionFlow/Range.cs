@@ -24,6 +24,10 @@ namespace CollisionFlow
 		{
 			return NumberUnitComparer.Instance.Compare(Min, value) < 0 && NumberUnitComparer.Instance.Compare(value, Max) <= 0;
 		}
+		public bool ContainsExEx(double value)
+		{
+			return NumberUnitComparer.Instance.Compare(Min, value) < 0 && NumberUnitComparer.Instance.Compare(value, Max) < 0;
+		}
 		public bool Contains(Range range)
 		{
 			return NumberUnitComparer.Instance.Compare(Min, range.Min) < 0 && NumberUnitComparer.Instance.Compare(range.Max, Max) <= 0;

@@ -64,8 +64,8 @@ namespace CollisionFlow
 			var projectEnd = line.OffsetToPoint(subEnd2).Crossing(projectLine);
 
 			return projectLine.GetOptimalProjection() == LineState.Horisontal ?
-				Range.Auto(projectBegin.X, projectEnd.X).Contains(projectPoint.X) :
-				Range.Auto(projectBegin.Y, projectEnd.Y).Contains(projectPoint.Y);
+				Range.Auto(projectBegin.X, projectEnd.X).ContainsExEx(projectPoint.X) :
+				Range.Auto(projectBegin.Y, projectEnd.Y).ContainsExEx(projectPoint.Y);
 		}
 		private static bool IsContainsPoint(IEnumerable<Vector128> polygon, Vector128 point)
 		{

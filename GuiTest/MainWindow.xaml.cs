@@ -27,7 +27,7 @@ namespace GuiTest
 		public MainWindow()
 		{
 			InitializeComponent();
-			var random = new Random(0);
+			var random = new Random(2);
 			for (int iRow = 0; iRow < 10; iRow++)
 			{
 				for (int iColumn = 0; iColumn < 10; iColumn++)
@@ -65,19 +65,22 @@ namespace GuiTest
 		{
 			var sw = Stopwatch.StartNew();
 			var offset = 1d;
-			CollisionResult? result = CollisionDispatcher.Offset(offset);
+			var result = CollisionDispatcher.Offset(offset);
 			while (result is not null && result.Offset < offset)
 			{
-				var edgePolygon = Polygons.Select((x, i) => new { x, i }).FirstOrDefault(x => ReferenceEquals(x.x.PolygonHandler, result.EdgePolygon));
-				var vertexPolygon = Polygons.Select((x, i) => new { x, i }).FirstOrDefault(x => ReferenceEquals(x.x.PolygonHandler, result.VertexPolygon));
+				foreach (var pairResult in result.Results)
+				{
+					var edgePolygon = Polygons.Select((x, i) => new { x, i }).FirstOrDefault(x => ReferenceEquals(x.x.PolygonHandler, pairResult.EdgePolygon));
+					var vertexPolygon = Polygons.Select((x, i) => new { x, i }).FirstOrDefault(x => ReferenceEquals(x.x.PolygonHandler, pairResult.VertexPolygon));
 
-				if (edgePolygon is not null)
-				{
-					edgePolygon.x.Course = new Vector128(-edgePolygon.x.Course.ToVector());
-				}
-				if (vertexPolygon is not null)
-				{
-					vertexPolygon.x.Course = new Vector128(-vertexPolygon.x.Course.ToVector());
+					if (edgePolygon is not null)
+					{
+						edgePolygon.x.Course = new Vector128(-edgePolygon.x.Course.ToVector());
+					}
+					if (vertexPolygon is not null)
+					{
+						vertexPolygon.x.Course = new Vector128(-vertexPolygon.x.Course.ToVector());
+					}
 				}
 
 				offset -= result.Offset;

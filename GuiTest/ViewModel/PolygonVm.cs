@@ -46,6 +46,11 @@ namespace GuiTest.ViewModel
 		public bool IsAdd { get; }
 		public CollisionDispatcher CollisionDispatcher { get; }
 
+		public void SetCollision(bool value)
+		{
+			Polygon.Stroke = value ? Brushes.Green : Brushes.Red;
+		}
+
 		private Vector128 course;
 		public Vector128 Course
 		{

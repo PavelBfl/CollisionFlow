@@ -1,9 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using System;
+using System.Linq;
 
 namespace CollisionFlow
 {
+	public class GroupCollisionResult
+	{
+		public GroupCollisionResult(IEnumerable<CollisionResult> results, double offset)
+		{
+			Results = results?.ToArray() ?? throw new ArgumentNullException(nameof(results));
+			Offset = offset;
+		}
+
+		public CollisionResult[] Results { get; }
+		public double Offset { get; }
+	}
 	public class CollisionDispatcher
 	{
 		private readonly List<List<Relation>> relations = new List<List<Relation>>();
@@ -52,30 +64,48 @@ namespace CollisionFlow
 			}
 		}
 
-		public CollisionResult Offset(double value)
+		public GroupCollisionResult Offset(double value)
 		{
-			CollisionResult resultMin = null;
+			var resultMin = new List<CollisionResult>();
+			double? min = null;
 			foreach (var row in relations)
 			{
 				foreach (var cell in row)
 				{
 					var cellResult = cell.Result;
-					if (resultMin is null || (cellResult != null && cellResult.Offset < resultMin.Offset))
+					if (cellResult != null && cellResult.Offset < value)
 					{
-						resultMin = cellResult;
+						if (min is null)
+						{
+							min = cellResult.Offset;
+							resultMin.Add(cellResult);
+						}
+						else
+						{
+							var compare = NumberUnitComparer.Instance.Compare(cellResult.Offset, min.Value);
+							if (compare < 0)
+							{
+								min = cellResult.Offset;
+								resultMin.Clear();
+								resultMin.Add(cellResult);
+							}
+							else if (compare == 0)
+							{
+								resultMin.Add(cellResult);
+							}
+						}
 					}
 				}
 			}
 
-			if (resultMin != null)
+			if (min != null)
 			{
-				resultMin = resultMin.Clone();
-				if (resultMin.Offset > value)
+				for (int i = 0; i < resultMin.Count; i++)
 				{
-					resultMin.Offset = value;
+					resultMin[i] = resultMin[i].Clone();
 				}
 			}
-			var offset = resultMin?.Offset ?? value;
+			var offset = min ?? value;
 			if (!NumberUnitComparer.Instance.IsZero(offset))
 			{
 				foreach (var row in relations)
@@ -90,7 +120,15 @@ namespace CollisionFlow
 					polygon.Offset(offset);
 				}
 			}
-			return resultMin;
+
+			if (min is null)
+			{
+				return null;
+			}
+			else
+			{
+				return new GroupCollisionResult(resultMin, min.Value);
+			}
 		}
 
 		public static bool IsCollision(IEnumerable<Vector128> polygon1, IEnumerable<Vector128> polygon2)

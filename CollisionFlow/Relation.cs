@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Linq;
+using CollisionFlow.Polygons;
 
 namespace CollisionFlow
 {
@@ -69,22 +70,37 @@ namespace CollisionFlow
 			}
 			else
 			{
-				foreach (var collision in collisions)
+				if (FlatCheck())
 				{
-					if (result is null || result.Offset > collision.Offset)
-					{
-						result = collision;
-					}
-					if (NumberUnitComparer.Instance.IsZero(result.Offset - NumberUnitComparer.Instance.Epsilon))
-					{
-						result.Offset -= NumberUnitComparer.Instance.Epsilon;
-						return result;
-					}
+					return null;
 				}
-				if (result != null)
+				else
+				{
+					result = GetMinResult(collisions); 
+				}
+			}
+			return result;
+		}
+
+
+		private CollisionResult GetMinResult(IEnumerable<CollisionResult> collisions)
+		{
+			CollisionResult result = null;
+			foreach (var collision in collisions)
+			{
+				if (result is null || result.Offset > collision.Offset)
+				{
+					result = collision;
+				}
+				if (NumberUnitComparer.Instance.IsZero(result.Offset - NumberUnitComparer.Instance.Epsilon))
 				{
 					result.Offset -= NumberUnitComparer.Instance.Epsilon;
+					return result;
 				}
+			}
+			if (result != null)
+			{
+				result.Offset -= NumberUnitComparer.Instance.Epsilon;
 			}
 			return result;
 		}
@@ -95,15 +111,15 @@ namespace CollisionFlow
 			var secondBounds = Second.Bounds;
 
 			var quadrants = GetQuadrant(firstBounds, secondBounds);
-			if (quadrants.first == Quadrant.None)
+			if (quadrants is null)
 			{
 				return false;
 			}
 			else
 			{
-				var firstCourse = GetQuadrant(First.Verticies);
-				var secondCourse = GetQuadrant(Second.Verticies);
-				if ((firstCourse & quadrants.second) == 0 && (secondCourse & quadrants.first) == 0)
+				var firstCourse = First.CourseQuadrant;
+				var secondCourse = Second.CourseQuadrant;
+				if ((firstCourse & quadrants.Value.second) == 0 && (secondCourse & quadrants.Value.first) == 0)
 				{
 					return true;
 				}
@@ -114,19 +130,6 @@ namespace CollisionFlow
 			}
 		}
 
-		private enum Quadrant
-		{
-			None = 0x0,
-			TopRight = 0x1,
-			TopLeft = 0x2,
-			BottomLeft = 0x4,
-			BottomRight = 0x8,
-
-			Left = TopLeft | BottomLeft,
-			Right = TopRight | BottomRight,
-			Top = TopLeft | TopRight,
-			Bottom = BottomLeft | BottomRight,
-		}
 		private static int Compare(Range first, Range second)
 		{
 			if (first.Intersect(second))
@@ -142,82 +145,40 @@ namespace CollisionFlow
 				return 1;
 			}
 		}
-		private (Quadrant first, Quadrant second) GetQuadrant(Rect first, Rect second)
+		private (Quadrant first, Quadrant second)? GetQuadrant(Rect first, Rect second)
 		{
-			var xCompare = Compare(new Range(first.Left, first.Right), new Range(second.Left, second.Right));
-			var yCompare = Compare(new Range(first.Bottom, first.Top), new Range(second.Bottom, second.Top));
+			var xCompare = Compare(first.Horisontal, second.Horisontal);
 
 			switch (xCompare)
 			{
 				case 0:
+					var yCompare = Compare(first.Vertical, second.Vertical);
 					switch (yCompare)
 					{
-						case 0: return (Quadrant.None, Quadrant.None);
+						case 0: return null;
 						case 1: return (Quadrant.Top, Quadrant.Bottom);
 						case -1: return (Quadrant.Bottom, Quadrant.Top);
 						default: throw new InvalidCollisiopnException();
 					}
 				case 1:
-					switch (yCompare)
-					{
-						case 0: return (Quadrant.Right, Quadrant.Left);
-						case 1: return (Quadrant.TopRight, Quadrant.BottomLeft);
-						case -1: return (Quadrant.BottomRight, Quadrant.TopLeft);
-						default: throw new InvalidCollisiopnException();
-					}
+					return (Quadrant.Right, Quadrant.Left);
 				case -1:
-					switch (yCompare)
-					{
-						case 0: return (Quadrant.Left, Quadrant.Right);
-						case 1: return (Quadrant.TopLeft, Quadrant.BottomRight);
-						case -1: return (Quadrant.BottomLeft, Quadrant.TopRight);
-						default: throw new InvalidCollisiopnException();
-					}
+					return (Quadrant.Left, Quadrant.Right);
 				default: throw new InvalidCollisiopnException();
 			}
-		}
-		private Quadrant GetQuadrant(Moved<Vector128, Vector128>[] verticies)
-		{
-			var result = Quadrant.None;
-			foreach (var vertex in verticies)
-			{
-				if (vertex.Course.X >= 0)
-				{
-					if (vertex.Course.Y >= 0)
-					{
-						result |= Quadrant.TopRight;
-					}
-					else
-					{
-						result |= Quadrant.BottomRight;
-					}
-				}
-				else
-				{
-					if (vertex.Course.Y >= 0)
-					{
-						result |= Quadrant.TopLeft;
-					}
-					else
-					{
-						result |= Quadrant.BottomLeft;
-					}
-				}
-			}
-			return result;
 		}
 
 		private static IEnumerable<CollisionResult> GetTime(Polygon main, Polygon other)
 		{
-			for (int iEdge = 0; iEdge < main.Edges.Length; iEdge++)
+			for (int iEdge = 0; iEdge < main.Edges.Count; iEdge++)
 			{
 				var mainLine = main.Edges[iEdge];
 				for (int iVertex = 0; iVertex < other.Verticies.Length; iVertex++)
 				{
 					var otherPoint = other.Verticies[iVertex];
 
-					var prevMainLine = main.Edges[iEdge == 0 ? main.Edges.Length - 1 : iEdge - 1];
-					var nextMainLine = main.Edges[iEdge == main.Edges.Length - 1 ? 0 : iEdge + 1];
+					var prevMainLine = main.Edges[iEdge == 0 ? main.Edges.Count - 1 : iEdge - 1];
+					var nextMainLine = main.Edges[iEdge == main.Edges.Count - 1 ? 0 : iEdge + 1];
 					var time = GetTime(mainLine, prevMainLine, nextMainLine, otherPoint);
 					if (time.HasValue)
 					{

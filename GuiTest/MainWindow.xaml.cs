@@ -88,13 +88,18 @@ namespace GuiTest
 			}
 			var elapsed = sw.Elapsed;
 			TbFrame.Text = elapsed.ToString();
-			TbFps.Text = (TimeSpan.FromSeconds(1) / elapsed).ToString("0.0");
+
+			FpsSumm += TimeSpan.FromSeconds(1) / elapsed;
+			FpsCounter++;
+			TbFps.Text = (FpsSumm / FpsCounter).ToString("0.0");
 
 			foreach (var polygon in Polygons)
 			{
 				polygon.Update();
 			}
 		}
+		private static double FpsSumm = 0;
+		private static double FpsCounter = 0;
 
 		private List<PolygonVm> Polygons { get; } = new();
 		private CollisionDispatcher CollisionDispatcher { get; } = new();

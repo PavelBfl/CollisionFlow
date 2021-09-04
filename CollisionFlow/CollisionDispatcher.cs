@@ -2,6 +2,7 @@
 using System.Text;
 using System;
 using System.Linq;
+using CollisionFlow.Polygons;
 
 namespace CollisionFlow
 {
@@ -25,7 +26,7 @@ namespace CollisionFlow
 
 		public IPolygonHandler Add(IEnumerable<Moved<LineFunction, Vector128>> lines)
 		{
-			var polygon = Polygon.Create(lines);
+			var polygon = new Polygon(lines);
 			polygon.GlobalIndex = polygons.Count;
 			polygons.Add(polygon);
 

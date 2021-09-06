@@ -97,6 +97,43 @@ namespace CollisionFlow
 		public bool IsVerticalDown() => double.IsNegativeInfinity(Slope);
 		public bool IsHorizontal() => Slope == 0;
 
+		public bool IsParalel(LineFunction lineFunction, double epsilon = 0.000001)
+		{
+			if (epsilon < 0)
+			{
+				throw new ArgumentOutOfRangeException(nameof(epsilon));
+			}
+
+			switch (State)
+			{
+				case LineState.None:
+					switch (lineFunction.State)
+					{
+						case LineState.Horisontal:
+						case LineState.None: return Math.Abs(Slope - lineFunction.Slope) < epsilon;
+						case LineState.Vectical: return false;
+						default: throw new InvalidCollisiopnException();
+					}
+				case LineState.Vectical:
+					switch (lineFunction.State)
+					{
+						case LineState.None: return false;
+						case LineState.Vectical: return true;
+						case LineState.Horisontal: return false;
+						default: throw new InvalidCollisiopnException();
+					}
+				case LineState.Horisontal:
+					switch (lineFunction.State)
+					{
+						case LineState.None: return Math.Abs(Slope - lineFunction.Slope) < epsilon;
+						case LineState.Vectical: return false;
+						case LineState.Horisontal: return true;
+						default: throw new InvalidCollisiopnException();
+					}
+				default: throw new InvalidCollisiopnException();
+			}
+		}
+
 		public double GetY(double x)
 		{
 			if (State == LineState.Vectical)
@@ -141,17 +178,22 @@ namespace CollisionFlow
 		}
 		public LineFunction OffsetByVector(Vector128 vector)
 		{
+			return new LineFunction(Slope, Offset + GetCourseOffset(vector));
+		}
+		public double GetCourseOffset(Vector128 vector)
+		{
 			switch (State)
 			{
-				case LineState.Vectical: return AsVerticalUp(Offset + vector.X);
-				case LineState.Horisontal: return AsHorisontal(Offset + vector.Y);
-				case LineState.None: return new LineFunction(Slope, Offset - vector.X * Slope + vector.Y);
+				case LineState.Vectical: return vector.X;
+				case LineState.Horisontal: return vector.Y;
+				case LineState.None: return -vector.X * Slope + vector.Y;
 				default: throw new InvalidCollisiopnException();
 			}
 		}
+
 		public Vector128 Crossing(LineFunction lineFunction)
 		{
-			if (State == lineFunction.State && State != LineState.None)
+			if (IsParalel(lineFunction))
 			{
 				throw new InvalidOperationException();
 			}

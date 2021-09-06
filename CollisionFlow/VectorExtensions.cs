@@ -11,5 +11,7 @@ namespace CollisionFlow
 			=> vector[X_INDEX];
 		public static T GetY<T>(this Vector<T> vector) where T : struct
 			=> vector[Y_INDEX];
+
+		public static Vector128 ToVector128(this Vector<double> vector) => new Vector128(vector);
 	}
 }

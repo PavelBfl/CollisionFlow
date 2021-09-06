@@ -233,22 +233,11 @@ namespace CollisionFlow
 
 		private static double? GetTime(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin)
 		{
-			var projectionLine = line.Target.Perpendicular();
-
-			var currentLineProjection = line.Target.Crossing(projectionLine);
-			var nextLineProjection = line.Target.OffsetByVector(new Vector128(line.Course.ToVector())).Crossing(projectionLine);
-
-			var currentPointProjection = line.Target.OffsetToPoint(freePoin.Target).Crossing(projectionLine);
-			var nextPointProjection = line.Target.OffsetToPoint(new Vector128(freePoin.Target.ToVector() + freePoin.Course.ToVector())).Crossing(projectionLine);
-
-			if (projectionLine.GetOptimalProjection() == LineState.Horisontal)
-			{
-				return GetTime(Moved.Create(currentLineProjection.X, nextLineProjection.X - currentLineProjection.X), Moved.Create(currentPointProjection.X, nextPointProjection.X - currentPointProjection.X));
-			}
-			else
-			{
-				return GetTime(Moved.Create(currentLineProjection.Y, nextLineProjection.Y - currentLineProjection.Y), Moved.Create(currentPointProjection.Y, nextPointProjection.Y - currentPointProjection.Y));
-			}
+			var freeLine = line.Target.OffsetToPoint(freePoin.Target);
+			return GetTime(
+				Moved.Create(line.Target.Offset, line.Target.GetCourseOffset(line.Course)),
+				Moved.Create(freeLine.Offset, freeLine.GetCourseOffset(freePoin.Course))
+			);
 		}
 
 		private static double? GetTime(Moved<double, double> point1, Moved<double, double> point2)

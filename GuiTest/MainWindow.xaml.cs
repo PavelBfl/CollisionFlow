@@ -30,7 +30,7 @@ namespace GuiTest
 			var random = new Random(2);
 			for (int iRow = 0; iRow < 10; iRow++)
 			{
-				for (int iColumn = 0; iColumn < 10; iColumn++)
+				for (int iColumn = 0; iColumn < 20; iColumn++)
 				{
 					var polygonVm = new PolygonVm(
 						new System.Windows.Rect(iColumn * 10, iRow * 10, 10, 10),

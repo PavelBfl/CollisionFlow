@@ -7,6 +7,13 @@ namespace CollisionFlow
 {
 	public struct Rect
 	{
+		public Rect(Vector128 begin, Vector128 end)
+		{
+			Left = Math.Min(begin.X, end.X);
+			Right = Math.Max(begin.X, end.X);
+			Top = Math.Max(begin.Y, end.Y);
+			Bottom = Math.Min(begin.Y, end.Y);
+		}
 		public Rect(double left, double right, double top, double bottom)
 		{
 			Left = left;

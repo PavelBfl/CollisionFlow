@@ -129,6 +129,9 @@ namespace CollisionFlow.Polygons
 		}
 		IReadOnlyList<Moved<Vector128, Vector128>> IPolygonHandler.Vertices => Verticies;
 
+		public Moved<Vector128, Vector128> GetBeginVertex(int edgeIndex) => Verticies[edgeIndex];
+		public Moved<Vector128, Vector128> GetEndVertex(int edgeIndex) => Verticies[edgeIndex + 1 < Verticies.Length ? edgeIndex + 1 : 0];
+
 		private Rect? bounds;
 		public Rect Bounds
 		{

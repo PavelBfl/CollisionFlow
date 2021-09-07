@@ -5,8 +5,35 @@ using CollisionFlow.Polygons;
 
 namespace CollisionFlow
 {
+
 	class Relation
 	{
+		private abstract class PreviewChecker
+		{
+			public CollisionResult Result { get; set; }
+			public bool Check(double result)
+			{
+				if (Result is null)
+				{
+					return true;
+				}
+				else
+				{
+					return ResultCheck(result);
+				}
+			}
+
+			protected abstract bool ResultCheck(double result);
+		}
+		private class MinChecker : PreviewChecker
+		{
+			protected override bool ResultCheck(double result) => result < Result.Offset;
+		}
+		private class MaxChecker : PreviewChecker
+		{
+			protected override bool ResultCheck(double result) => result > Result.Offset;
+		}
+
 		public Relation(Polygon first, Polygon second)
 		{
 			First = first ?? throw new ArgumentNullException(nameof(first));
@@ -52,21 +79,21 @@ namespace CollisionFlow
 
 		private CollisionResult GetTime()
 		{
-			var collisions = GetTime(First, Second).Concat(GetTime(Second, First));
-			CollisionResult result = null;
 			if (IsCollision)
 			{
-				foreach (var collision in collisions)
+				var checker = new MaxChecker();
+				foreach (var collision in GetTime(First, Second, checker).Concat(GetTime(Second, First, checker)))
 				{
-					if (result is null || result.Offset < collision.Offset)
+					if (checker.Result is null || checker.Result.Offset < collision.Offset)
 					{
-						result = collision;
+						checker.Result = collision;
 					}
 				}
-				if (result != null)
+				if (checker.Result != null)
 				{
-					result.Offset += NumberUnitComparer.Instance.Epsilon;
+					checker.Result.Offset += NumberUnitComparer.Instance.Epsilon;
 				}
+				return checker.Result;
 			}
 			else
 			{
@@ -76,33 +103,40 @@ namespace CollisionFlow
 				}
 				else
 				{
-					result = GetMinResult(collisions); 
+					return GetMinResult();
 				}
 			}
-			return result;
 		}
-
-
-		private CollisionResult GetMinResult(IEnumerable<CollisionResult> collisions)
+		private static Rect GetFullRect(Rect rect, Vector128 course)
 		{
-			CollisionResult result = null;
-			foreach (var collision in collisions)
+			var offsetRect = new Rect(
+				left: rect.Left + course.X,
+				top: rect.Top + course.Y,
+				right: rect.Right + course.X,
+				bottom: rect.Bottom + course.Y
+			);
+			return rect.Union(offsetRect);
+		}
+		private CollisionResult GetMinResult()	
+		{
+			var checker = new MinChecker();
+			foreach (var collision in GetTime(First, Second, checker).Concat(GetTime(Second, First, checker)))
 			{
-				if (result is null || result.Offset > collision.Offset)
+				if (checker.Result is null || checker.Result.Offset > collision.Offset)
 				{
-					result = collision;
+					checker.Result = collision;
 				}
-				if (NumberUnitComparer.Instance.IsZero(result.Offset - NumberUnitComparer.Instance.Epsilon))
+				if (NumberUnitComparer.Instance.IsZero(checker.Result.Offset - NumberUnitComparer.Instance.Epsilon))
 				{
-					result.Offset -= NumberUnitComparer.Instance.Epsilon;
-					return result;
+					checker.Result.Offset -= NumberUnitComparer.Instance.Epsilon;
+					return checker.Result;
 				}
 			}
-			if (result != null)
+			if (checker.Result != null)
 			{
-				result.Offset -= NumberUnitComparer.Instance.Epsilon;
+				checker.Result.Offset -= NumberUnitComparer.Instance.Epsilon;
 			}
-			return result;
+			return checker.Result;
 		}
 
 		private bool FlatCheck()
@@ -168,7 +202,7 @@ namespace CollisionFlow
 			}
 		}
 
-		private static IEnumerable<CollisionResult> GetTime(Polygon main, Polygon other)
+		private static IEnumerable<CollisionResult> GetTime(Polygon main, Polygon other, PreviewChecker previewChecker)
 		{
 			for (int iEdge = 0; iEdge < main.Edges.Count; iEdge++)
 			{
@@ -177,40 +211,26 @@ namespace CollisionFlow
 				{
 					var otherPoint = other.Verticies[iVertex];
 
-					var prevMainLine = main.Edges[iEdge == 0 ? main.Edges.Count - 1 : iEdge - 1];
-					var nextMainLine = main.Edges[iEdge == main.Edges.Count - 1 ? 0 : iEdge + 1];
-					var time = GetTime(mainLine, prevMainLine, nextMainLine, otherPoint);
-					if (time.HasValue)
+					var time = GetTime(mainLine, otherPoint);
+					if (time.HasValue && previewChecker.Check(time.Value))
 					{
-						yield return new CollisionResult(main, iEdge, other, iVertex, time.Value);
+						if (InRange(time.Value, mainLine.Target.GetOptimalProjection(), main.GetBeginVertex(iEdge), main.GetEndVertex(iEdge), otherPoint))
+						{
+							yield return new CollisionResult(main, iEdge, other, iVertex, time.Value);
+						}
 					}
 				}
 			}
 		}
 
-		private static double? GetTime(Moved<LineFunction, Vector128> mainLine, Moved<LineFunction, Vector128> prevMainLine, Moved<LineFunction, Vector128> nextMainLine, Moved<Vector128, Vector128> freePoin)
+		private static bool InRange(double offset, LineState state, Moved<Vector128, Vector128> begin, Moved<Vector128, Vector128> end, Moved<Vector128, Vector128> freePoin)
 		{
-			var time = GetTime(mainLine, freePoin);
-			if (time.HasValue)
-			{
-				var prevLine = prevMainLine.Offset(time.Value).Target;
-				var currentLine = mainLine.Offset(time.Value).Target;
-				var nextLine = nextMainLine.Offset(time.Value).Target;
-
-				var point = freePoin.Offset(time.Value).Target;
-				var beginPoint = prevLine.Crossing(currentLine);
-				var endPoint = nextLine.Crossing(currentLine);
-
-				var inRange = currentLine.GetOptimalProjection() == LineState.Horisontal ?
-					Contains(beginPoint.X, endPoint.X, point.X):
-					Contains(beginPoint.Y, endPoint.Y, point.Y);
-
-				return inRange ? time : null;
-			}
-			else
-			{
-				return null;
-			}
+			var beginOffset = begin.Offset(offset).Target;
+			var endOffset = end.Offset(offset).Target;
+			var freePointOffset = freePoin.Offset(offset).Target;
+			return state == LineState.Horisontal ?
+				Contains(beginOffset.X, endOffset.X, freePointOffset.X) :
+				Contains(beginOffset.Y, endOffset.Y, freePointOffset.Y);
 		}
 		private static bool Contains(double first, double second, double value)
 		{

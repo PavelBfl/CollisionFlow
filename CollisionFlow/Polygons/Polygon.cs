@@ -54,13 +54,14 @@ namespace CollisionFlow.Polygons
 			}
 			Edges = new EdgesCollection(edges);
 			CourseQuadrant = Edges.Aggregate(Quadrant.None, (a, x) => a | GetQuadrant(x.Course));
+			ChangeRefresh(true);
 		}
 		
 		public int GlobalIndex { get; set; }
 
-		public bool ChangeRefresh()
+		public bool ChangeRefresh(bool force = false)
 		{
-			if (Edges.IsChanged)
+			if (Edges.IsChanged || force)
 			{
 				try
 				{

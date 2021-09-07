@@ -8,6 +8,12 @@ namespace CollisionFlow
 
 	class Relation
 	{
+		private enum ResultState
+		{
+			None,
+			Wait,
+			Success
+		}
 		private abstract class PreviewChecker
 		{
 			public CollisionResult Result { get; set; }
@@ -49,29 +55,42 @@ namespace CollisionFlow
 
 		public double? Time => Result?.Offset;
 
-		private bool resultCalculate = false;
+		private ResultState resultState = ResultState.None;
+		private double wait = 0;
+		//private bool resultCalculate = false;
 		private CollisionResult result;
+
+		public void Step(double value)
+		{
+			if (resultState == ResultState.Wait)
+			{
+				wait -= value;
+			}
+			else
+			{
+				result?.Step(value);
+			}
+		}
 
 		public CollisionResult Result
 		{
 			get
 			{
-				if (resultCalculate)
+				if (resultState == ResultState.Success)
 				{
 					if (result != null && NumberUnitComparer.Instance.IsZero(result.Offset))
 					{
-						resultCalculate = false;
+						resultState = ResultState.None;
 						IsCollision = !IsCollision;
 					}
 				}
-				if (!resultCalculate)
+				if (resultState == ResultState.None || (resultState == ResultState.Wait && wait < 0.000001))
 				{
 					result = GetTime();
 					if (result != null)
 					{
 						result.IsCollision = IsCollision;
 					}
-					resultCalculate = true;
 				}
 				return result;
 			}
@@ -93,17 +112,40 @@ namespace CollisionFlow
 				{
 					checker.Result.Offset += NumberUnitComparer.Instance.Epsilon;
 				}
+				resultState = ResultState.Success;
 				return checker.Result;
 			}
 			else
 			{
 				if (FlatCheck())
 				{
+					resultState = ResultState.Success;
 					return null;
 				}
 				else
 				{
-					return GetMinResult();
+					if (First.State == PolygonState.Undeformable && Second.State == PolygonState.Undeformable)
+					{
+						const double WAIT_TIME = 10;
+						var firstBounds = GetFullRect(First.Bounds, (First.Edges[0].Course.ToVector() * WAIT_TIME).ToVector128());
+						var secondBounds = GetFullRect(Second.Bounds, (Second.Edges[0].Course.ToVector() * WAIT_TIME).ToVector128());
+						if (firstBounds.Intersect(secondBounds))
+						{
+							resultState = ResultState.Success;
+							return GetMinResult();
+						}
+						else
+						{
+							wait = WAIT_TIME;
+							resultState = ResultState.Wait;
+							return null;
+						}
+					}
+					else
+					{
+						resultState = ResultState.Success;
+						return GetMinResult(); 
+					}
 				}
 			}
 		}

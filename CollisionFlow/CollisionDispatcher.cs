@@ -113,7 +113,7 @@ namespace CollisionFlow
 				{
 					foreach (var cell in row)
 					{
-						cell.Result?.Step(offset);
+						cell.Step(offset);
 					}
 				}
 				foreach (var polygon in polygons)

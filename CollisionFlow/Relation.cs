@@ -5,6 +5,62 @@ using CollisionFlow.Polygons;
 
 namespace CollisionFlow
 {
+	abstract class RelationResult
+	{
+		public abstract void Step(double value);
+	}
+	class OffsetResult : RelationResult
+	{
+		public OffsetResult(CollisionData collisionData, double offset)
+		{
+			CollisionData = collisionData ?? throw new ArgumentNullException(nameof(collisionData));
+			Offset = offset;
+		}
+
+		public CollisionData CollisionData { get; }
+		public double Offset { get; set; }
+
+		public override void Step(double value)
+		{
+			Offset -= value;
+		}
+	}
+	class WaitResult : RelationResult
+	{
+		public WaitResult(double offset)
+		{
+			if (offset < 0)
+			{
+				throw new InvalidCollisiopnException();
+			}
+			Offset = offset;
+		}
+
+		public double Offset { get; private set; }
+
+		public bool IsWait => Offset >= 0.000001;
+
+		public override void Step(double value)
+		{
+			if (value > Offset)
+			{
+				throw new InvalidCollisiopnException();
+			}
+			Offset -= value;
+		}
+	}
+	class InfinitResult : RelationResult
+	{
+		public static InfinitResult Instance { get; } = new InfinitResult();
+		private InfinitResult()
+		{
+
+		}
+		public override void Step(double value)
+		{
+			
+		}
+	}
 
 	class Relation
 	{
@@ -16,7 +72,7 @@ namespace CollisionFlow
 		}
 		private abstract class PreviewChecker
 		{
-			public CollisionResult Result { get; set; }
+			public OffsetResult Result { get; set; }
 			public bool Check(double result)
 			{
 				if (Result is null)
@@ -47,56 +103,35 @@ namespace CollisionFlow
 			IsCollision = First.IsCollision(Second);
 		}
 
-		public bool IsFindPrev { get; set; } = false;
-
 		public Polygon First { get; }
 		public Polygon Second { get; }
 		private bool IsCollision { get; set; }
 
-		public double? Time => Result?.Offset;
-
-		private ResultState resultState = ResultState.None;
-		private double wait = 0;
-		//private bool resultCalculate = false;
-		private CollisionResult result;
+		private RelationResult result;
 
 		public void Step(double value)
 		{
-			if (resultState == ResultState.Wait)
-			{
-				wait -= value;
-			}
-			else
-			{
-				result?.Step(value);
-			}
+			result?.Step(value);
 		}
 
-		public CollisionResult Result
+		public OffsetResult GetResult(double offset)
 		{
-			get
+			if (result is OffsetResult offsetResult)
 			{
-				if (resultState == ResultState.Success)
+				if (NumberUnitComparer.Instance.IsZero(offsetResult.Offset))
 				{
-					if (result != null && NumberUnitComparer.Instance.IsZero(result.Offset))
-					{
-						resultState = ResultState.None;
-						IsCollision = !IsCollision;
-					}
+					result = null;
+					IsCollision = !IsCollision;
 				}
-				if (resultState == ResultState.None || (resultState == ResultState.Wait && wait < 0.000001))
-				{
-					result = GetTime();
-					if (result != null)
-					{
-						result.IsCollision = IsCollision;
-					}
-				}
-				return result;
 			}
+			if (result is null || (result is WaitResult waitResult && waitResult.Offset < offset))
+			{
+				result = GetTime(offset);
+			}
+			return result as OffsetResult;
 		}
 
-		private CollisionResult GetTime()
+		private RelationResult GetTime(double offset)
 		{
 			if (IsCollision)
 			{
@@ -112,54 +147,67 @@ namespace CollisionFlow
 				{
 					checker.Result.Offset += NumberUnitComparer.Instance.Epsilon;
 				}
-				resultState = ResultState.Success;
 				return checker.Result;
 			}
 			else
 			{
-				if (FlatCheck())
+				var flatResult = FlatCheck();
+				if (flatResult != null)
 				{
-					resultState = ResultState.Success;
+					return flatResult;
+				}
+				var undeformableResult = UndeformableResult(offset);
+				if (undeformableResult != null)
+				{
+					return undeformableResult;
+				}
+				return GetMinResult();
+			}
+		}
+		private WaitResult UndeformableResult(double offset)
+		{
+			if (First.State == PolygonState.Undeformable && Second.State == PolygonState.Undeformable)
+			{
+				var distance = GetDistance(First.Bounds, Second.Bounds);
+				if (distance.Equals(Vector128.Zero))
+				{
+					return null;
+				}
+				var firstCourse = First.Edges[0].Course;
+				var secondCourse = Second.Edges[0].Course;
+				double wait;
+				if (NumberUnitComparer.Instance.IsZero(distance.Y))
+				{
+					var xTime = distance.X / Math.Abs(firstCourse.X - secondCourse.X);
+					wait = xTime;
+				}
+				else if (NumberUnitComparer.Instance.IsZero(distance.X))
+				{
+					var yTime = distance.Y / Math.Abs(firstCourse.Y - secondCourse.Y);
+					wait = yTime;
+				}
+				else
+				{
+					var xTime = distance.X / Math.Abs(firstCourse.X - secondCourse.X);
+					var yTime = distance.Y / Math.Abs(firstCourse.Y - secondCourse.Y);
+					wait = Math.Max(xTime, yTime);
+				}
+
+				if (wait < offset)
+				{
 					return null;
 				}
 				else
 				{
-					if (First.State == PolygonState.Undeformable && Second.State == PolygonState.Undeformable)
-					{
-						const double WAIT_TIME = 10;
-						var firstBounds = GetFullRect(First.Bounds, (First.Edges[0].Course.ToVector() * WAIT_TIME).ToVector128());
-						var secondBounds = GetFullRect(Second.Bounds, (Second.Edges[0].Course.ToVector() * WAIT_TIME).ToVector128());
-						if (firstBounds.Intersect(secondBounds))
-						{
-							resultState = ResultState.Success;
-							return GetMinResult();
-						}
-						else
-						{
-							wait = WAIT_TIME;
-							resultState = ResultState.Wait;
-							return null;
-						}
-					}
-					else
-					{
-						resultState = ResultState.Success;
-						return GetMinResult(); 
-					}
+					return new WaitResult(wait);
 				}
 			}
+			else
+			{
+				return null;
+			}
 		}
-		private static Rect GetFullRect(Rect rect, Vector128 course)
-		{
-			var offsetRect = new Rect(
-				left: rect.Left + course.X,
-				top: rect.Top + course.Y,
-				right: rect.Right + course.X,
-				bottom: rect.Bottom + course.Y
-			);
-			return rect.Union(offsetRect);
-		}
-		private CollisionResult GetMinResult()	
+		private RelationResult GetMinResult()
 		{
 			var checker = new MinChecker();
 			foreach (var collision in GetTime(First, Second, checker).Concat(GetTime(Second, First, checker)))
@@ -178,10 +226,10 @@ namespace CollisionFlow
 			{
 				checker.Result.Offset -= NumberUnitComparer.Instance.Epsilon;
 			}
-			return checker.Result;
+			return (RelationResult)checker.Result ?? InfinitResult.Instance;
 		}
 
-		private bool FlatCheck()
+		private RelationResult FlatCheck()
 		{
 			var firstBounds = First.Bounds;
 			var secondBounds = Second.Bounds;
@@ -189,7 +237,7 @@ namespace CollisionFlow
 			var quadrants = GetQuadrant(firstBounds, secondBounds);
 			if (quadrants is null)
 			{
-				return false;
+				return null;
 			}
 			else
 			{
@@ -197,11 +245,11 @@ namespace CollisionFlow
 				var secondCourse = Second.CourseQuadrant;
 				if ((firstCourse & quadrants.Value.second) == 0 && (secondCourse & quadrants.Value.first) == 0)
 				{
-					return true;
+					return InfinitResult.Instance;
 				}
 				else
 				{
-					return false;
+					return null;
 				}
 			}
 		}
@@ -243,8 +291,35 @@ namespace CollisionFlow
 				default: throw new InvalidCollisiopnException();
 			}
 		}
+		private Vector128 GetDistance(Rect first, Rect second)
+		{
+			var xCompare = Compare(first.Horisontal, second.Horisontal);
+			var yCompare = Compare(first.Vertical, second.Vertical);
 
-		private static IEnumerable<CollisionResult> GetTime(Polygon main, Polygon other, PreviewChecker previewChecker)
+			var x = 0d;
+			switch (xCompare)
+			{
+				case 1:
+					x = first.Left - second.Right;
+					break;
+				case -1:
+					x = second.Left - first.Right;
+					break;
+			}
+			var y = 0d;
+			switch (yCompare)
+			{
+				case 1:
+					y = first.Bottom - second.Top;
+					break;
+				case -1:
+					y = second.Bottom - first.Top;
+					break;
+			}
+			return new Vector128(x, y);
+		}
+
+		private static IEnumerable<OffsetResult> GetTime(Polygon main, Polygon other, PreviewChecker previewChecker)
 		{
 			for (int iEdge = 0; iEdge < main.Edges.Count; iEdge++)
 			{
@@ -258,7 +333,10 @@ namespace CollisionFlow
 					{
 						if (InRange(time.Value, mainLine.Target.GetOptimalProjection(), main.GetBeginVertex(iEdge), main.GetEndVertex(iEdge), otherPoint))
 						{
-							yield return new CollisionResult(main, iEdge, other, iVertex, time.Value);
+							yield return new OffsetResult(
+								new CollisionData(main, iEdge, other, iVertex),
+								time.Value
+							);
 						}
 					}
 				}

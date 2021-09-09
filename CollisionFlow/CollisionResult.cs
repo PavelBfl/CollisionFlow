@@ -1,5 +1,24 @@
-﻿namespace CollisionFlow
+﻿using System;
+
+namespace CollisionFlow
 {
+	public class CollisionData
+	{
+		public CollisionData(IPolygonHandler edgePolygon, int edgeIndex, IPolygonHandler vertexPolygon, int vertexIndex)
+		{
+			EdgePolygon = edgePolygon ?? throw new ArgumentNullException(nameof(edgePolygon));
+			EdgeIndex = edgeIndex;
+			VertexPolygon = vertexPolygon ?? throw new ArgumentNullException(nameof(vertexPolygon));
+			VertexIndex = vertexIndex;
+		}
+
+		public IPolygonHandler EdgePolygon { get; }
+		public int EdgeIndex { get; }
+		public Moved<LineFunction, Vector128> Edge => EdgePolygon.Edges[EdgeIndex];
+		public IPolygonHandler VertexPolygon { get; }
+		public int VertexIndex { get; }
+		public Moved<Vector128, Vector128> Vertex => VertexPolygon.Vertices[VertexIndex];
+	}
 	public class CollisionResult
 	{
 		public CollisionResult(IPolygonHandler edgePolygon, int edgeIndex, IPolygonHandler vertexPolygon, int vertexIndex, double offset)

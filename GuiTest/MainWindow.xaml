@@ -9,8 +9,10 @@
     <DockPanel>
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
             <Button Content="Update frame" Click="UpdateFrame_Click"/>
-            <TextBlock x:Name="TbFrame" Margin="3,0,3,0"/>
+            <TextBlock x:Name="TbMin" Margin="3,0,3,0"/>
+            <TextBlock x:Name="TbMax" Margin="3,0,3,0"/>
             <TextBlock x:Name="TbFps" Margin="3,0,3,0"/>
+            <TextBlock x:Name="TbFpsLast" Margin="3,0,3,0"/>
         </StackPanel>
         <Canvas x:Name="CnvRoot"/>
     </DockPanel>

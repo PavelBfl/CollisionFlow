@@ -8,13 +8,13 @@ namespace CollisionFlow
 {
 	public class GroupCollisionResult
 	{
-		public GroupCollisionResult(IEnumerable<CollisionResult> results, double offset)
+		public GroupCollisionResult(IEnumerable<CollisionData> results, double offset)
 		{
 			Results = results?.ToArray() ?? throw new ArgumentNullException(nameof(results));
 			Offset = offset;
 		}
 
-		public CollisionResult[] Results { get; }
+		public CollisionData[] Results { get; }
 		public double Offset { get; }
 	}
 	public class CollisionDispatcher
@@ -67,19 +67,19 @@ namespace CollisionFlow
 
 		public GroupCollisionResult Offset(double value)
 		{
-			var resultMin = new List<CollisionResult>();
+			var resultMin = new List<CollisionData>();
 			double? min = null;
 			foreach (var row in relations)
 			{
 				foreach (var cell in row)
 				{
-					var cellResult = cell.Result;
+					var cellResult = cell.GetResult(value);
 					if (cellResult != null && cellResult.Offset < value)
 					{
 						if (min is null)
 						{
 							min = cellResult.Offset;
-							resultMin.Add(cellResult);
+							resultMin.Add(cellResult.CollisionData);
 						}
 						else
 						{
@@ -88,24 +88,17 @@ namespace CollisionFlow
 							{
 								min = cellResult.Offset;
 								resultMin.Clear();
-								resultMin.Add(cellResult);
+								resultMin.Add(cellResult.CollisionData);
 							}
 							else if (compare == 0)
 							{
-								resultMin.Add(cellResult);
+								resultMin.Add(cellResult.CollisionData);
 							}
 						}
 					}
 				}
 			}
 
-			if (min != null)
-			{
-				for (int i = 0; i < resultMin.Count; i++)
-				{
-					resultMin[i] = resultMin[i].Clone();
-				}
-			}
 			var offset = min ?? value;
 			if (!NumberUnitComparer.Instance.IsZero(offset))
 			{

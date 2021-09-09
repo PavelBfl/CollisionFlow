@@ -53,7 +53,6 @@ namespace CollisionFlow.Polygons
 				throw new ArgumentNullException(nameof(edges));
 			}
 			Edges = new EdgesCollection(edges);
-			CourseQuadrant = Edges.Aggregate(Quadrant.None, (a, x) => a | GetQuadrant(x.Course));
 			ChangeRefresh(true);
 		}
 		

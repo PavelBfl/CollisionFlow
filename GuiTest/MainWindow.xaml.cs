@@ -87,11 +87,23 @@ namespace GuiTest
 				result = CollisionDispatcher.Offset(offset);
 			}
 			var elapsed = sw.Elapsed;
-			TbFrame.Text = elapsed.ToString();
 
-			FpsSumm += TimeSpan.FromSeconds(1) / elapsed;
+			var perSecond = TimeSpan.FromSeconds(1) / elapsed;
+			FpsMin = Math.Min(FpsMin, perSecond);
+			TbMin.Text = FpsMin.ToString("0.0");
+			FpsMax = Math.Max(FpsMax, perSecond);
+			TbMax.Text = FpsMax.ToString("0.0");
+
+			FpsSumm += perSecond;
 			FpsCounter++;
 			TbFps.Text = (FpsSumm / FpsCounter).ToString("0.0");
+
+			FpsQueue.Enqueue(perSecond);
+			while (FpsQueue.Count > 10)
+			{
+				FpsQueue.Dequeue();
+			}
+			TbFpsLast.Text = (FpsQueue.Sum() / FpsQueue.Count).ToString("0.0");
 
 			foreach (var polygon in Polygons)
 			{
@@ -100,6 +112,9 @@ namespace GuiTest
 		}
 		private static double FpsSumm = 0;
 		private static double FpsCounter = 0;
+		private static double FpsMin = double.PositiveInfinity;
+		private static double FpsMax = 0;
+		private static Queue<double> FpsQueue = new Queue<double>();
 
 		private List<PolygonVm> Polygons { get; } = new();
 		private CollisionDispatcher CollisionDispatcher { get; } = new();

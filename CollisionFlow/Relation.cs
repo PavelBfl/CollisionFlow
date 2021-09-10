@@ -107,6 +107,12 @@ namespace CollisionFlow
 		public Polygon Second { get; }
 		private bool IsCollision { get; set; }
 
+		public void OnHandled()
+		{
+			result = null;
+			IsCollision = !IsCollision;
+		}
+
 		private RelationResult result;
 
 		public void Step(double value)
@@ -116,14 +122,6 @@ namespace CollisionFlow
 
 		public OffsetResult GetResult(double offset)
 		{
-			if (result is OffsetResult offsetResult)
-			{
-				if (NumberUnitComparer.Instance.IsZero(offsetResult.Offset))
-				{
-					result = null;
-					IsCollision = !IsCollision;
-				}
-			}
 			if (result is null || (result is WaitResult waitResult && waitResult.Offset < offset))
 			{
 				result = GetTime(offset);

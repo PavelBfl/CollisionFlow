@@ -67,7 +67,7 @@ namespace CollisionFlow
 
 		public GroupCollisionResult Offset(double value)
 		{
-			var resultMin = new List<CollisionData>();
+			var resultMin = new List<(CollisionData Data, Relation Relation)>();
 			double? min = null;
 			foreach (var row in relations)
 			{
@@ -79,7 +79,7 @@ namespace CollisionFlow
 						if (min is null)
 						{
 							min = cellResult.Offset;
-							resultMin.Add(cellResult.CollisionData);
+							resultMin.Add((cellResult.CollisionData, cell));
 						}
 						else
 						{
@@ -88,11 +88,11 @@ namespace CollisionFlow
 							{
 								min = cellResult.Offset;
 								resultMin.Clear();
-								resultMin.Add(cellResult.CollisionData);
+								resultMin.Add((cellResult.CollisionData, cell));
 							}
 							else if (compare == 0)
 							{
-								resultMin.Add(cellResult.CollisionData);
+								resultMin.Add((cellResult.CollisionData, cell));
 							}
 						}
 					}
@@ -121,7 +121,11 @@ namespace CollisionFlow
 			}
 			else
 			{
-				return new GroupCollisionResult(resultMin, min.Value);
+				foreach (var item in resultMin)
+				{
+					item.Relation.OnHandled();
+				}
+				return new GroupCollisionResult(resultMin.Select(x => x.Data), min.Value);
 			}
 		}
 

@@ -64,12 +64,6 @@ namespace CollisionFlow
 
 	class Relation
 	{
-		private enum ResultState
-		{
-			None,
-			Wait,
-			Success
-		}
 		private abstract class PreviewChecker
 		{
 			public OffsetResult Result { get; set; }
@@ -122,10 +116,6 @@ namespace CollisionFlow
 
 		public OffsetResult GetResult(double offset)
 		{
-			if (First.GlobalIndex == 4 && Second.GlobalIndex == 1)
-			{
-
-			}
 			if (result is null || (result is WaitResult waitResult && waitResult.Offset < offset))
 			{
 				result = GetTime(offset);
@@ -256,19 +246,25 @@ namespace CollisionFlow
 			}
 		}
 
-		private static int Compare(Range first, Range second)
+		private enum RangeCompare
+		{
+			Equals,
+			Less,
+			Over
+		}
+		private static RangeCompare Compare(Range first, Range second)
 		{
 			if (first.Intersect(second))
 			{
-				return 0;
+				return RangeCompare.Equals;
 			}
 			else if (first.Max < second.Min)
 			{
-				return -1;
+				return RangeCompare.Less;
 			}
 			else
 			{
-				return 1;
+				return RangeCompare.Over;
 			}
 		}
 		private (Quadrant first, Quadrant second)? GetQuadrant(Rect first, Rect second)
@@ -277,19 +273,17 @@ namespace CollisionFlow
 
 			switch (xCompare)
 			{
-				case 0:
+				case RangeCompare.Equals:
 					var yCompare = Compare(first.Vertical, second.Vertical);
 					switch (yCompare)
 					{
-						case 0: return null;
-						case 1: return (Quadrant.Top, Quadrant.Bottom);
-						case -1: return (Quadrant.Bottom, Quadrant.Top);
+						case RangeCompare.Equals: return null;
+						case RangeCompare.Over: return (Quadrant.Top, Quadrant.Bottom);
+						case RangeCompare.Less: return (Quadrant.Bottom, Quadrant.Top);
 						default: throw new InvalidCollisiopnException();
 					}
-				case 1:
-					return (Quadrant.Right, Quadrant.Left);
-				case -1:
-					return (Quadrant.Left, Quadrant.Right);
+				case RangeCompare.Over: return (Quadrant.Right, Quadrant.Left);
+				case RangeCompare.Less: return (Quadrant.Left, Quadrant.Right);
 				default: throw new InvalidCollisiopnException();
 			}
 		}
@@ -301,20 +295,20 @@ namespace CollisionFlow
 			var x = 0d;
 			switch (xCompare)
 			{
-				case 1:
+				case RangeCompare.Over:
 					x = first.Left - second.Right;
 					break;
-				case -1:
+				case RangeCompare.Less:
 					x = second.Left - first.Right;
 					break;
 			}
 			var y = 0d;
 			switch (yCompare)
 			{
-				case 1:
+				case RangeCompare.Over:
 					y = first.Bottom - second.Top;
 					break;
-				case -1:
+				case RangeCompare.Less:
 					y = second.Bottom - first.Top;
 					break;
 			}
@@ -372,7 +366,6 @@ namespace CollisionFlow
 				return false;
 			}
 		}
-
 		private static double? GetTime(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin)
 		{
 			var freeLine = line.Target.OffsetToPoint(freePoin.Target);
@@ -381,7 +374,6 @@ namespace CollisionFlow
 				Moved.Create(freeLine.Offset, freeLine.GetCourseOffset(freePoin.Course))
 			);
 		}
-
 		private static double? GetTime(Moved<double, double> point1, Moved<double, double> point2)
 		{
 			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);

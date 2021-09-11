@@ -122,6 +122,10 @@ namespace CollisionFlow
 
 		public OffsetResult GetResult(double offset)
 		{
+			if (First.GlobalIndex == 4 && Second.GlobalIndex == 1)
+			{
+
+			}
 			if (result is null || (result is WaitResult waitResult && waitResult.Offset < offset))
 			{
 				result = GetTime(offset);
@@ -164,15 +168,15 @@ namespace CollisionFlow
 		}
 		private WaitResult UndeformableResult(double offset)
 		{
-			if (First.State == PolygonState.Undeformable && Second.State == PolygonState.Undeformable)
+			if (First is UndeformablePolygon first && Second is UndeformablePolygon second)
 			{
-				var distance = GetDistance(First.Bounds, Second.Bounds);
+				var distance = GetDistance(first.Bounds, second.Bounds);
 				if (distance.Equals(Vector128.Zero))
 				{
 					return null;
 				}
-				var firstCourse = First.Edges[0].Course;
-				var secondCourse = Second.Edges[0].Course;
+				var firstCourse = first.Course;
+				var secondCourse = second.Course;
 				double wait;
 				if (NumberUnitComparer.Instance.IsZero(distance.Y))
 				{
@@ -319,7 +323,7 @@ namespace CollisionFlow
 
 		private static IEnumerable<OffsetResult> GetTime(Polygon main, Polygon other, PreviewChecker previewChecker)
 		{
-			for (int iEdge = 0; iEdge < main.Edges.Count; iEdge++)
+			for (int iEdge = 0; iEdge < main.Edges.Length; iEdge++)
 			{
 				var mainLine = main.Edges[iEdge];
 				for (int iVertex = 0; iVertex < other.Verticies.Length; iVertex++)

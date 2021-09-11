@@ -26,7 +26,7 @@ namespace CollisionFlow
 
 		public IPolygonHandler Add(IEnumerable<Moved<LineFunction, Vector128>> lines)
 		{
-			var polygon = new Polygon(lines);
+			var polygon = Polygon.Create(lines);
 			polygon.GlobalIndex = polygons.Count;
 			polygons.Add(polygon);
 
@@ -131,7 +131,7 @@ namespace CollisionFlow
 
 		public static bool IsCollision(IEnumerable<Vector128> polygon1, IEnumerable<Vector128> polygon2)
 		{
-			return Polygon.IsCollision(polygon1, polygon2);
+			return CommonPolygon.IsCollision(polygon1, polygon2);
 		}
 	}
 }

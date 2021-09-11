@@ -27,7 +27,7 @@ namespace GuiTest
 		public MainWindow()
 		{
 			InitializeComponent();
-			var random = new Random(2);
+			var random = new Random(0);
 			for (int iRow = 0; iRow < 10; iRow++)
 			{
 				for (int iColumn = 0; iColumn < 20; iColumn++)
@@ -35,8 +35,7 @@ namespace GuiTest
 					var polygonVm = new PolygonVm(
 						new System.Windows.Rect(iColumn * 10, iRow * 10, 10, 10),
 						CollisionDispatcher,
-						random,
-						true //iColumn == 0
+						random
 					);
 					if (polygonVm.Polygon is not null)
 					{

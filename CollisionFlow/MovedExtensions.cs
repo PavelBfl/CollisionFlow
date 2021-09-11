@@ -12,5 +12,12 @@
 
 		public static Moved<double, double> Offset(this Moved<double, double> moved, double value)
 			=> moved.SetTarget(moved.Target + moved.Course * value);
+
+		public static Rect Offset(this Rect rect, Vector128 course) => new Rect(
+			left: rect.Left + course.X,
+			right: rect.Right + course.X,
+			top: rect.Top + course.Y,
+			bottom: rect.Bottom + course.Y
+		);
 	}
 }

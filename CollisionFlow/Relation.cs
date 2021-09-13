@@ -208,17 +208,29 @@ namespace CollisionFlow
 				{
 					checker.Result = collision;
 				}
-				if (NumberUnitComparer.Instance.IsZero(checker.Result.Offset - NumberUnitComparer.Instance.Epsilon))
+				
+				if (NumberUnitComparer.Instance.IsZero(SubtracEpsilon(checker.Result.Offset)))
 				{
-					checker.Result.Offset -= NumberUnitComparer.Instance.Epsilon;
+					checker.Result.Offset = 0;
 					return checker.Result;
 				}
 			}
 			if (checker.Result != null)
 			{
-				checker.Result.Offset -= NumberUnitComparer.Instance.Epsilon;
+				checker.Result.Offset = SubtracEpsilon(checker.Result.Offset);
 			}
 			return (RelationResult)checker.Result ?? InfinitResult.Instance;
+		}
+		private static double SubtracEpsilon(double value)
+		{
+			if (value < NumberUnitComparer.Instance.Epsilon)
+			{
+				return 0;
+			}
+			else
+			{
+				return value - NumberUnitComparer.Instance.Epsilon;
+			}
 		}
 
 		private RelationResult FlatCheck()

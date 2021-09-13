@@ -1,5 +1,6 @@
 ﻿using CollisionFlow;
 using GuiTest.ViewModel;
+using SolidFlow;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,32 +28,38 @@ namespace GuiTest
 		public MainWindow()
 		{
 			InitializeComponent();
-			var random = new Random(0);
-			for (int iRow = 0; iRow < 10; iRow++)
+
+			const double WEIGHT_MAX = 10;
+			const double HEIGHT_MAX = 10;
+			const double SPEED_MAX = 5;
+			const int ROWS_COUNT = 10;
+			const int COLUMNS_COUNT = 10;
+			const double GLOBAL_OFFSET = 200;
+
+			var random = new Random(1);
+			for (int iRow = 0; iRow < ROWS_COUNT; iRow++)
 			{
-				for (int iColumn = 0; iColumn < 20; iColumn++)
+				for (int iColumn = 0; iColumn < COLUMNS_COUNT; iColumn++)
 				{
-					var polygonVm = new PolygonVm(
-						new System.Windows.Rect(iColumn * 10, iRow * 10, 10, 10),
-						CollisionDispatcher,
-						random
-					);
-					if (polygonVm.Polygon is not null)
-					{
-						Polygons.Add(polygonVm);
-						CnvRoot.Children.Add(polygonVm.Polygon);
-					}
+					var offsetX = GLOBAL_OFFSET + iColumn * WEIGHT_MAX;
+					var offsetY = iRow * HEIGHT_MAX;
+					var centerX = offsetX + WEIGHT_MAX / 2;
+					var centerY = offsetY + HEIGHT_MAX / 2;
+					var points = PolygonBuilder.RegularPolygon((Math.Min(WEIGHT_MAX, HEIGHT_MAX) - 1) / 2, random.Next(3, 10))
+						.Select(x => new Vector128(x.X + centerX, x.Y + centerY))
+						.ToArray();
+					
+					var body = new Body(BodyDispatcher.Dispatcher, points, new Vector128(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX));
+					BodyDispatcher.Bodies.Add(body);
 				}
 			}
 
-			var left = new RectangleVm(new System.Windows.Rect(-10, 0, 9, 350), CollisionDispatcher);
-			var top = new RectangleVm(new System.Windows.Rect(0, -10, 350, 9), CollisionDispatcher);
-			var right = new RectangleVm(new System.Windows.Rect(360, 0, 10, 350), CollisionDispatcher);
-			var bottom = new RectangleVm(new System.Windows.Rect(0, 351, 350, 10), CollisionDispatcher);
-			CnvRoot.Children.Add(left.Rectangle);
-			CnvRoot.Children.Add(right.Rectangle);
-			CnvRoot.Children.Add(top.Rectangle);
-			CnvRoot.Children.Add(bottom.Rectangle);
+			foreach (var body in BodyDispatcher.Bodies)
+			{
+				var bodyVm = new BodyVm(body);
+				Bodyes.Add(bodyVm);
+				CnvRoot.Children.Add(bodyVm.Polygon);
+			}
 
 			DispatcherTimer = new DispatcherTimer();
 			DispatcherTimer.Tick += FrameUpdate;
@@ -62,66 +69,15 @@ namespace GuiTest
 
 		private void FrameUpdate(object? sender, EventArgs e)
 		{
-			var sw = Stopwatch.StartNew();
-			var offset = 1d;
-			var result = CollisionDispatcher.Offset(offset);
-			while (result is not null && result.Offset < offset)
+			BodyDispatcher.Offset(1);
+			foreach (var bodyVm in Bodyes)
 			{
-				foreach (var pairResult in result.Results)
-				{
-					var edgePolygon = Polygons.Select((x, i) => new { x, i }).FirstOrDefault(x => ReferenceEquals(x.x.PolygonHandler, pairResult.EdgePolygon));
-					var vertexPolygon = Polygons.Select((x, i) => new { x, i }).FirstOrDefault(x => ReferenceEquals(x.x.PolygonHandler, pairResult.VertexPolygon));
-
-					if (edgePolygon is not null)
-					{
-						edgePolygon.x.Course = new Vector128(-edgePolygon.x.Course.ToVector());
-					}
-					if (vertexPolygon is not null)
-					{
-						vertexPolygon.x.Course = new Vector128(-vertexPolygon.x.Course.ToVector());
-					}
-				}
-
-				offset -= result.Offset;
-				result = CollisionDispatcher.Offset(offset);
-			}
-			var elapsed = sw.Elapsed;
-
-			var perSecond = TimeSpan.FromSeconds(1) / elapsed;
-			FpsMin = Math.Min(FpsMin, perSecond);
-			TbMin.Text = FpsMin.ToString("0.0");
-			FpsMax = Math.Max(FpsMax, perSecond);
-			TbMax.Text = FpsMax.ToString("0.0");
-
-			FpsSumm += perSecond;
-			FpsCounter++;
-			TbFps.Text = (FpsSumm / FpsCounter).ToString("0.0");
-
-			FpsQueue.Enqueue(perSecond);
-			while (FpsQueue.Count > 10)
-			{
-				FpsQueue.Dequeue();
-			}
-			TbFpsLast.Text = (FpsQueue.Sum() / FpsQueue.Count).ToString("0.0");
-
-			foreach (var polygon in Polygons)
-			{
-				polygon.Update();
+				bodyVm.Refresh();
 			}
 		}
-		private static double FpsSumm = 0;
-		private static double FpsCounter = 0;
-		private static double FpsMin = double.PositiveInfinity;
-		private static double FpsMax = 0;
-		private static Queue<double> FpsQueue = new Queue<double>();
 
-		private List<PolygonVm> Polygons { get; } = new();
-		private CollisionDispatcher CollisionDispatcher { get; } = new();
+		private List<BodyVm> Bodyes { get; } = new();
+		private BodyDispatcher BodyDispatcher { get; } = new();
 		public DispatcherTimer DispatcherTimer { get; }
-
-		private void UpdateFrame_Click(object sender, RoutedEventArgs e)
-		{
-			FrameUpdate(null, EventArgs.Empty);
-		}
 	}
 }

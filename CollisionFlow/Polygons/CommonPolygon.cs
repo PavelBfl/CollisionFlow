@@ -110,6 +110,8 @@ namespace CollisionFlow.Polygons
 		IReadOnlyList<Moved<LineFunction, Vector128>> IPolygonHandler.Edges => Edges;
 		IReadOnlyList<Moved<Vector128, Vector128>> IPolygonHandler.Vertices => Verticies;
 
+		public object AttachetData { get; set; }
+
 		public bool IsCollision(Polygon other)
 		{
 			if (other is null)

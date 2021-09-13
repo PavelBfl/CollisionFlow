@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CollisionFlow\CollisionFlow.csproj" />
+    <ProjectReference Include="..\SolidFlow\SolidFlow.csproj" />
   </ItemGroup>
 
 </Project>

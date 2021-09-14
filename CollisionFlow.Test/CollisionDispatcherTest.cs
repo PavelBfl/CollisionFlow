@@ -22,14 +22,24 @@ namespace CollisionFlow.Test
 		}
 
 		[Fact]
-		public void Dispatcher_AddNull_ArgumentNullException()
+		public void Add_SetNull_ArgumentNullException()
 		{
 			var dispatcher = new CollisionDispatcher();
 			Assert.Throws<ArgumentNullException>(() => dispatcher.Add(null));
 		}
 
 		[Fact]
-		public void Dispatcher_Add_PolygonsContains()
+		public void Add_Single_HandleNotNull()
+		{
+			var builder = PolygonBuilder.CreateRegular(1, 10);
+			var dispatcher = new CollisionDispatcher();
+			var handler = dispatcher.Add(builder.GetLines());
+
+			Assert.NotNull(handler);
+		}
+
+		[Fact]
+		public void Add_Single_PolygonsContains()
 		{
 			var builder = PolygonBuilder.CreateRegular(1, 10);
 			var dispatcher = new CollisionDispatcher();
@@ -39,7 +49,7 @@ namespace CollisionFlow.Test
 		}
 
 		[Fact]
-		public void Dispatcher_Remove_PolygonsContains()
+		public void Remove_Single_PolygonsContains()
 		{
 			var builder = PolygonBuilder.CreateRegular(1, 10);
 			var dispatcher = new CollisionDispatcher();
@@ -49,6 +59,26 @@ namespace CollisionFlow.Test
 			Assert.DoesNotContain(handler, dispatcher.Polygons);
 		}
 
+		[Theory]
+		[MemberData(nameof(GetPolygonsWithTarget))]
+		public void Add_AddCollection_HandleNotNull(PolygonBuilder[] polygons, int index)
+		{
+			var dispatcher = new CollisionDispatcher();
+			IPolygonHandler handler = null;
+			for (int i = 0; i < polygons.Length; i++)
+			{
+				if (i == index)
+				{
+					handler = dispatcher.Add(polygons[i].GetLines());
+				}
+				else
+				{
+					dispatcher.Add(polygons[i].GetLines());
+				}
+			}
+
+			Assert.NotNull(handler);
+		}
 		[Theory]
 		[MemberData(nameof(GetPolygonsWithTarget))]
 		public void Add_AddCollection_ContainsTarget(PolygonBuilder[] polygons, int index)

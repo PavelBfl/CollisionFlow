@@ -40,7 +40,7 @@ namespace CollisionFlow
 
 			if (polygon.GlobalIndex > 0)
 			{
-				relations.RemoveAt(polygon.GlobalIndex);
+				relations.RemoveAt(polygon.GlobalIndex - 1);
 			}
 			else if (relations.Count > 0)
 			{

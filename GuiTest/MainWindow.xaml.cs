@@ -1,4 +1,5 @@
 ﻿using CollisionFlow;
+using CollisionFlow.Polygons;
 using GuiTest.ViewModel;
 using SolidFlow;
 using System;

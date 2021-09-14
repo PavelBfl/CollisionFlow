@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using CollisionFlow;
+using CollisionFlow.Polygons;
 using System;
 using System.Collections.Generic;
 using System.Linq;

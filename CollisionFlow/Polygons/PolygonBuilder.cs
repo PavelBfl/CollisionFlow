@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace CollisionFlow
+namespace CollisionFlow.Polygons
 {
 	public class PolygonBuilder
 	{
-		public static IEnumerable<Vector128> RegularPolygon(double radius, int verticesCount)
+		public static IEnumerable<Vector128> RegularPolygon(double radius, int verticesCount, double offset = 0)
 		{
 			const double FULL_ROUND = Math.PI * 2;
 
@@ -18,7 +18,7 @@ namespace CollisionFlow
 
 			for (int i = 0; i < verticesCount; i++)
 			{
-				var angleStep = FULL_ROUND / verticesCount * i;
+				var angleStep = FULL_ROUND / verticesCount * i + offset;
 
 				var x = Math.Cos(angleStep) * radius;
 				var y = Math.Sin(angleStep) * radius;
@@ -27,6 +27,15 @@ namespace CollisionFlow
 			}
 		}
 
+		public static PolygonBuilder CreateRegular(double radius, int verticesCount, double offset = 0, Vector128? center = null)
+			=> new PolygonBuilder(RegularPolygon(radius, verticesCount, offset), center ?? Vector128.Zero);
+		public static PolygonBuilder CreateRect(Rect rect, Vector128? course = null)
+			=> new PolygonBuilder(course ?? Vector128.Zero)
+				.Add(new Vector128(rect.Left, rect.Top))
+				.Add(new Vector128(rect.Right, rect.Top))
+				.Add(new Vector128(rect.Right, rect.Bottom))
+				.Add(new Vector128(rect.Left, rect.Bottom));
+
 		public PolygonBuilder()
 		{
 
@@ -34,6 +43,18 @@ namespace CollisionFlow
 		public PolygonBuilder(Vector128 defaultCourse)
 		{
 			DefaultCourse = defaultCourse;
+		}
+		public PolygonBuilder(IEnumerable<Vector128> vertices, Vector128 defaultCourse)
+			: this(defaultCourse)
+		{
+			if (vertices is null)
+			{
+				throw new ArgumentNullException(nameof(vertices));
+			}
+			foreach (var vertex in vertices)
+			{
+				Add(vertex);
+			}
 		}
 
 		private List<Moved<Vector128, Vector128>> Points { get; } = new List<Moved<Vector128, Vector128>>();
@@ -65,6 +86,33 @@ namespace CollisionFlow
 		public PolygonBuilder OffsetX(double x) => OffsetX(x, DefaultCourse);
 		public PolygonBuilder OffsetY(double y, Vector128 course) => Offset(new Vector128(0, y), course);
 		public PolygonBuilder OffsetY(double y) => OffsetY(y, DefaultCourse);
+		public PolygonBuilder OffsetAll(Vector128 vector)
+		{
+			var result = new PolygonBuilder(DefaultCourse);
+			foreach (var point in Points)
+			{
+				result.Add((point.Target.ToVector() + vector.ToVector()).ToVector128(), point.Course);
+			}
+			return result;
+		}
+		public PolygonBuilder OffsetCourse(Vector128 vector)
+		{
+			var result = new PolygonBuilder(DefaultCourse);
+			foreach (var point in Points)
+			{
+				result.Add(point.Target, (point.Course.ToVector() + vector.ToVector()).ToVector128());
+			}
+			return result;
+		}
+		public PolygonBuilder SetAllCourse(Vector128 vector)
+		{
+			var result = new PolygonBuilder(DefaultCourse);
+			foreach (var point in Points)
+			{
+				result.Add(point.Target, vector);
+			}
+			return result;
+		}
 
 		public IEnumerable<Moved<LineFunction, Vector128>> GetLines()
 		{

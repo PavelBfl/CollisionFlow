@@ -6,17 +6,6 @@ using CollisionFlow.Polygons;
 
 namespace CollisionFlow
 {
-	public class GroupCollisionResult
-	{
-		public GroupCollisionResult(IEnumerable<CollisionData> results, double offset)
-		{
-			Results = results?.ToArray() ?? throw new ArgumentNullException(nameof(results));
-			Offset = offset;
-		}
-
-		public CollisionData[] Results { get; }
-		public double Offset { get; }
-	}
 	public class CollisionDispatcher
 	{
 		private readonly List<List<Relation>> relations = new List<List<Relation>>();
@@ -49,7 +38,15 @@ namespace CollisionFlow
 			}
 			var polygon = (Polygon)handler;
 
-			relations.RemoveAt(polygon.GlobalIndex > 0 ? polygon.GlobalIndex - 1 : 0);
+			if (polygon.GlobalIndex > 0)
+			{
+				relations.RemoveAt(polygon.GlobalIndex);
+			}
+			else if (relations.Count > 0)
+			{
+				// После отчистки эта строка будет хранить пустой список, поэтому удаляем сразу всю строку
+				relations.RemoveAt(0);
+			}
 			foreach (var row in relations)
 			{
 				if (polygon.GlobalIndex < row.Count)

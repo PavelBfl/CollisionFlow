@@ -7,6 +7,9 @@ namespace CollisionFlow
 {
 	public struct Rect
 	{
+		public static Rect CreateLeftTop(double x, double y, double width, double height)
+			=> new Rect(x, x + width, y, y - height);
+
 		public Rect(Vector128 begin, Vector128 end)
 		{
 			Left = Math.Min(begin.X, end.X);

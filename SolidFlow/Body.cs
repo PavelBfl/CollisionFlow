@@ -24,7 +24,7 @@ namespace SolidFlow
 		{
 			foreach (var body in Bodies)
 			{
-				body.Course = (body.Course.ToVector() + (Vector128.Create(0, 0.1) * body.Weight)).ToVector128();
+				body.Course = (body.Course.ToVector() + body.StepOffset.ToVector() * body.Weight).ToVector128();
 			}
 			var result = Dispatcher.Offset(value);
 			while (!(result is null) && result.Offset < value)
@@ -45,13 +45,28 @@ namespace SolidFlow
 						coefficientX - vertexBody.Course.X,
 						coefficientY - vertexBody.Course.Y
 					);
-					edgeBody.Course = edgeV;
-					vertexBody.Course = vertexV;
+
+					const double BOUNS = 0.95;
+					edgeBody.Course = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, edgeV).ToVector() * BOUNS).ToVector128();
+					vertexBody.Course = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, vertexV).ToVector() * BOUNS).ToVector128();
 				}
 
 				value -= result.Offset;
 				result = Dispatcher.Offset(value);
 			}
+		}
+		private static Vector128 Mirror(LineFunction line, Vector128 vertex, Vector128 course)
+		{
+			var nextLine = line.OffsetByVector(course);
+			var overrideLine = line
+						.Perpendicular()
+						.OffsetToPoint(vertex)
+						.OffsetByVector((-course.ToVector()).ToVector128());
+			var newPoint = nextLine.Crossing(overrideLine);
+			return new Vector128(
+				newPoint.X - vertex.X,
+				newPoint.Y - vertex.Y
+			);
 		}
 	}
 	public class Body
@@ -82,6 +97,7 @@ namespace SolidFlow
 		public CollisionDispatcher Dispatcher { get; }
 		public IPolygonHandler Handler { get; private set; }
 		public double Weight { get; set; } = 1;
+		public Vector128 StepOffset { get; set; }
 
 		private Vector128 course;
 		public Vector128 Course

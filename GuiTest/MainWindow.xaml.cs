@@ -32,10 +32,10 @@ namespace GuiTest
 
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
-			const double SPEED_MAX = 5;
+			const double SPEED_MAX = 0;
 			const int ROWS_COUNT = 10;
 			const int COLUMNS_COUNT = 10;
-			const double GLOBAL_OFFSET = 200;
+			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
 			for (int iRow = 0; iRow < ROWS_COUNT; iRow++)
@@ -49,11 +49,41 @@ namespace GuiTest
 					var points = PolygonBuilder.RegularPolygon((Math.Min(WEIGHT_MAX, HEIGHT_MAX) - 1) / 2, random.Next(3, 10))
 						.Select(x => new Vector128(x.X + centerX, x.Y + centerY))
 						.ToArray();
-					
-					var body = new Body(BodyDispatcher.Dispatcher, points, new Vector128(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX));
+
+					var body = new Body(BodyDispatcher.Dispatcher, points, new Vector128(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX))
+					{
+						StepOffset = new Vector128(0, 0.1),
+					};
 					BodyDispatcher.Bodies.Add(body);
 				}
 			}
+
+			var bottom = new Body(BodyDispatcher.Dispatcher, new Vector128[]
+			{
+				new(0, -1000),
+				new(0, 300),
+				new(700, 300),
+				new(700, -1000),
+				new(710, -1000),
+				new(710, 310),
+				new(-10, 310),
+				new(-10, -1000),
+			})
+			{
+				Weight = 1000000000000,
+			};
+			BodyDispatcher.Bodies.Add(bottom);
+
+			var bod = new Body(BodyDispatcher.Dispatcher, new Vector128[]
+			{
+				new(350, 200),
+				new(400, 250),
+				new(300, 250),
+			})
+			{
+				Weight = 1000000000000,
+			};
+			BodyDispatcher.Bodies.Add(bod);
 
 			foreach (var body in BodyDispatcher.Bodies)
 			{

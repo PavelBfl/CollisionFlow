@@ -14,122 +14,81 @@ namespace BenchmarkTest
 	{
 		static void Main(string[] args)
 		{
-			//BenchmarkRunner.Run<Test>();
-			var disparcher = Test.Dispatcher1000;
-			for (int i = 0; i < 500; i++)
-			{
-				var result = disparcher.Offset(1);
-
-				if (result is { Offset: < 1 })
-				{
-					Console.WriteLine($"{i,-2} Error: ({result.Offset})");
-				}
-				else
-				{
-					Console.WriteLine($"{i,-2} Success");
-				}
-			}
+			BenchmarkRunner.Run<Test>();
 		}
 	}
 
 	public class Test
 	{
-		public static CollisionDispatcher Dispatcher2 { get; } = GetDispatcher(2, 1);
-		public static CollisionDispatcher Dispatcher100 { get; } = GetDispatcher(10, 10);
-		public static CollisionDispatcher Dispatcher1000 { get; } = GetDispatcher(10, 100);
-		public static Rect[] ControlObjects { get; } = Enumerable.Range(0, 1000)
-			.Select(x => new Rect(0, 10, 10, 0))
-			.ToArray();
+		private static CollisionDispatcher DispatcherLight { get; } = GetDispatcher(2);
+		private static CollisionDispatcher DispatcherMedium { get; } = GetDispatcher(100);
+		private static CollisionDispatcher DispatcherHeavy { get; } = GetDispatcher(1000);
 
-		public static CollisionDispatcher GetDispatcher(int rowsCount, int columnsCount)
+		private static CollisionDispatcher Dispatcher10 { get; } = GetDispatcher(10);
+		private static CollisionDispatcher Dispatcher50 { get; } = GetDispatcher(50);
+
+		public static CollisionDispatcher GetDispatcher(int count)
 		{
-			if (rowsCount < 1)
-			{
-				throw new InvalidOperationException();
-			}
-			if (columnsCount < 1)
+			if (count < 1)
 			{
 				throw new InvalidOperationException();
 			}
 
 			var result = new CollisionDispatcher();
-			for (int iRow = 0; iRow < rowsCount; iRow++)
+
+			var left = PolygonBuilder.CreateRect(new Rect(-1, 0, count, 0));
+			var right = PolygonBuilder.CreateRect(new Rect(2, 3, count, 0));
+
+			result.Add(left.GetLines());
+			result.Add(right.GetLines());
+
+			for (int i = 0; i < count; i++)
 			{
-				for (int iColumn = 0; iColumn < columnsCount; iColumn++)
-				{
-					result.Add(new PolygonBuilder(new Vector128(1, 0))
-						.Add(new Vector128(iColumn, iRow))
-						.Add(new Vector128(iColumn + 0.5, iRow + 0.5))
-						.Add(new Vector128(iColumn, iRow + 0.9))
-						.Add(new Vector128(iColumn + 1.1, iRow + 0.5))
-						.GetLines());
-				}
+				var polygon = PolygonBuilder.CreateRegular(0.4, 10, 0, new Vector128(1, i + 0.5))
+					.SetAllCourse(new Vector128(10, 0));
+				result.Add(polygon.GetLines());
 			}
 			return result;
 		}
 
 		[Benchmark]
-		public int ControlFor()
+		public void Test10()
 		{
-			var result = 0;
+			Offset(Dispatcher10);
+		}
+		[Benchmark]
+		public void Test50()
+		{
+			Offset(Dispatcher50);
+		}
+		[Benchmark]
+		public void Light()
+		{
+			Offset(DispatcherLight);
+		}
+		[Benchmark]
+		public void Medium()
+		{
+			Offset(DispatcherMedium);
+		}
+		[Benchmark]
+		public void Heavy()
+		{
+			Offset(DispatcherHeavy);
+		}
 
-			for (int i = 0; i < ControlObjects.Length; i++)
+		private static void Offset(CollisionDispatcher collisionDispatcher)
+		{
+			collisionDispatcher.Offset(1);
+			foreach (var polygon in collisionDispatcher.Polygons.ToArray())
 			{
-				for (int j = i + 1; j < ControlObjects.Length; j++)
-				{
-					result++;
-				}
+				var builder = new PolygonBuilder(
+					polygon.Vertices.Select(x => x.Target),
+					new Vector128(-polygon.Vertices.First().Target.X, 0)
+				);
+				collisionDispatcher.Remove(polygon);
+				collisionDispatcher.Add(builder.GetLines());
 			}
-
-			return result;
-		}
-		[Benchmark]
-		public long ControlBinaryAnd()
-		{
-			var result = ~0L;
-
-			for (long i = 0; i < ControlObjects.Length; i++)
-			{
-				for (long j = i + 1; j < ControlObjects.Length; j++)
-				{
-					result &= i & j;
-				}
-			}
-
-			return result;
-		}
-		[Benchmark]
-		public bool ControlRectCollision()
-		{
-			var result = true;
-
-			for (int i = 0; i < ControlObjects.Length; i++)
-			{
-				var rect1 = ControlObjects[i];
-				for (int j = i + 1; j < ControlObjects.Length; j++)
-				{
-					var rect2 = ControlObjects[j];
-					result = rect1.Intersect(rect2);
-				}
-			}
-
-			return result;
-		}
-
-		[Benchmark]
-		public void CommonNew2()
-		{
-			Dispatcher2.Offset(1);
-		}
-		[Benchmark]
-		public void CommonNew100()
-		{
-			Dispatcher100.Offset(1);
-		}
-		[Benchmark]
-		public void CommonNew1000()
-		{
-			Dispatcher1000.Offset(1);
 		}
 	}
 }

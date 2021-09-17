@@ -62,10 +62,27 @@ namespace CollisionFlow
 			}
 		}
 
+		private static int counter = -1;
 		public GroupCollisionResult Offset(double value)
 		{
+			counter++;
 			var resultMin = new List<(CollisionData Data, Relation Relation)>();
 			double? min = null;
+
+			//var pResult = relations.AsParallel()
+			//	.WithDegreeOfParallelism(1)
+			//	.SelectMany(x => x)
+			//	.Select(x => (Data: x.GetResult(value), Relation: x))
+			//	.Where(x => x.Data != null && x.Data.Offset < value)
+			//	.ToLookup(x => x.Data.Offset, NumberUnitComparer.Instance);
+
+			//if (pResult.Any())
+			//{
+			//	var pMin = pResult.Min(x => x.Key);
+			//	min = pMin;
+			//	resultMin.AddRange(pResult[pMin].Select(x => (x.Data.CollisionData, x.Relation)));
+			//}
+
 			foreach (var row in relations)
 			{
 				foreach (var cell in row)

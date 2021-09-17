@@ -14,32 +14,22 @@ namespace CollisionFlow.Polygons
 			}
 			Edges = edges?.ToArray() ?? throw new ArgumentNullException(nameof(edges));
 			CourseQuadrant = Edges.Aggregate(Quadrant.None, (a, x) => a | GetQuadrant(x.Course));
+			Verticies = GetVerticies(Edges);
+			bounds = new Rect(Verticies.Select(x => x.Target));
 		}
 
 		public override Quadrant CourseQuadrant { get; }
 
 		public override Moved<LineFunction, Vector128>[] Edges { get; }
+		public override Moved<Vector128, Vector128>[] Verticies { get; }
 
-		private Moved<Vector128, Vector128>[] vertices = null;
-		public override Moved<Vector128, Vector128>[] Verticies => vertices ?? (vertices = GetVerticies(Edges));
-
-		private Rect? bounds;
-		public override Rect Bounds
-		{
-			get
-			{
-				if (bounds is null)
-				{
-					bounds = new Rect(Verticies.Select(x => x.Target));
-				}
-				return bounds.Value;
-			}
-		}
+		private Rect bounds;
+		public override Rect Bounds => bounds;
 
 		public override void Offset(double value)
 		{
 			base.Offset(value);
-			bounds = null;
+			bounds = new Rect(Verticies.Select(x => x.Target));
 		}
 	}
 }

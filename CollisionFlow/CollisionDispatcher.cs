@@ -69,48 +69,23 @@ namespace CollisionFlow
 			var resultMin = new List<(CollisionData Data, Relation Relation)>();
 			double? min = null;
 
-			//var pResult = relations.AsParallel()
-			//	.WithDegreeOfParallelism(1)
-			//	.SelectMany(x => x)
-			//	.Select(x => (Data: x.GetResult(value), Relation: x))
-			//	.Where(x => x.Data != null && x.Data.Offset < value)
-			//	.ToLookup(x => x.Data.Offset, NumberUnitComparer.Instance);
+			var pResult = relations.AsParallel()
+				.SelectMany(x => x)
+				.Select(x => (Data: x.GetResult(value), Relation: x))
+				.Where(x => x.Data != null && x.Data.Offset < value)
+				.OrderBy(x => x.Data.Offset);
 
-			//if (pResult.Any())
-			//{
-			//	var pMin = pResult.Min(x => x.Key);
-			//	min = pMin;
-			//	resultMin.AddRange(pResult[pMin].Select(x => (x.Data.CollisionData, x.Relation)));
-			//}
-
-			foreach (var row in relations)
+			foreach (var item in pResult)
 			{
-				foreach (var cell in row)
+				if (min is null)
 				{
-					var cellResult = cell.GetResult(value);
-					if (cellResult != null && cellResult.Offset < value)
-					{
-						if (min is null)
-						{
-							min = cellResult.Offset;
-							resultMin.Add((cellResult.CollisionData, cell));
-						}
-						else
-						{
-							var compare = NumberUnitComparer.Instance.Compare(cellResult.Offset, min.Value);
-							if (compare < 0)
-							{
-								min = cellResult.Offset;
-								resultMin.Clear();
-								resultMin.Add((cellResult.CollisionData, cell));
-							}
-							else if (compare == 0)
-							{
-								resultMin.Add((cellResult.CollisionData, cell));
-							}
-						}
-					}
+					min = item.Data.Offset;
 				}
+				else if (!NumberUnitComparer.Instance.Equals(min.Value, item.Data.Offset))
+				{
+					break;
+				}
+				resultMin.Add((item.Data.CollisionData, item.Relation));
 			}
 
 			var offset = min ?? value;

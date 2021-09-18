@@ -6,31 +6,6 @@ namespace CollisionFlow.Polygons
 {
 	abstract class Polygon : IPolygonHandler
 	{
-		protected static Quadrant GetQuadrant(Vector128 course)
-		{
-			var xCompare = NumberUnitComparer.Instance.Compare(course.X, 0);
-			var yCompare = NumberUnitComparer.Instance.Compare(course.Y, 0);
-
-			var result = Quadrant.None;
-			if (xCompare < 0)
-			{
-				result |= Quadrant.Left;
-			}
-			else if (xCompare > 0)
-			{
-				result |= Quadrant.Right;
-			}
-
-			if (yCompare < 0)
-			{
-				result |= Quadrant.Bottom;
-			}
-			else if (yCompare > 0)
-			{
-				result |= Quadrant.Top;
-			}
-			return result;
-		}
 		protected static Moved<Vector128, Vector128>[] GetVerticies(Moved<LineFunction, Vector128>[] edges)
 		{
 			var vertices = new Moved<Vector128, Vector128>[edges.Length];
@@ -79,7 +54,6 @@ namespace CollisionFlow.Polygons
 		}
 
 		public int GlobalIndex { get; set; }
-		public abstract Quadrant CourseQuadrant { get; }
 
 		public abstract Moved<LineFunction, Vector128>[] Edges { get; }
 		public abstract Moved<Vector128, Vector128>[] Verticies { get; }

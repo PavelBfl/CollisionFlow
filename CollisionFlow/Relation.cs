@@ -143,65 +143,15 @@ namespace CollisionFlow
 			}
 			else
 			{
-				var flatResult = FlatCheck();
+				var flatResult = FlatCheck(offset);
 				if (flatResult != null)
 				{
 					return flatResult;
 				}
-				var undeformableResult = UndeformableResult(offset);
-				if (undeformableResult != null)
-				{
-					return undeformableResult;
-				}
 				return GetMinResult();
 			}
 		}
-		private static int flatCounter = 0;
-		private static int notFlatCounter = 0;
 
-		private WaitResult UndeformableResult(double offset)
-		{
-			if (First is UndeformablePolygon first && Second is UndeformablePolygon second)
-			{
-				var distance = GetDistance(first.Bounds, second.Bounds);
-				if (distance.Equals(Vector128.Zero))
-				{
-					return null;
-				}
-				var firstCourse = first.Course;
-				var secondCourse = second.Course;
-				double wait;
-				if (NumberUnitComparer.Instance.IsZero(distance.Y))
-				{
-					var xTime = distance.X / Math.Abs(firstCourse.X - secondCourse.X);
-					wait = xTime;
-				}
-				else if (NumberUnitComparer.Instance.IsZero(distance.X))
-				{
-					var yTime = distance.Y / Math.Abs(firstCourse.Y - secondCourse.Y);
-					wait = yTime;
-				}
-				else
-				{
-					var xTime = distance.X / Math.Abs(firstCourse.X - secondCourse.X);
-					var yTime = distance.Y / Math.Abs(firstCourse.Y - secondCourse.Y);
-					wait = Math.Max(xTime, yTime);
-				}
-
-				if (wait < offset)
-				{
-					return null;
-				}
-				else
-				{
-					return new WaitResult(wait);
-				}
-			}
-			else
-			{
-				return null;
-			}
-		}
 		private RelationResult GetMinResult()
 		{
 			var checker = new MinChecker();
@@ -236,29 +186,76 @@ namespace CollisionFlow
 			}
 		}
 
-		private static InfinitResult GetFlat(double pursuerCourse, double runawayCourse)
-			=> pursuerCourse - runawayCourse > 0 ? null : InfinitResult.Instance;
-		private InfinitResult GetFlatHorisontal()
+		private double? GetFlatHorisontal()
 		{
 			switch (Compare(First.Bounds.Horisontal, Second.Bounds.Horisontal))
 			{
-				case RangeCompare.Equals: return null;
-				case RangeCompare.Less: return GetFlat(First.BoundsCourse.Right, Second.BoundsCourse.Left);
-				case RangeCompare.Over: return GetFlat(Second.BoundsCourse.Right, First.BoundsCourse.Left);
+				case RangeCompare.Equals: return 0;
+				case RangeCompare.Less: return GetTime(Moved.Create(First.Bounds.Right, First.BoundsCourse.Right) , Moved.Create(Second.Bounds.Left, Second.BoundsCourse.Left));
+				case RangeCompare.Over: return GetTime(Moved.Create(Second.Bounds.Right, Second.BoundsCourse.Right), Moved.Create(First.Bounds.Left, First.BoundsCourse.Left));
 				default: throw new InvalidCollisiopnException();
 			}
 		}
-		private InfinitResult GetFlatVertical()
+		private double? GetFlatVertical()
 		{
 			switch (Compare(First.Bounds.Vertical, Second.Bounds.Vertical))
 			{
-				case RangeCompare.Equals: return null;
-				case RangeCompare.Less: return GetFlat(First.BoundsCourse.Top, Second.BoundsCourse.Bottom);
-				case RangeCompare.Over: return GetFlat(Second.BoundsCourse.Top, First.BoundsCourse.Bottom);
+				case RangeCompare.Equals: return 0;
+				case RangeCompare.Less: return GetTime(Moved.Create(First.Bounds.Top, First.BoundsCourse.Top), Moved.Create(Second.Bounds.Bottom, Second.BoundsCourse.Bottom));
+				case RangeCompare.Over: return GetTime(Moved.Create(Second.Bounds.Top, Second.BoundsCourse.Top), Moved.Create(First.Bounds.Bottom, First.BoundsCourse.Bottom));
 				default: throw new InvalidCollisiopnException();
 			}
 		}
-		private RelationResult FlatCheck() => GetFlatHorisontal() ?? GetFlatVertical();
+		private RelationResult FlatCheck(double offset)
+		{
+			var horisontal = GetFlatHorisontal();
+			if (horisontal != null)
+			{
+				var vertical = GetFlatVertical();
+				if (vertical != null)
+				{
+					double wait;
+					if (NumberUnitComparer.Instance.IsZero(horisontal.Value))
+					{
+						if (NumberUnitComparer.Instance.IsZero(vertical.Value))
+						{
+							return null;
+						}
+						else
+						{
+							wait = vertical.Value;
+						}
+					}
+					else
+					{
+						if (NumberUnitComparer.Instance.IsZero(vertical.Value))
+						{
+							wait = horisontal.Value;
+						}
+						else
+						{
+							wait = Math.Max(vertical.Value, horisontal.Value);
+						}
+					}
+					if (wait < offset)
+					{
+						return null;
+					}
+					else
+					{
+						return new WaitResult(wait);
+					}
+				}
+				else
+				{
+					return InfinitResult.Instance;
+				}
+			}
+			else
+			{
+				return InfinitResult.Instance;
+			}
+		}
 
 		private enum RangeCompare
 		{
@@ -280,53 +277,6 @@ namespace CollisionFlow
 			{
 				return RangeCompare.Over;
 			}
-		}
-		private (Quadrant first, Quadrant second)? GetQuadrant(Rect first, Rect second)
-		{
-			var xCompare = Compare(first.Horisontal, second.Horisontal);
-
-			switch (xCompare)
-			{
-				case RangeCompare.Equals:
-					var yCompare = Compare(first.Vertical, second.Vertical);
-					switch (yCompare)
-					{
-						case RangeCompare.Equals: return null;
-						case RangeCompare.Over: return (Quadrant.Top, Quadrant.Bottom);
-						case RangeCompare.Less: return (Quadrant.Bottom, Quadrant.Top);
-						default: throw new InvalidCollisiopnException();
-					}
-				case RangeCompare.Over: return (Quadrant.Right, Quadrant.Left);
-				case RangeCompare.Less: return (Quadrant.Left, Quadrant.Right);
-				default: throw new InvalidCollisiopnException();
-			}
-		}
-		private Vector128 GetDistance(Rect first, Rect second)
-		{
-			var xCompare = Compare(first.Horisontal, second.Horisontal);
-			var yCompare = Compare(first.Vertical, second.Vertical);
-
-			var x = 0d;
-			switch (xCompare)
-			{
-				case RangeCompare.Over:
-					x = first.Left - second.Right;
-					break;
-				case RangeCompare.Less:
-					x = second.Left - first.Right;
-					break;
-			}
-			var y = 0d;
-			switch (yCompare)
-			{
-				case RangeCompare.Over:
-					y = first.Bottom - second.Top;
-					break;
-				case RangeCompare.Less:
-					y = second.Bottom - first.Top;
-					break;
-			}
-			return new Vector128(x, y);
 		}
 
 		private static IEnumerable<OffsetResult> GetTime(Polygon main, Polygon other, PreviewChecker previewChecker)

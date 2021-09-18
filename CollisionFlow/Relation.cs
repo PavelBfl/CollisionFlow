@@ -156,6 +156,9 @@ namespace CollisionFlow
 				return GetMinResult();
 			}
 		}
+		private static int flatCounter = 0;
+		private static int notFlatCounter = 0;
+
 		private WaitResult UndeformableResult(double offset)
 		{
 			if (First is UndeformablePolygon first && Second is UndeformablePolygon second)
@@ -233,30 +236,29 @@ namespace CollisionFlow
 			}
 		}
 
-		private RelationResult FlatCheck()
+		private static InfinitResult GetFlat(double pursuerCourse, double runawayCourse)
+			=> pursuerCourse - runawayCourse > 0 ? null : InfinitResult.Instance;
+		private InfinitResult GetFlatHorisontal()
 		{
-			var firstBounds = First.Bounds;
-			var secondBounds = Second.Bounds;
-
-			var quadrants = GetQuadrant(firstBounds, secondBounds);
-			if (quadrants is null)
+			switch (Compare(First.Bounds.Horisontal, Second.Bounds.Horisontal))
 			{
-				return null;
-			}
-			else
-			{
-				var firstCourse = First.CourseQuadrant;
-				var secondCourse = Second.CourseQuadrant;
-				if ((firstCourse & quadrants.Value.second) == 0 && (secondCourse & quadrants.Value.first) == 0)
-				{
-					return InfinitResult.Instance;
-				}
-				else
-				{
-					return null;
-				}
+				case RangeCompare.Equals: return null;
+				case RangeCompare.Less: return GetFlat(First.BoundsCourse.Right, Second.BoundsCourse.Left);
+				case RangeCompare.Over: return GetFlat(Second.BoundsCourse.Right, First.BoundsCourse.Left);
+				default: throw new InvalidCollisiopnException();
 			}
 		}
+		private InfinitResult GetFlatVertical()
+		{
+			switch (Compare(First.Bounds.Vertical, Second.Bounds.Vertical))
+			{
+				case RangeCompare.Equals: return null;
+				case RangeCompare.Less: return GetFlat(First.BoundsCourse.Top, Second.BoundsCourse.Bottom);
+				case RangeCompare.Over: return GetFlat(Second.BoundsCourse.Top, First.BoundsCourse.Bottom);
+				default: throw new InvalidCollisiopnException();
+			}
+		}
+		private RelationResult FlatCheck() => GetFlatHorisontal() ?? GetFlatVertical();
 
 		private enum RangeCompare
 		{

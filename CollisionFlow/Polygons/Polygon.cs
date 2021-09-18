@@ -84,6 +84,7 @@ namespace CollisionFlow.Polygons
 		public abstract Moved<LineFunction, Vector128>[] Edges { get; }
 		public abstract Moved<Vector128, Vector128>[] Verticies { get; }
 		public abstract Rect Bounds { get; }
+		public abstract Rect BoundsCourse { get; }
 		public virtual void Offset(double value)
 		{
 			for (int i = 0; i < Edges.Length; i++)

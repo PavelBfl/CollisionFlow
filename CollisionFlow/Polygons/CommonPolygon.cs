@@ -16,6 +16,7 @@ namespace CollisionFlow.Polygons
 			CourseQuadrant = Edges.Aggregate(Quadrant.None, (a, x) => a | GetQuadrant(x.Course));
 			Verticies = GetVerticies(Edges);
 			bounds = new Rect(Verticies.Select(x => x.Target));
+			BoundsCourse = new Rect(Verticies.Select(x => x.Course));
 		}
 
 		public override Quadrant CourseQuadrant { get; }
@@ -25,6 +26,7 @@ namespace CollisionFlow.Polygons
 
 		private Rect bounds;
 		public override Rect Bounds => bounds;
+		public override Rect BoundsCourse { get; }
 
 		public override void Offset(double value)
 		{

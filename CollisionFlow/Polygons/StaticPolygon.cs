@@ -16,12 +16,14 @@ namespace CollisionFlow.Polygons
 			Edges = edges.Select(x => Moved.Create(x, Vector128.Zero)).ToArray();
 			Verticies = GetVerticies(Edges);
 			Bounds = new Rect(Verticies.Select(x => x.Target));
+			BoundsCourse = new Rect(0, 0, 0, 0);
 		}
 
 		public override Quadrant CourseQuadrant { get; }
 		public override Moved<LineFunction, Vector128>[] Edges { get; }
 		public override Moved<Vector128, Vector128>[] Verticies { get; }
 		public override Rect Bounds { get; }
+		public override Rect BoundsCourse { get; }
 
 		public override void Offset(double value)
 		{

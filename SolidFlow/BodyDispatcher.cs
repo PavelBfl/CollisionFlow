@@ -1,36 +1,69 @@
 ﻿using CollisionFlow;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SolidFlow
 {
 	public class BodyDispatcher
 	{
-		private static bool IsDeadSpeed(Vector128 speed, double value)
+		private static bool IsDeadSpeed(Vector128 speed)
 		{
 			const double MIN_SPEED = 0.07;
-			return Math.Abs(speed.X) < (MIN_SPEED * value) && Math.Abs(speed.Y) < (MIN_SPEED * value);
+			return Math.Abs(speed.X) < MIN_SPEED && Math.Abs(speed.Y) < MIN_SPEED;
 		}
 
 		public double StepLength { get; } = 1d;
+		private double LastStep { get; set; } = 0;
+
 		public CollisionDispatcher Dispatcher { get; } = new CollisionDispatcher();
 		public List<Body> Bodies { get; } = new List<Body>();
 
 		public void Offset(double value)
 		{
-			do
+			if (value <= LastStep)
 			{
-				var offset = value > StepLength ? StepLength : value;
-				OffsetStep(offset);
-				value -= offset;
-			} while (value > 0);
+				OffsetStep(value);
+				LastStep -= value;
+				if (LastStep == 0)
+				{
+					Refresh();
+				}
+			}
+			else if (value <= StepLength)
+			{
+				OffsetStep(LastStep);
+				Refresh();
+				OffsetStep(value - LastStep);
+				LastStep = StepLength - (value - LastStep);
+			}
+			else
+			{
+				var offset = LastStep > 0 ? LastStep : StepLength;
+				while (value > 0)
+				{
+					OffsetStep(offset);
+					Refresh();
+					value -= offset;
+					LastStep -= offset;
+					offset = Math.Min(value, StepLength);
+				}
+				while (LastStep < 0)
+				{
+					LastStep += StepLength;
+				}
+			}
 		}
-		private void OffsetStep(double value)
+
+		private void Refresh()
 		{
 			foreach (var body in Bodies)
 			{
-				body.Refresh(value);
+				body.Refresh();
 			}
+		}
+		private void OffsetStep(double value)
+		{
 			var result = Dispatcher.Offset(value);
 			while (!(result is null) && result.Offset < value)
 			{
@@ -52,7 +85,7 @@ namespace SolidFlow
 					);
 
 					var edgeCourse = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
-					if (IsDeadSpeed(edgeCourse, value))
+					if (IsDeadSpeed(edgeCourse))
 					{
 						edgeBody.CreateRest(vertexBody);
 					}
@@ -62,7 +95,7 @@ namespace SolidFlow
 					}
 
 					var vertexCourse = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
-					if (IsDeadSpeed(vertexCourse, value))
+					if (IsDeadSpeed(vertexCourse))
 					{
 						vertexBody.CreateRest(edgeBody);
 					}

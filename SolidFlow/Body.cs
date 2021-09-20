@@ -49,11 +49,11 @@ namespace SolidFlow
 		public HashSet<Body> RestOn { get; } = new HashSet<Body>();
 		private HashSet<Body> RestFor { get; } = new HashSet<Body>();
 
-		public void Refresh(double value)
+		public void Refresh()
 		{
 			if (!IsRest)
 			{
-				Course = (Course.ToVector() + Pull.ToVector() * value).ToVector128();
+				Course = (Course.ToVector() + Pull.ToVector() * Weight).ToVector128();
 				ClearRest();
 			}
 		}

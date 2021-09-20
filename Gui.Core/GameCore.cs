@@ -123,7 +123,7 @@ namespace Gui.Core
 
 		protected override void Update(GameTime gameTime)
 		{
-			_bodyDispatcher.Offset(0.1);
+			_bodyDispatcher.Offset(1);
 			base.Update(gameTime);
 		}
 

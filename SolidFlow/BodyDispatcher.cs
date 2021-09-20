@@ -1,10 +1,17 @@
 ﻿using CollisionFlow;
+using System;
 using System.Collections.Generic;
 
 namespace SolidFlow
 {
 	public class BodyDispatcher
 	{
+		private static bool IsDeadSpeed(Vector128 speed, double value)
+		{
+			const double MIN_SPEED = 0.07;
+			return Math.Abs(speed.X) < (MIN_SPEED * value) && Math.Abs(speed.Y) < (MIN_SPEED * value);
+		}
+
 		public double StepLength { get; } = 1d;
 		public CollisionDispatcher Dispatcher { get; } = new CollisionDispatcher();
 		public List<Body> Bodies { get; } = new List<Body>();
@@ -22,7 +29,7 @@ namespace SolidFlow
 		{
 			foreach (var body in Bodies)
 			{
-				body.Course = (body.Course.ToVector() + body.StepOffset.ToVector() * body.Weight).ToVector128();
+				body.Refresh(value);
 			}
 			var result = Dispatcher.Offset(value);
 			while (!(result is null) && result.Offset < value)
@@ -44,8 +51,25 @@ namespace SolidFlow
 						coefficientY - vertexBody.Course.Y
 					);
 
-					edgeBody.Course = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
-					vertexBody.Course = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
+					var edgeCourse = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
+					if (IsDeadSpeed(edgeCourse, value))
+					{
+						edgeBody.CreateRest(vertexBody);
+					}
+					else
+					{
+						edgeBody.Push(edgeCourse);
+					}
+
+					var vertexCourse = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
+					if (IsDeadSpeed(vertexCourse, value))
+					{
+						vertexBody.CreateRest(edgeBody);
+					}
+					else
+					{
+						vertexBody.Push(vertexCourse);
+					}
 				}
 
 				value -= result.Offset;

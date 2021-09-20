@@ -52,7 +52,7 @@ namespace GuiTest
 
 					var body = new Body(BodyDispatcher.Dispatcher, points, new Vector128(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX))
 					{
-						StepOffset = new Vector128(0, 0.1),
+						Pull = new Vector128(0, 0.1),
 						Bounce = 0.95,
 					};
 					BodyDispatcher.Bodies.Add(body);

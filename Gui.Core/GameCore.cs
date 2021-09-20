@@ -51,8 +51,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 10;
-			const int COLUMNS_COUNT = 10;
+			const int ROWS_COUNT = 2;
+			const int COLUMNS_COUNT = 1;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -70,8 +70,8 @@ namespace Gui.Core
 
 					var body = new Body(_bodyDispatcher.Dispatcher, points, new Vector128(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX))
 					{
-						StepOffset = new Vector128(0, 0.1),
-						Bounce = 0.95,
+						Pull = new Vector128(0, 0.1),
+						Bounce = 0.3,
 					};
 					_bodyDispatcher.Bodies.Add(body);
 				}
@@ -90,19 +90,23 @@ namespace Gui.Core
 			})
 			{
 				Weight = 1000000000000,
+				Center = new Vector128(350, 305),
+				Name = "Bottom",
 			};
 			_bodyDispatcher.Bodies.Add(bottom);
 
-			var bod = new Body(_bodyDispatcher.Dispatcher, new Vector128[]
-			{
-				new Vector128(350, 200),
-				new Vector128(400, 250),
-				new Vector128(300, 250),
-			})
-			{
-				Weight = 1000000000000,
-			};
-			_bodyDispatcher.Bodies.Add(bod);
+			//var bod = new Body(_bodyDispatcher.Dispatcher, new Vector128[]
+			//{
+			//	new Vector128(350, 200),
+			//	new Vector128(400, 250),
+			//	new Vector128(300, 250),
+			//})
+			//{
+			//	Weight = 1000000000000,
+			//	Center = new Vector128(350, 225),
+			//	Name = "Bod",
+			//};
+			//_bodyDispatcher.Bodies.Add(bod);
 
 			base.Initialize();
 		}
@@ -119,10 +123,24 @@ namespace Gui.Core
 
 		protected override void Update(GameTime gameTime)
 		{
-			_bodyDispatcher.Offset(1);
+			_bodyDispatcher.Offset(0.1);
 			base.Update(gameTime);
 		}
 
+		private static Vector2 GetCenter(Body body)
+		{
+			if (body.Center.HasValue)
+			{
+				return new Vector2((float)body.Center.Value.X, (float)body.Center.Value.Y);
+			}
+			else
+			{
+				return new Vector2(
+					body.Handler.Vertices.Select(x => (float)x.Target.X).Average(),
+					body.Handler.Vertices.Select(x => (float)x.Target.Y).Average()
+				);
+			}
+		}
 		protected override void Draw(GameTime gameTime)
 		{
 			GraphicsDevice.Clear(Color.Black);
@@ -136,6 +154,18 @@ namespace Gui.Core
 					Color.Red,
 					1
 				);
+				var bodyCenter = GetCenter(body);
+				foreach (var rest in body.RestOn)
+				{
+					var restCenter = GetCenter(rest);
+					DrawLine(
+						_spriteBatch,
+						bodyCenter,
+						restCenter,
+						Color.Green,
+						1
+					);
+				}
 			}
 			_spriteBatch.End();
 

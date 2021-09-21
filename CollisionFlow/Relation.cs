@@ -161,8 +161,9 @@ namespace CollisionFlow
 				{
 					checker.Result = collision;
 				}
-				
-				if (NumberUnitComparer.Instance.IsZero(SubtracEpsilon(checker.Result.Offset)))
+
+				var prevTime = AddSteps(checker.Result, -1);
+				if (prevTime < 0 || NumberUnitComparer.Instance.IsZero(prevTime))
 				{
 					checker.Result.Offset = 0;
 					return checker.Result;
@@ -170,20 +171,24 @@ namespace CollisionFlow
 			}
 			if (checker.Result != null)
 			{
-				checker.Result.Offset = SubtracEpsilon(checker.Result.Offset);
+				var prevTime = AddSteps(checker.Result, -1);
+				if (prevTime < 0 || NumberUnitComparer.Instance.IsZero(prevTime))
+				{
+					prevTime = 0;
+				}
+				checker.Result.Offset = prevTime;
 			}
 			return (RelationResult)checker.Result ?? InfinitResult.Instance;
 		}
-		private static double SubtracEpsilon(double value)
+		private static double AddSteps(OffsetResult result, int steps)
 		{
-			if (value < NumberUnitComparer.Instance.Epsilon)
-			{
-				return 0;
-			}
-			else
-			{
-				return value - NumberUnitComparer.Instance.Epsilon;
-			}
+			var vector = (result.CollisionData.Vertex.Course.ToVector() - result.CollisionData.Edge.Course.ToVector()).ToVector128();
+
+			var length = Math.Abs(vector.X) > Math.Abs(vector.Y) ? vector.X : vector.Y;
+
+			var timeStep = NumberUnitComparer.Instance.Epsilon * result.Offset / length;
+
+			return result.Offset + steps * timeStep;
 		}
 
 		private double? GetFlatHorisontal()

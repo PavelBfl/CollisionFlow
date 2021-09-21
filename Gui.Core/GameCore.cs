@@ -72,6 +72,7 @@ namespace Gui.Core
 					{
 						Pull = new Vector128(0, 0.1),
 						Bounce = 0.3,
+						Name = $"C:{iColumn};R:{iRow};V:{points.Length}",
 					};
 					_bodyDispatcher.Bodies.Add(body);
 				}
@@ -123,7 +124,7 @@ namespace Gui.Core
 
 		protected override void Update(GameTime gameTime)
 		{
-			_bodyDispatcher.Offset(1);
+			_bodyDispatcher.Offset(0.2);
 			base.Update(gameTime);
 		}
 

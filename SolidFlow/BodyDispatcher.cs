@@ -62,6 +62,20 @@ namespace SolidFlow
 				body.Refresh();
 			}
 		}
+
+		private static bool IsNear(Vector128 main, Vector128 other)
+		{
+			const double EPSILON = 0.001;
+			return Math.Abs(main.X - other.X) < EPSILON && Math.Abs(main.Y - other.Y) < EPSILON;
+		}
+		private static LineFunction? GetLine(Vector128 vertex, Vector128 edgePoint)
+		{
+			if (IsNear(vertex, edgePoint))
+			{
+				return new LineFunction(vertex, edgePoint).Perpendicular().OffsetToPoint(edgePoint);
+			}
+			return null;
+		}
 		private void OffsetStep(double value)
 		{
 			var result = Dispatcher.Offset(value);
@@ -84,7 +98,12 @@ namespace SolidFlow
 						coefficientY - vertexBody.Course.Y
 					);
 
-					var edgeCourse = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
+					var edge =
+						GetLine(pairResult.Vertex.Target, pairResult.EdgePolygon.GetBeginVertex(pairResult.EdgeIndex).Target) ??
+						GetLine(pairResult.Vertex.Target, pairResult.EdgePolygon.GetEndVertex(pairResult.EdgeIndex).Target) ??
+						pairResult.Edge.Target;
+					
+					var edgeCourse = (Mirror(edge, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
 					if (IsDeadSpeed(edgeCourse))
 					{
 						edgeBody.CreateRest(vertexBody);
@@ -94,7 +113,7 @@ namespace SolidFlow
 						edgeBody.Push(edgeCourse);
 					}
 
-					var vertexCourse = (Mirror(pairResult.Edge.Target, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
+					var vertexCourse = (Mirror(edge, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
 					if (IsDeadSpeed(vertexCourse))
 					{
 						vertexBody.CreateRest(edgeBody);

@@ -8,5 +8,8 @@ namespace CollisionFlow
 		IReadOnlyList<Moved<Vector128, Vector128>> Vertices { get; }
 
 		object AttachetData { get; set; }
+
+		Moved<Vector128, Vector128> GetBeginVertex(int edgeIndex);
+		Moved<Vector128, Vector128> GetEndVertex(int edgeIndex);
 	}
 }

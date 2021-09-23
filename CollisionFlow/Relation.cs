@@ -11,6 +11,7 @@ namespace CollisionFlow
 	}
 	class OffsetResult : RelationResult
 	{
+
 		public OffsetResult(CollisionData collisionData, double offset)
 		{
 			CollisionData = collisionData ?? throw new ArgumentNullException(nameof(collisionData));
@@ -18,10 +19,15 @@ namespace CollisionFlow
 		}
 
 		public CollisionData CollisionData { get; }
+
 		public double Offset { get; set; }
 
 		public override void Step(double value)
 		{
+			if (value > Offset)
+			{
+				throw new InvalidCollisiopnException();
+			}
 			Offset -= value;
 		}
 	}
@@ -137,7 +143,7 @@ namespace CollisionFlow
 				}
 				if (checker.Result != null)
 				{
-					checker.Result.Offset += NumberUnitComparer.Instance.Epsilon;
+					checker.Result.Offset = AddSteps(checker.Result, 1);
 				}
 				return checker.Result;
 			}
@@ -176,6 +182,7 @@ namespace CollisionFlow
 				{
 					prevTime = 0;
 				}
+
 				checker.Result.Offset = prevTime;
 			}
 			return (RelationResult)checker.Result ?? InfinitResult.Instance;
@@ -186,7 +193,7 @@ namespace CollisionFlow
 
 			var length = Math.Abs(vector.X) > Math.Abs(vector.Y) ? vector.X : vector.Y;
 
-			var timeStep = NumberUnitComparer.Instance.Epsilon * result.Offset / length;
+			var timeStep = NumberUnitComparer.Instance.Epsilon / length;
 
 			return result.Offset + steps * timeStep;
 		}

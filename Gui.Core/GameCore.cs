@@ -52,7 +52,7 @@ namespace Gui.Core
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
 			const int ROWS_COUNT = 2;
-			const int COLUMNS_COUNT = 1;
+			const int COLUMNS_COUNT = 3;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -96,18 +96,18 @@ namespace Gui.Core
 			};
 			_bodyDispatcher.Bodies.Add(bottom);
 
-			//var bod = new Body(_bodyDispatcher.Dispatcher, new Vector128[]
-			//{
-			//	new Vector128(350, 200),
-			//	new Vector128(400, 250),
-			//	new Vector128(300, 250),
-			//})
-			//{
-			//	Weight = 1000000000000,
-			//	Center = new Vector128(350, 225),
-			//	Name = "Bod",
-			//};
-			//_bodyDispatcher.Bodies.Add(bod);
+			var bod = new Body(_bodyDispatcher.Dispatcher, new Vector128[]
+			{
+				new Vector128(350, 200),
+				new Vector128(400, 250),
+				new Vector128(300, 250),
+			})
+			{
+				Weight = 1000000000000,
+				Center = new Vector128(350, 225),
+				Name = "Bod",
+			};
+			_bodyDispatcher.Bodies.Add(bod);
 
 			base.Initialize();
 		}
@@ -124,7 +124,7 @@ namespace Gui.Core
 
 		protected override void Update(GameTime gameTime)
 		{
-			_bodyDispatcher.Offset(0.2);
+			_bodyDispatcher.Offset(0.1);
 			base.Update(gameTime);
 		}
 

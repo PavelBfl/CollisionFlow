@@ -65,8 +65,8 @@ namespace SolidFlow
 
 		private static bool IsNear(Vector128 main, Vector128 other)
 		{
-			const double EPSILON = 0.001;
-			return Math.Abs(main.X - other.X) < EPSILON && Math.Abs(main.Y - other.Y) < EPSILON;
+			return Math.Abs(main.X - other.X) <= 0.001 &&
+				Math.Abs(main.Y - other.Y) <= 0.001;
 		}
 		private static LineFunction? GetLine(Vector128 vertex, Vector128 edgePoint)
 		{

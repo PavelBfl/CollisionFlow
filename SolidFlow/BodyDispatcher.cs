@@ -72,7 +72,10 @@ namespace SolidFlow
 		{
 			if (IsNear(vertex, edgePoint))
 			{
-				return new LineFunction(vertex, edgePoint).Perpendicular().OffsetToPoint(edgePoint);
+				return new LineFunction(
+					(vertex.ToVector() * 10).ToVector128(),
+					(edgePoint.ToVector() * 10).ToVector128()
+				).Perpendicular().OffsetToPoint(edgePoint);
 			}
 			return null;
 		}

@@ -143,6 +143,11 @@ namespace CollisionFlow
 				}
 				if (checker.Result != null)
 				{
+					var prevResult = AddSteps(checker.Result, 1);
+					if (prevResult < -10000)
+					{
+
+					}
 					checker.Result.Offset = AddSteps(checker.Result, 1);
 				}
 				return checker.Result;
@@ -193,7 +198,9 @@ namespace CollisionFlow
 
 			var length = Math.Abs(vector.X) > Math.Abs(vector.Y) ? vector.X : vector.Y;
 
-			var timeStep = NumberUnitComparer.Instance.Epsilon / length;
+			var timeStep = length >= NumberUnitComparer.Instance.Epsilon ?
+				NumberUnitComparer.Instance.Epsilon / length :
+				NumberUnitComparer.Instance.Epsilon;
 
 			return result.Offset + steps * timeStep;
 		}

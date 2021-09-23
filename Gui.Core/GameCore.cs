@@ -51,8 +51,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 2;
-			const int COLUMNS_COUNT = 3;
+			const int ROWS_COUNT = 5;
+			const int COLUMNS_COUNT = 10;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -71,7 +71,7 @@ namespace Gui.Core
 					var body = new Body(_bodyDispatcher.Dispatcher, points, new Vector128(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX))
 					{
 						Pull = new Vector128(0, 0.1),
-						Bounce = 0.3,
+						Bounce = 0.8,
 						Name = $"C:{iColumn};R:{iRow};V:{points.Length}",
 					};
 					_bodyDispatcher.Bodies.Add(body);
@@ -124,7 +124,7 @@ namespace Gui.Core
 
 		protected override void Update(GameTime gameTime)
 		{
-			_bodyDispatcher.Offset(0.1);
+			_bodyDispatcher.Offset(1);
 			base.Update(gameTime);
 		}
 

@@ -143,11 +143,6 @@ namespace CollisionFlow
 				}
 				if (checker.Result != null)
 				{
-					var prevResult = AddSteps(checker.Result, 1);
-					if (prevResult < -10000)
-					{
-
-					}
 					checker.Result.Offset = AddSteps(checker.Result, 1);
 				}
 				return checker.Result;

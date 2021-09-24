@@ -51,8 +51,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 5;
-			const int COLUMNS_COUNT = 10;
+			const int ROWS_COUNT = 1;
+			const int COLUMNS_COUNT = 1;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -124,7 +124,7 @@ namespace Gui.Core
 
 		protected override void Update(GameTime gameTime)
 		{
-			_bodyDispatcher.Offset(1);
+			_bodyDispatcher.Offset(10);
 			base.Update(gameTime);
 		}
 

@@ -7,10 +7,29 @@ namespace SolidFlow
 {
 	public class BodyDispatcher
 	{
-		private static bool IsDeadSpeed(Vector128 speed)
+		private static bool IsDeadSpeed(Vector128 speed, Body body)
 		{
-			const double MIN_SPEED = 0.07;
-			return Math.Abs(speed.X) < MIN_SPEED && Math.Abs(speed.Y) < MIN_SPEED;
+			if (0 <= body.Bounce && body.Bounce <= 1)
+			{
+				if (!body.Pull.Equals(Vector128.Zero))
+				{
+					var reverseBounce = 1 - body.Bounce;
+
+					var reverseSpeed = speed.ToVector() * reverseBounce;
+
+					var pullLength = Math.Max(Math.Abs(body.Pull.X), Math.Abs(body.Pull.Y));
+					return Math.Abs(reverseSpeed.GetX()) < pullLength && Math.Abs(reverseSpeed.GetY()) < pullLength;
+				}
+				else
+				{
+					const double MIN_SPEED = 0.01;
+					return Math.Abs(speed.X) < MIN_SPEED && Math.Abs(speed.Y) < MIN_SPEED;
+				}
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		public double StepLength { get; } = 1d;
@@ -107,7 +126,7 @@ namespace SolidFlow
 						pairResult.Edge.Target;
 					
 					var edgeCourse = (Mirror(edge, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
-					if (IsDeadSpeed(edgeCourse))
+					if (IsDeadSpeed(edgeCourse, edgeBody))
 					{
 						edgeBody.CreateRest(vertexBody);
 					}
@@ -117,7 +136,7 @@ namespace SolidFlow
 					}
 
 					var vertexCourse = (Mirror(edge, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
-					if (IsDeadSpeed(vertexCourse))
+					if (IsDeadSpeed(vertexCourse, vertexBody))
 					{
 						vertexBody.CreateRest(edgeBody);
 					}

@@ -80,8 +80,11 @@ namespace SolidFlow
 		}
 		public void Push(Vector128 course)
 		{
-			ClearRest();
-			Course = course;
+			if (!Course.Equals(course))
+			{
+				ClearRest();
+				Course = course; 
+			}
 		}
 
 		private Vector128 course;

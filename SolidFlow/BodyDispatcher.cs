@@ -33,7 +33,7 @@ namespace SolidFlow
 		}
 
 		public double StepLength { get; } = 1d;
-		private double LastStep { get; set; } = 0;
+		public double LastStep { get; set; } = 0;
 
 		public CollisionDispatcher Dispatcher { get; } = new CollisionDispatcher();
 		public List<Body> Bodies { get; } = new List<Body>();
@@ -132,7 +132,7 @@ namespace SolidFlow
 					}
 					else
 					{
-						edgeBody.Push(edgeCourse);
+						edgeBody.Course = edgeCourse;
 					}
 
 					var vertexCourse = (Mirror(edge, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
@@ -142,7 +142,7 @@ namespace SolidFlow
 					}
 					else
 					{
-						vertexBody.Push(vertexCourse);
+						vertexBody.Course = vertexCourse;
 					}
 				}
 

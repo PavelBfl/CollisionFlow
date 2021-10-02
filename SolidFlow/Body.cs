@@ -6,12 +6,6 @@ using System.Linq;
 
 namespace SolidFlow
 {
-	public enum BodyState
-	{
-		None,
-		Rest,
-		Excite,
-	}
 	public class Body
 	{
 		public Vector128? Center { get; set; }
@@ -54,7 +48,6 @@ namespace SolidFlow
 			if (!IsRest)
 			{
 				Course = (Course.ToVector() + Pull.ToVector() * Weight).ToVector128();
-				ClearRest();
 			}
 		}
 		public bool IsRest => RestOn.Any();
@@ -78,20 +71,12 @@ namespace SolidFlow
 			}
 			RestFor.Clear();
 		}
-		public void Push(Vector128 course)
-		{
-			if (!Course.Equals(course))
-			{
-				ClearRest();
-				Course = course; 
-			}
-		}
 
 		private Vector128 course;
 		public Vector128 Course
 		{
 			get => course;
-			private set
+			set
 			{
 				if (!Course.Equals(value))
 				{
@@ -104,8 +89,25 @@ namespace SolidFlow
 					Dispatcher.Remove(Handler);
 					Handler = Dispatcher.Add(builder.GetLines());
 					Handler.AttachetData = this;
+
+					ClearRest();
 				}
 			}
+		}
+
+		public void SetPolygon(IEnumerable<Vector128> vertices, Vector128 course)
+		{
+			this.course = course;
+			var builder = new PolygonBuilder(course);
+			foreach (var vertex in vertices)
+			{
+				builder.Add(vertex);
+			}
+			Dispatcher.Remove(Handler);
+			Handler = Dispatcher.Add(builder.GetLines());
+			Handler.AttachetData = this;
+
+			ClearRest();
 		}
 	}
 }

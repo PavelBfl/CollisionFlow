@@ -2,13 +2,59 @@
 using CollisionFlow.Polygons;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using SolidFlow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Track.Relation;
+using Track.Relation.Tracks;
 
 namespace Gui.Core
 {
+	public class BodyObjerver
+	{
+		public BodyObjerver(Body body)
+		{
+			Body = body ?? throw new ArgumentNullException(nameof(body));
+
+			Weight = new SortedList<double, double>();
+			Bounce = new SortedList<double, double>();
+			Vertices = new ArrayTrack<double, Vector128>(body.Handler.Vertices.Count, null);
+			Pull = new SortedList<double, Vector128>();
+			Course = new SortedList<double, Vector128>();
+		}
+
+		public Body Body { get; }
+		public SortedList<double, double> Weight { get; }
+		public SortedList<double, double> Bounce { get; }
+		public ArrayTrack<double, Vector128> Vertices { get; }
+		public SortedList<double, Vector128> Pull { get; }
+		public SortedList<double, Vector128> Course { get; }
+
+		public void Commit(double key)
+		{
+			Weight.AddTrack(key, Body.Weight);
+			Bounce.AddTrack(key, Body.Bounce);
+			Vertices.Add(key, Body.Handler.Vertices.Select(x => x.Target).ToArray());
+			Pull.Add(key, Body.Pull);
+			Course.Add(key, Body.Course);
+		}
+		public void Offset(double key)
+		{
+			Body.Weight = Weight.GetValueTrack(key);
+			Weight.RemoveTrack(key);
+			Body.Bounce = Bounce.GetValueTrack(key);
+			Bounce.RemoveTrack(key);
+			Body.Pull = Pull.GetValueTrack(key);
+			Pull.RemoveTrack(key);
+
+			Vertices.TryGetValue(key, out var certices);
+			Vertices.Remove(key);
+			Body.SetPolygon(certices, Course.GetValueTrack(key));
+			Course.RemoveTrack(key);
+		}
+	}
 	public class GameCore : Game
 	{
 		public static Texture2D Pixel { get; private set; }
@@ -36,7 +82,11 @@ namespace Gui.Core
 		private GraphicsDeviceManager _graphics;
 		private SpriteBatch _spriteBatch;
 		private BodyDispatcher _bodyDispatcher;
+		private KeyboardState keyboardState;
 
+		private BodyObjerver[] bodyObservers;
+		private SortedList<double, double> LastStep { get; } = new SortedList<double, double>();
+		
 		public GameCore()
 		{
 			_graphics = new GraphicsDeviceManager(this);
@@ -51,8 +101,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 1;
-			const int COLUMNS_COUNT = 1;
+			const int ROWS_COUNT = 3;
+			const int COLUMNS_COUNT = 10;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -109,6 +159,14 @@ namespace Gui.Core
 			};
 			_bodyDispatcher.Bodies.Add(bod);
 
+			bodyObservers = _bodyDispatcher.Bodies.Select(x => new BodyObjerver(x)).ToArray();
+
+			LastStep.AddTrack(timeLine, _bodyDispatcher.LastStep);
+			foreach (var bodyObserver in bodyObservers)
+			{
+				bodyObserver.Commit(timeLine);
+			}
+
 			base.Initialize();
 		}
 
@@ -124,7 +182,35 @@ namespace Gui.Core
 
 		protected override void Update(GameTime gameTime)
 		{
-			_bodyDispatcher.Offset(10);
+			const double STEP_SIZE = 1;
+			keyboardState = Keyboard.GetState();
+
+			if (keyboardState.IsKeyDown(Keys.LeftShift))
+			{
+				timeLine -= STEP_SIZE;
+				if (timeLine >= 0)
+				{
+					_bodyDispatcher.LastStep = LastStep.GetValueTrack(timeLine);
+					LastStep.RemoveTrack(timeLine);
+
+					foreach (var bodyObserver in bodyObservers)
+					{
+						bodyObserver.Offset(timeLine);
+					} 
+				}
+			}
+			else
+			{
+
+				_bodyDispatcher.Offset(STEP_SIZE);
+				timeLine += STEP_SIZE;
+
+				LastStep.AddTrack(timeLine, _bodyDispatcher.LastStep);
+				foreach (var bodyObserver in bodyObservers)
+				{
+					bodyObserver.Commit(timeLine);
+				} 
+			}
 			base.Update(gameTime);
 		}
 
@@ -172,5 +258,7 @@ namespace Gui.Core
 
 			base.Draw(gameTime);
 		}
+
+		private double timeLine = 0;
 	}
 }

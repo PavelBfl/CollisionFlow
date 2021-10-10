@@ -4,12 +4,12 @@ namespace CollisionFlow
 {
 	public interface IPolygonHandler
 	{
-		IReadOnlyList<Moved<LineFunction, Vector128>> Edges { get; }
-		IReadOnlyList<Moved<Vector128, Vector128>> Vertices { get; }
+		IReadOnlyList<Moved<LineFunction, Course>> Edges { get; }
+		IReadOnlyList<Moved<Vector128, Course>> Vertices { get; }
 
 		object AttachetData { get; set; }
 
-		Moved<Vector128, Vector128> GetBeginVertex(int edgeIndex);
-		Moved<Vector128, Vector128> GetEndVertex(int edgeIndex);
+		Moved<Vector128, Course> GetBeginVertex(int edgeIndex);
+		Moved<Vector128, Course> GetEndVertex(int edgeIndex);
 	}
 }

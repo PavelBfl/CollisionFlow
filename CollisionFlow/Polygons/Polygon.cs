@@ -6,30 +6,35 @@ namespace CollisionFlow.Polygons
 {
 	abstract class Polygon : IPolygonHandler
 	{
-		protected static Moved<Vector128, Vector128>[] GetVerticies(Moved<LineFunction, Vector128>[] edges)
+		protected static Moved<Vector128, Course>[] GetVerticies(Moved<LineFunction, Course>[] edges)
 		{
-			var vertices = new Moved<Vector128, Vector128>[edges.Length];
+			var vertices = new Moved<Vector128, Course>[edges.Length];
 			var prevIndex = edges.Length - 1;
 			for (var index = 0; index < edges.Length; index++)
 			{
 				var prevLine = edges[prevIndex];
 				var currentLine = edges[index];
 
-				var prevLineOffset = prevLine.Target.OffsetByVector(prevLine.Course);
-				var currentLineOffset = currentLine.Target.OffsetByVector(currentLine.Course);
-
 				var currentPoint = prevLine.Target.Crossing(currentLine.Target);
+
+				var prevLineOffsetV = prevLine.Target.OffsetByVector(prevLine.Course.V.ToVector128());
+				var currentLineOffsetV = currentLine.Target.OffsetByVector(currentLine.Course.V.ToVector128());
+				var v = prevLineOffsetV.Crossing(currentLineOffsetV).ToVector() - currentPoint.ToVector();
+
+				var prevLineOffsetA = prevLine.Target.OffsetByVector(prevLine.Course.A.ToVector128());
+				var currentLineOffsetA = currentLine.Target.OffsetByVector(currentLine.Course.A.ToVector128());
+				var a = prevLineOffsetA.Crossing(currentLineOffsetA).ToVector() - currentPoint.ToVector();
 
 				vertices[index] = Moved.Create(
 					currentPoint,
-					new Vector128(prevLineOffset.Crossing(currentLineOffset).ToVector() - currentPoint.ToVector())
+					new Course(v, a)
 				);
 				prevIndex = index;
 			}
 			return vertices;
 		}
 
-		public static Polygon Create(IEnumerable<Moved<LineFunction, Vector128>> edges)
+		public static Polygon Create(IEnumerable<Moved<LineFunction, Course>> edges)
 		{
 			if (edges is null)
 			{
@@ -55,27 +60,43 @@ namespace CollisionFlow.Polygons
 
 		public int GlobalIndex { get; set; }
 
-		public abstract Moved<LineFunction, Vector128>[] Edges { get; }
-		public abstract Moved<Vector128, Vector128>[] Verticies { get; }
+		public abstract Moved<LineFunction, Course>[] Edges { get; }
+		public abstract Moved<Vector128, Course>[] Verticies { get; }
 		public abstract Rect Bounds { get; }
-		public abstract Rect BoundsCourse { get; }
-		public virtual void Offset(double value)
+		public virtual void Offset(double time)
 		{
 			for (int i = 0; i < Edges.Length; i++)
 			{
-				Edges[i] = Edges[i].Offset(value);
+				var edge = Edges[i];
+				var offset = Acceleration.Offset(
+					time,
+					edge.Target.Offset,
+					edge.Target.GetCourseOffset(edge.Course.V.ToVector128()),
+					edge.Target.GetCourseOffset(edge.Course.A.ToVector128())
+				);
+				var line = new LineFunction(edge.Target.Slope, offset);
+				var course = edge.Course.Offset(time);
+
+				Edges[i] = Moved.Create(line, course);
 			}
 			for (int i = 0; i < Verticies.Length; i++)
 			{
-				Verticies[i] = Verticies[i].Offset(value);
+				var vertex = Verticies[i];
+				var point = new Vector128(
+					Acceleration.Offset(time, vertex.Target.X, vertex.Course.V.GetX(), vertex.Course.A.GetX()),
+					Acceleration.Offset(time, vertex.Target.Y, vertex.Course.V.GetY(), vertex.Course.A.GetY())
+				);
+				var course = vertex.Course.Offset(time);
+
+				Verticies[i] = Moved.Create(point, course);
 			}
 		}
 
-		public Moved<Vector128, Vector128> GetBeginVertex(int edgeIndex) => Verticies[edgeIndex];
-		public Moved<Vector128, Vector128> GetEndVertex(int edgeIndex) => Verticies[edgeIndex + 1 < Verticies.Length ? edgeIndex + 1 : 0];
+		public Moved<Vector128, Course> GetBeginVertex(int edgeIndex) => Verticies[edgeIndex];
+		public Moved<Vector128, Course> GetEndVertex(int edgeIndex) => Verticies[edgeIndex + 1 < Verticies.Length ? edgeIndex + 1 : 0];
 
-		IReadOnlyList<Moved<LineFunction, Vector128>> IPolygonHandler.Edges => Edges;
-		IReadOnlyList<Moved<Vector128, Vector128>> IPolygonHandler.Vertices => Verticies;
+		IReadOnlyList<Moved<LineFunction, Course>> IPolygonHandler.Edges => Edges;
+		IReadOnlyList<Moved<Vector128, Course>> IPolygonHandler.Vertices => Verticies;
 
 		public object AttachetData { get; set; }
 

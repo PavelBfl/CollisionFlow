@@ -5,8 +5,10 @@ using System.Text;
 
 namespace CollisionFlow
 {
-	public struct Course
+	public struct Course : IEquatable<Course>
 	{
+		public static Course Zero { get; } = new Course(Vector<double>.Zero, Vector<double>.Zero);
+
 		public Course(Vector<double> v, Vector<double> a)
 		{
 			V = v;
@@ -15,12 +17,51 @@ namespace CollisionFlow
 		public Vector<double> V { get; }
 		public Vector<double> A { get; }
 
+		public bool Equals(Course other)
+		{
+			return NumberUnitComparer.Instance.Equals(V.GetX(), other.V.GetX()) &&
+				NumberUnitComparer.Instance.Equals(V.GetY(), other.V.GetY()) &&
+				NumberUnitComparer.Instance.Equals(A.GetX(), other.A.GetX()) &&
+				NumberUnitComparer.Instance.Equals(A.GetY(), other.A.GetY());
+		}
+
 		public Course Offset(double time) => new Course(V + A * time, A);
+
+		public Vector<double> Offset(Vector<double> vector, double time)
+		{
+			return Vector128.Create(
+				Acceleration.Offset(time, vector.GetX(), V.GetX(), A.GetX()),
+				Acceleration.Offset(time, vector.GetY(), V.GetY(), A.GetY())
+			);
+		}
+		public Rect Offset(Rect rect, double time)
+		{
+			var leftTop = Offset(Vector128.Create(rect.Left, rect.Top), time);
+
+			return Rect.CreateLeftTop(
+				leftTop.GetX(),
+				leftTop.GetY(),
+				rect.Right - rect.Left,
+				rect.Top - rect.Bottom
+			);
+		}
 	}
 	public class Acceleration
 	{
 		private static bool IsZero(double value) => Math.Abs(value) < 0.0000001;
-		public static double? GetTime(double min, double vMin, double aMin, double max, double vMax, double aMax)
+
+		public static double? GetTime(double first, double vFirst, double aFirst, double second, double vSecond, double aSecond)
+		{
+			if (first < second)
+			{
+				return GetTimeMinMax(first, vFirst, aFirst, second, vSecond, aSecond);
+			}
+			else
+			{
+				return GetTimeMinMax(second, vSecond, aSecond, first, vFirst, aFirst);
+			}
+		}
+		private static double? GetTimeMinMax(double min, double vMin, double aMin, double max, double vMax, double aMax)
 		{
 			var v = vMin - vMax;
 			var a = aMin - aMax;
@@ -28,6 +69,10 @@ namespace CollisionFlow
 			if ((IsZero(v) || v < 0) && (IsZero(a) || a < 0))
 			{
 				return null;
+			}
+			else if (IsZero(a))
+			{
+				return Relation.GetTime(Moved.Create(min, vMin), Moved.Create(max, vMax));
 			}
 
 			var s = max - min;

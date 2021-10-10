@@ -1,7 +1,6 @@
 ﻿using CollisionFlow;
 using CollisionFlow.Polygons;
 using GuiTest.ViewModel;
-using SolidFlow;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,43 +29,52 @@ namespace GuiTest
 		{
 			InitializeComponent();
 
-			const double Y = 100;
-
-			var x1 = 50d;
-			var v1 = 5d;
-			var a1 = -0.1d;
-
-			var x2 = 500d;
-			var v2 = -10d;
-			var a2 = 0.1d;
-
-			DrawPoint(new Point(x1, Y), Brushes.Red, 7);
-			DrawPoint(new Point(x2, Y), Brushes.Red, 7);
-
-			var time = Acceleration.GetTime(x1, v1, a1, x2, v2, a2);
-
-			if (time is not null)
+			var random = new Random(0);
+			var polygonVm = new PolygonVm(new System.Windows.Rect(10, 10, 100, 100), CollisionDispatcher, random)
 			{
-				var collisionX1 = Acceleration.Offset(time.Value, x1, v1, a1);
-				var collisionX2 = Acceleration.Offset(time.Value, x2, v2, a2);
+				Course = new Course(
+					Vector128.Create(0.1, -2),
+					Vector128.Create(0, 0.1)
+				),
+			};
+			PolygonsVm.Add(polygonVm);
 
-				DrawPoint(new Point(collisionX1, Y + 10), Brushes.Green);
-				DrawPoint(new Point(collisionX2, Y + 20), Brushes.Green);
+			var bottom = new RectangleVm(new System.Windows.Rect(-100, 300, 1000, 10), CollisionDispatcher);
+			CnvRoot.Children.Add(bottom.Rectangle);
 
-				const double TIME_STEP = 1;
-				var timeCounter = TIME_STEP;
-				while (timeCounter < time.Value)
+			foreach (var item in PolygonsVm)
+			{
+				CnvRoot.Children.Add(item.Polygon);
+			}
+
+			DispatcherTimer.Tick += UpdateFrame;
+			DispatcherTimer.Start();
+		}
+
+		private void UpdateFrame(object? sender, EventArgs e)
+		{
+			var result = CollisionDispatcher.Offset(1);
+
+			if (result is not null)
+			{
+				foreach (var item in PolygonsVm)
 				{
-					var offset1 = Acceleration.Offset(timeCounter, x1, v1, a1);
-					var offset2 = Acceleration.Offset(timeCounter, x2, v2, a2);
+					item.Course = Course.Zero;
+				}
+			}
 
-					DrawPoint(new Point(offset1, Y), Brushes.Pink);
-					DrawPoint(new Point(offset2, Y), Brushes.Pink);
-
-					timeCounter += TIME_STEP;
-				} 
+			foreach (var polygon in PolygonsVm)
+			{
+				polygon.Update();
 			}
 		}
+
+		private CollisionDispatcher CollisionDispatcher { get; } = new();
+		private List<PolygonVm> PolygonsVm { get; } = new();
+		private DispatcherTimer DispatcherTimer = new()
+		{
+			Interval = TimeSpan.FromSeconds(1 / 2),
+		};
 
 		private void DrawPoint(Point position, Brush color, double size = 5)
 		{

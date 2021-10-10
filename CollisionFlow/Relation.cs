@@ -149,11 +149,6 @@ namespace CollisionFlow
 			}
 			else
 			{
-				var flatResult = FlatCheck(offset);
-				if (flatResult != null)
-				{
-					return flatResult;
-				}
 				return GetMinResult();
 			}
 		}
@@ -189,7 +184,7 @@ namespace CollisionFlow
 		}
 		private static double AddSteps(OffsetResult result, int steps)
 		{
-			var vector = (result.CollisionData.Vertex.Course.ToVector() - result.CollisionData.Edge.Course.ToVector()).ToVector128();
+			var vector = (result.CollisionData.Vertex.Course.V - result.CollisionData.Edge.Course.V).ToVector128();
 
 			var length = Math.Abs(vector.X) > Math.Abs(vector.Y) ? vector.X : vector.Y;
 
@@ -198,77 +193,6 @@ namespace CollisionFlow
 				NumberUnitComparer.Instance.Epsilon;
 
 			return result.Offset + steps * timeStep;
-		}
-
-		private double? GetFlatHorisontal()
-		{
-			switch (Compare(First.Bounds.Horisontal, Second.Bounds.Horisontal))
-			{
-				case RangeCompare.Equals: return 0;
-				case RangeCompare.Less: return GetTime(Moved.Create(First.Bounds.Right, First.BoundsCourse.Right) , Moved.Create(Second.Bounds.Left, Second.BoundsCourse.Left));
-				case RangeCompare.Over: return GetTime(Moved.Create(Second.Bounds.Right, Second.BoundsCourse.Right), Moved.Create(First.Bounds.Left, First.BoundsCourse.Left));
-				default: throw new InvalidCollisiopnException();
-			}
-		}
-		private double? GetFlatVertical()
-		{
-			switch (Compare(First.Bounds.Vertical, Second.Bounds.Vertical))
-			{
-				case RangeCompare.Equals: return 0;
-				case RangeCompare.Less: return GetTime(Moved.Create(First.Bounds.Top, First.BoundsCourse.Top), Moved.Create(Second.Bounds.Bottom, Second.BoundsCourse.Bottom));
-				case RangeCompare.Over: return GetTime(Moved.Create(Second.Bounds.Top, Second.BoundsCourse.Top), Moved.Create(First.Bounds.Bottom, First.BoundsCourse.Bottom));
-				default: throw new InvalidCollisiopnException();
-			}
-		}
-		private RelationResult FlatCheck(double offset)
-		{
-			var horisontal = GetFlatHorisontal();
-			if (horisontal != null)
-			{
-				var vertical = GetFlatVertical();
-				if (vertical != null)
-				{
-					double wait;
-					if (NumberUnitComparer.Instance.IsZero(horisontal.Value))
-					{
-						if (NumberUnitComparer.Instance.IsZero(vertical.Value))
-						{
-							return null;
-						}
-						else
-						{
-							wait = vertical.Value;
-						}
-					}
-					else
-					{
-						if (NumberUnitComparer.Instance.IsZero(vertical.Value))
-						{
-							wait = horisontal.Value;
-						}
-						else
-						{
-							wait = Math.Max(vertical.Value, horisontal.Value);
-						}
-					}
-					if (wait < offset)
-					{
-						return null;
-					}
-					else
-					{
-						return new WaitResult(wait);
-					}
-				}
-				else
-				{
-					return InfinitResult.Instance;
-				}
-			}
-			else
-			{
-				return InfinitResult.Instance;
-			}
 		}
 
 		private enum RangeCompare
@@ -317,14 +241,14 @@ namespace CollisionFlow
 			}
 		}
 
-		private static bool InRange(double offset, LineState state, Moved<Vector128, Vector128> begin, Moved<Vector128, Vector128> end, Moved<Vector128, Vector128> freePoin)
+		private static bool InRange(double time, LineState state, Moved<Vector128, Course> begin, Moved<Vector128, Course> end, Moved<Vector128, Course> freePoin)
 		{
-			var beginOffset = begin.Offset(offset).Target;
-			var endOffset = end.Offset(offset).Target;
-			var freePointOffset = freePoin.Offset(offset).Target;
+			var beginOffset = begin.Course.Offset(begin.Target.ToVector(), time);
+			var endOffset = end.Course.Offset(end.Target.ToVector(), time);
+			var freePointOffset = freePoin.Course.Offset(freePoin.Target.ToVector(), time);
 			return state == LineState.Horisontal ?
-				Contains(beginOffset.X, endOffset.X, freePointOffset.X) :
-				Contains(beginOffset.Y, endOffset.Y, freePointOffset.Y);
+				Contains(beginOffset.GetX(), endOffset.GetX(), freePointOffset.GetX()) :
+				Contains(beginOffset.GetY(), endOffset.GetY(), freePointOffset.GetY());
 		}
 		private static bool Contains(double first, double second, double value)
 		{
@@ -344,15 +268,21 @@ namespace CollisionFlow
 				return false;
 			}
 		}
-		private static double? GetTime(Moved<LineFunction, Vector128> line, Moved<Vector128, Vector128> freePoin)
+		private static double? GetTime(Moved<LineFunction, Course> line, Moved<Vector128, Course> freePoin)
 		{
 			var freeLine = line.Target.OffsetToPoint(freePoin.Target);
-			return GetTime(
-				Moved.Create(line.Target.Offset, line.Target.GetCourseOffset(line.Course)),
-				Moved.Create(freeLine.Offset, freeLine.GetCourseOffset(freePoin.Course))
+			var freeV = freeLine.GetCourseOffset(freePoin.Course.V.ToVector128());
+			var freeA = freeLine.GetCourseOffset(freePoin.Course.A.ToVector128());
+
+			var lineV = line.Target.GetCourseOffset(line.Course.V.ToVector128());
+			var lineA = line.Target.GetCourseOffset(line.Course.A.ToVector128());
+
+			return Acceleration.GetTime(
+				freeLine.Offset, freeV, freeA,
+				line.Target.Offset, lineV, lineA
 			);
 		}
-		private static double? GetTime(Moved<double, double> point1, Moved<double, double> point2)
+		public static double? GetTime(Moved<double, double> point1, Moved<double, double> point2)
 		{
 			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);
 

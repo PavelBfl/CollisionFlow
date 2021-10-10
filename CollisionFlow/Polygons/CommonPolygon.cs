@@ -6,7 +6,7 @@ namespace CollisionFlow.Polygons
 {
 	class CommonPolygon : Polygon
 	{
-		public CommonPolygon(IEnumerable<Moved<LineFunction, Vector128>> edges)
+		public CommonPolygon(IEnumerable<Moved<LineFunction, Course>> edges)
 		{
 			if (edges is null)
 			{
@@ -15,15 +15,13 @@ namespace CollisionFlow.Polygons
 			Edges = edges?.ToArray() ?? throw new ArgumentNullException(nameof(edges));
 			Verticies = GetVerticies(Edges);
 			bounds = new Rect(Verticies.Select(x => x.Target));
-			BoundsCourse = new Rect(Verticies.Select(x => x.Course));
 		}
 
-		public override Moved<LineFunction, Vector128>[] Edges { get; }
-		public override Moved<Vector128, Vector128>[] Verticies { get; }
+		public override Moved<LineFunction, Course>[] Edges { get; }
+		public override Moved<Vector128, Course>[] Verticies { get; }
 
 		private Rect bounds;
 		public override Rect Bounds => bounds;
-		public override Rect BoundsCourse { get; }
 
 		public override void Offset(double value)
 		{

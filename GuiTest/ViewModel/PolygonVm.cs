@@ -25,7 +25,10 @@ namespace GuiTest.ViewModel
 			var points = PolygonBuilder.RegularPolygon(radius, random.Next(3, 10))
 				.Select(x => new Vector128(x.X + rect.X + rect.Width / 2, x.Y + rect.Y + rect.Height / 2)).ToArray();
 
-			course = new Vector128(random.NextDouble(), random.NextDouble());
+			course = new Course(
+				Vector128.Create(random.NextDouble(), random.NextDouble()),
+				Vector128.Create(random.NextDouble(), random.NextDouble())
+			);
 			var builder = new PolygonBuilder(course);
 			foreach (var point in points)
 			{
@@ -46,8 +49,8 @@ namespace GuiTest.ViewModel
 			Polygon.Stroke = value ? Brushes.Green : Brushes.Red;
 		}
 
-		private Vector128 course;
-		public Vector128 Course
+		private Course course;
+		public Course Course
 		{
 			get => course;
 			set

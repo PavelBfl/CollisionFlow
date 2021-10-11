@@ -21,23 +21,20 @@ namespace Gui.Core
 			Weight = new SortedList<double, double>();
 			Bounce = new SortedList<double, double>();
 			Vertices = new ArrayTrack<double, Vector128>(body.Handler.Vertices.Count, null);
-			Pull = new SortedList<double, Vector128>();
-			Course = new SortedList<double, Vector128>();
+			Course = new SortedList<double, Course>();
 		}
 
 		public Body Body { get; }
 		public SortedList<double, double> Weight { get; }
 		public SortedList<double, double> Bounce { get; }
 		public ArrayTrack<double, Vector128> Vertices { get; }
-		public SortedList<double, Vector128> Pull { get; }
-		public SortedList<double, Vector128> Course { get; }
+		public SortedList<double, Course> Course { get; }
 
 		public void Commit(double key)
 		{
 			Weight.AddTrack(key, Body.Weight);
 			Bounce.AddTrack(key, Body.Bounce);
 			Vertices.Add(key, Body.Handler.Vertices.Select(x => x.Target).ToArray());
-			Pull.Add(key, Body.Pull);
 			Course.Add(key, Body.Course);
 		}
 		public void Offset(double key)
@@ -46,8 +43,6 @@ namespace Gui.Core
 			Weight.RemoveTrack(key);
 			Body.Bounce = Bounce.GetValueTrack(key);
 			Bounce.RemoveTrack(key);
-			Body.Pull = Pull.GetValueTrack(key);
-			Pull.RemoveTrack(key);
 
 			Vertices.TryGetValue(key, out var certices);
 			Vertices.Remove(key);
@@ -85,8 +80,7 @@ namespace Gui.Core
 		private KeyboardState keyboardState;
 
 		private BodyObjerver[] bodyObservers;
-		private SortedList<double, double> LastStep { get; } = new SortedList<double, double>();
-		
+
 		public GameCore()
 		{
 			_graphics = new GraphicsDeviceManager(this);
@@ -118,9 +112,13 @@ namespace Gui.Core
 						.Select(x => new Vector128(x.X + centerX, x.Y + centerY))
 						.ToArray();
 
-					var body = new Body(_bodyDispatcher.Dispatcher, points, new Vector128(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX))
+					var body = new Body(_bodyDispatcher.Dispatcher, points, 
+						new Course(
+							Vector128.Create(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX),
+							Vector128.Create(0, BodyDispatcher.GRAVITY)
+						)
+					)
 					{
-						Pull = new Vector128(0, 0.1),
 						Bounce = 0.8,
 						Name = $"C:{iColumn};R:{iRow};V:{points.Length}",
 					};
@@ -161,7 +159,6 @@ namespace Gui.Core
 
 			bodyObservers = _bodyDispatcher.Bodies.Select(x => new BodyObjerver(x)).ToArray();
 
-			LastStep.AddTrack(timeLine, _bodyDispatcher.LastStep);
 			foreach (var bodyObserver in bodyObservers)
 			{
 				bodyObserver.Commit(timeLine);
@@ -190,9 +187,6 @@ namespace Gui.Core
 				timeLine -= STEP_SIZE;
 				if (timeLine >= 0)
 				{
-					_bodyDispatcher.LastStep = LastStep.GetValueTrack(timeLine);
-					LastStep.RemoveTrack(timeLine);
-
 					foreach (var bodyObserver in bodyObservers)
 					{
 						bodyObserver.Offset(timeLine);
@@ -205,7 +199,6 @@ namespace Gui.Core
 				_bodyDispatcher.Offset(STEP_SIZE);
 				timeLine += STEP_SIZE;
 
-				LastStep.AddTrack(timeLine, _bodyDispatcher.LastStep);
 				foreach (var bodyObserver in bodyObservers)
 				{
 					bodyObserver.Commit(timeLine);

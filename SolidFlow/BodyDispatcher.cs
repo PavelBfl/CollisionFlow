@@ -7,79 +7,21 @@ namespace SolidFlow
 {
 	public class BodyDispatcher
 	{
+		public const double GRAVITY = 0.03;
+
 		private static bool IsDeadSpeed(Vector128 speed, Body body)
 		{
-			if (0 <= body.Bounce && body.Bounce <= 1)
-			{
-				if (!body.Pull.Equals(Vector128.Zero))
-				{
-					var reverseBounce = 1 - body.Bounce;
+			const double MIN_SPEED = 0.001;
 
-					var reverseSpeed = speed.ToVector() * reverseBounce;
-
-					var pullLength = Math.Max(Math.Abs(body.Pull.X), Math.Abs(body.Pull.Y));
-					return Math.Abs(reverseSpeed.GetX()) < pullLength && Math.Abs(reverseSpeed.GetY()) < pullLength;
-				}
-				else
-				{
-					const double MIN_SPEED = 0.01;
-					return Math.Abs(speed.X) < MIN_SPEED && Math.Abs(speed.Y) < MIN_SPEED;
-				}
-			}
-			else
-			{
-				return false;
-			}
+			return Math.Abs(speed.X) < MIN_SPEED && Math.Abs(speed.Y) < MIN_SPEED;
 		}
-
-		public double StepLength { get; } = 1d;
-		public double LastStep { get; set; } = 0;
 
 		public CollisionDispatcher Dispatcher { get; } = new CollisionDispatcher();
 		public List<Body> Bodies { get; } = new List<Body>();
 
 		public void Offset(double value)
 		{
-			if (value <= LastStep)
-			{
-				OffsetStep(value);
-				LastStep -= value;
-				if (LastStep == 0)
-				{
-					Refresh();
-				}
-			}
-			else if (value <= StepLength)
-			{
-				OffsetStep(LastStep);
-				Refresh();
-				OffsetStep(value - LastStep);
-				LastStep = StepLength - (value - LastStep);
-			}
-			else
-			{
-				var offset = LastStep > 0 ? LastStep : StepLength;
-				while (value > 0)
-				{
-					OffsetStep(offset);
-					Refresh();
-					value -= offset;
-					LastStep -= offset;
-					offset = Math.Min(value, StepLength);
-				}
-				while (LastStep < 0)
-				{
-					LastStep += StepLength;
-				}
-			}
-		}
-
-		private void Refresh()
-		{
-			foreach (var body in Bodies)
-			{
-				body.Refresh();
-			}
+			OffsetStep(value);
 		}
 
 		private static bool IsNear(Vector128 main, Vector128 other)
@@ -108,16 +50,16 @@ namespace SolidFlow
 					var edgeBody = (Body)pairResult.EdgePolygon.AttachetData;
 					var vertexBody = (Body)pairResult.VertexPolygon.AttachetData;
 
-					var coefficientX = 2 * (edgeBody.Weight * edgeBody.Course.X + vertexBody.Weight * vertexBody.Course.X) / (edgeBody.Weight + vertexBody.Weight);
-					var coefficientY = 2 * (edgeBody.Weight * edgeBody.Course.Y + vertexBody.Weight * vertexBody.Course.Y) / (edgeBody.Weight + vertexBody.Weight);
+					var coefficientX = 2 * (edgeBody.Weight * edgeBody.Course.V.GetX() + vertexBody.Weight * vertexBody.Course.V.GetX()) / (edgeBody.Weight + vertexBody.Weight);
+					var coefficientY = 2 * (edgeBody.Weight * edgeBody.Course.V.GetY() + vertexBody.Weight * vertexBody.Course.V.GetY()) / (edgeBody.Weight + vertexBody.Weight);
 
 					var edgeV = new Vector128(
-						coefficientX - edgeBody.Course.X,
-						coefficientY - edgeBody.Course.Y
+						coefficientX - edgeBody.Course.V.GetX(),
+						coefficientY - edgeBody.Course.V.GetY()
 					);
 					var vertexV = new Vector128(
-						coefficientX - vertexBody.Course.X,
-						coefficientY - vertexBody.Course.Y
+						coefficientX - vertexBody.Course.V.GetX(),
+						coefficientY - vertexBody.Course.V.GetY()
 					);
 
 					var edge =
@@ -132,7 +74,10 @@ namespace SolidFlow
 					}
 					else
 					{
-						edgeBody.Course = edgeCourse;
+						edgeBody.Course = new Course(
+							Vector128.Create(edgeCourse.X, edgeCourse.Y),
+							Vector128.Create(0, GRAVITY)
+						);
 					}
 
 					var vertexCourse = (Mirror(edge, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
@@ -142,7 +87,10 @@ namespace SolidFlow
 					}
 					else
 					{
-						vertexBody.Course = vertexCourse;
+						vertexBody.Course = new Course(
+							Vector128.Create(vertexCourse.X, vertexCourse.Y),
+							Vector128.Create(0, GRAVITY)
+						);
 					}
 				}
 

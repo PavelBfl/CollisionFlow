@@ -17,6 +17,15 @@ namespace CollisionFlow
 		public Vector<double> V { get; }
 		public Vector<double> A { get; }
 
+		public Course SetV(double x, double y)
+		{
+			return new Course(Vector128.Create(x, y), A);
+		}
+		public Course SetA(double x, double y)
+		{
+			return new Course(V, Vector128.Create(x, y));
+		}
+
 		public bool Equals(Course other)
 		{
 			return NumberUnitComparer.Instance.Equals(V.GetX(), other.V.GetX()) &&
@@ -86,13 +95,13 @@ namespace CollisionFlow
 			else if (d > 0)
 			{
 				var result1 = (-v + Math.Sqrt(d)) / a;
-				if (result1 > 0)
+				if (result1 >= 0)
 				{
 					return result1;
 				}
 
 				var result2 = (-v - Math.Sqrt(d)) / a;
-				if (result2 > 0)
+				if (result2 >= 0)
 				{
 					return result2;
 				}

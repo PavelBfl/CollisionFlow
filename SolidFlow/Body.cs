@@ -12,11 +12,11 @@ namespace SolidFlow
 		public string Name { get; set; }
 
 		public Body(CollisionDispatcher dispatcher, IEnumerable<Vector128> verticies)
-			: this(dispatcher, verticies, Vector128.Zero)
+			: this(dispatcher, verticies, Course.Zero)
 		{
 
 		}
-		public Body(CollisionDispatcher dispatcher, IEnumerable<Vector128> verticies, Vector128 course)
+		public Body(CollisionDispatcher dispatcher, IEnumerable<Vector128> verticies, Course course)
 		{
 			Dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 			if (verticies is null)
@@ -24,7 +24,6 @@ namespace SolidFlow
 				throw new ArgumentNullException(nameof(verticies));
 			}
 
-			this.course = course;
 			var builder = new PolygonBuilder(course);
 			foreach (var vertex in verticies)
 			{
@@ -39,21 +38,13 @@ namespace SolidFlow
 		public double Weight { get; set; } = 1;
 		public double Bounce { get; set; } = 0;
 
-		public Vector128 Pull { get; set; }
 		public HashSet<Body> RestOn { get; } = new HashSet<Body>();
 		private HashSet<Body> RestFor { get; } = new HashSet<Body>();
 
-		public void Refresh()
-		{
-			if (!IsRest)
-			{
-				Course = (Course.ToVector() + Pull.ToVector() * Weight).ToVector128();
-			}
-		}
 		public bool IsRest => RestOn.Any();
 		public void CreateRest(Body body)
 		{
-			Course = Vector128.Zero;
+			Course = Course.Zero;
 			RestOn.Add(body);
 			body.RestFor.Add(this);
 		}
@@ -72,16 +63,14 @@ namespace SolidFlow
 			RestFor.Clear();
 		}
 
-		private Vector128 course;
-		public Vector128 Course
+		public Course Course
 		{
-			get => course;
+			get => Handler.Edges[0].Course;
 			set
 			{
 				if (!Course.Equals(value))
 				{
-					course = value;
-					var builder = new PolygonBuilder(Course);
+					var builder = new PolygonBuilder(value);
 					foreach (var vertex in Handler.Vertices)
 					{
 						builder.Add(vertex.Target);
@@ -95,9 +84,8 @@ namespace SolidFlow
 			}
 		}
 
-		public void SetPolygon(IEnumerable<Vector128> vertices, Vector128 course)
+		public void SetPolygon(IEnumerable<Vector128> vertices, Course course)
 		{
-			this.course = course;
 			var builder = new PolygonBuilder(course);
 			foreach (var vertex in vertices)
 			{

@@ -227,13 +227,28 @@ namespace CollisionFlow
 					var otherPoint = other.Verticies[iVertex];
 
 					var time = GetTime(mainLine, otherPoint);
-					if (time.HasValue && previewChecker.Check(time.Value))
+					if (time.HasValue)
 					{
-						if (InRange(time.Value, mainLine.Target.GetOptimalProjection(), main.GetBeginVertex(iEdge), main.GetEndVertex(iEdge), otherPoint))
+						var timeInstance = time.Value;
+						if (timeInstance.Result1 >= 0 &&
+							previewChecker.Check(timeInstance.Result1) &&
+							InRange(timeInstance.Result1, mainLine.Target.GetOptimalProjection(), main.GetBeginVertex(iEdge), main.GetEndVertex(iEdge), otherPoint)
+						)
 						{
 							yield return new OffsetResult(
 								new CollisionData(main, iEdge, other, iVertex),
-								time.Value
+								timeInstance.Result1
+							);
+						}
+
+						if (timeInstance.Result2 >= 0 &&
+							previewChecker.Check(timeInstance.Result2) &&
+							InRange(timeInstance.Result2, mainLine.Target.GetOptimalProjection(), main.GetBeginVertex(iEdge), main.GetEndVertex(iEdge), otherPoint)
+						)
+						{
+							yield return new OffsetResult(
+								new CollisionData(main, iEdge, other, iVertex),
+								timeInstance.Result2
 							);
 						}
 					}
@@ -268,7 +283,7 @@ namespace CollisionFlow
 				return false;
 			}
 		}
-		private static double? GetTime(Moved<LineFunction, Course> line, Moved<Vector128, Course> freePoin)
+		private static TimeA? GetTime(Moved<LineFunction, Course> line, Moved<Vector128, Course> freePoin)
 		{
 			var freeLine = line.Target.OffsetToPoint(freePoin.Target);
 			var freeV = freeLine.GetCourseOffset(freePoin.Course.V.ToVector128());

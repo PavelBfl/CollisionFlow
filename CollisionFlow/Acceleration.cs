@@ -55,11 +55,28 @@ namespace CollisionFlow
 			);
 		}
 	}
+
+	public struct TimeA
+	{
+		public TimeA(double result)
+			: this(result, result)
+		{
+
+		}
+		public TimeA(double result1, double result2)
+		{
+			Result1 = result1;
+			Result2 = result2;
+		}
+
+		public double Result1 { get; }
+		public double Result2 { get; }
+	}
 	public class Acceleration
 	{
 		private static bool IsZero(double value) => Math.Abs(value) < 0.0000001;
 
-		public static double? GetTime(double first, double vFirst, double aFirst, double second, double vSecond, double aSecond)
+		public static TimeA? GetTime(double first, double vFirst, double aFirst, double second, double vSecond, double aSecond)
 		{
 			if (first < second)
 			{
@@ -70,7 +87,7 @@ namespace CollisionFlow
 				return GetTimeMinMax(second, vSecond, aSecond, first, vFirst, aFirst);
 			}
 		}
-		private static double? GetTimeMinMax(double min, double vMin, double aMin, double max, double vMax, double aMax)
+		private static TimeA? GetTimeMinMax(double min, double vMin, double aMin, double max, double vMax, double aMax)
 		{
 			var v = vMin - vMax;
 			var a = aMin - aMax;
@@ -81,7 +98,9 @@ namespace CollisionFlow
 			}
 			else if (IsZero(a))
 			{
-				return Relation.GetTime(Moved.Create(min, vMin), Moved.Create(max, vMax));
+				var time = Relation.GetTime(Moved.Create(min, vMin), Moved.Create(max, vMax));
+
+				return time is null ? new TimeA?() : new TimeA(time.Value);
 			}
 
 			var s = max - min;
@@ -90,23 +109,15 @@ namespace CollisionFlow
 			if (IsZero(d))
 			{
 				var result = -v / a;
-				return result;
+				return new TimeA(result);
 			}
 			else if (d > 0)
 			{
-				var result1 = (-v + Math.Sqrt(d)) / a;
-				if (result1 >= 0)
-				{
-					return result1;
-				}
+				var sqrtD = Math.Sqrt(d);
+				var result1 = (-v + sqrtD) / a;
+				var result2 = (-v - sqrtD) / a;
 
-				var result2 = (-v - Math.Sqrt(d)) / a;
-				if (result2 >= 0)
-				{
-					return result2;
-				}
-
-				throw new InvalidOperationException();
+				return new TimeA(result1, result2);
 			}
 			else
 			{

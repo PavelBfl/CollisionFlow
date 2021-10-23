@@ -230,6 +230,10 @@ namespace CollisionFlow
 					if (time.HasValue)
 					{
 						var timeInstance = time.Value;
+						if (timeInstance.Result1 < 0 && timeInstance.Result2 < 0)
+						{
+							throw new InvalidOperationException();
+						}
 						if (timeInstance.Result1 >= 0 &&
 							previewChecker.Check(timeInstance.Result1) &&
 							InRange(timeInstance.Result1, mainLine.Target.GetOptimalProjection(), main.GetBeginVertex(iEdge), main.GetEndVertex(iEdge), otherPoint)

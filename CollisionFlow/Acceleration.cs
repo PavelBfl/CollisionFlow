@@ -74,7 +74,7 @@ namespace CollisionFlow
 	}
 	public class Acceleration
 	{
-		private static bool IsZero(double value) => Math.Abs(value) < 0.0000001;
+		private static bool IsZero(double value) => Math.Abs(value) < 0.000000000001;
 
 		public static TimeA? GetTime(double first, double vFirst, double aFirst, double second, double vSecond, double aSecond)
 		{
@@ -104,7 +104,7 @@ namespace CollisionFlow
 			}
 
 			var s = max - min;
-
+			// (a/2)t^2 + vt - s = 0
 			var d = (v * v) - 2 * a * (-s);
 			if (IsZero(d))
 			{
@@ -128,5 +128,6 @@ namespace CollisionFlow
 		{
 			return value + v * time + (a * time * time) / 2;
 		}
+
 	}
 }

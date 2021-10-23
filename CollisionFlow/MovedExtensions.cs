@@ -13,6 +13,15 @@
 		public static Moved<double, double> Offset(this Moved<double, double> moved, double value)
 			=> moved.SetTarget(moved.Target + moved.Course * value);
 
+		public static Moved<Vector128, Course> Offset(this Moved<Vector128, Course> moved, double value)
+			=> Moved.Create(
+				new Vector128(
+					Acceleration.Offset(value, moved.Target.X, moved.Course.V.GetX(), moved.Course.A.GetX()),
+					Acceleration.Offset(value, moved.Target.Y, moved.Course.V.GetY(), moved.Course.A.GetY())
+				),
+				moved.Course.Offset(value)
+			);
+
 		public static Rect Offset(this Rect rect, Vector128 course) => new Rect(
 			left: rect.Left + course.X,
 			right: rect.Right + course.X,

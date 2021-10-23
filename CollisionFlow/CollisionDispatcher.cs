@@ -68,7 +68,7 @@ namespace CollisionFlow
 			double? min = null;
 
 			var pResult = relations
-				.AsParallel()
+				//.AsParallel()
 				.SelectMany(x => x)
 				.Select(x => (Data: x.GetResult(value), Relation: x))
 				.Where(x => x.Data != null && x.Data.Offset < value)

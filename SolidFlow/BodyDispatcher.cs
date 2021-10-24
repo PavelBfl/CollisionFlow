@@ -19,11 +19,6 @@ namespace SolidFlow
 		public CollisionDispatcher Dispatcher { get; } = new CollisionDispatcher();
 		public List<Body> Bodies { get; } = new List<Body>();
 
-		public void Offset(double value)
-		{
-			OffsetStep(value);
-		}
-
 		private static bool IsNear(Vector128 main, Vector128 other)
 		{
 			return Math.Abs(main.X - other.X) <= 0.001 &&
@@ -40,10 +35,11 @@ namespace SolidFlow
 			}
 			return null;
 		}
-		private void OffsetStep(double value)
+		public double? Offset(double value)
 		{
 			var result = Dispatcher.Offset(value);
-			while (!(result is null) && result.Offset < value)
+
+			if (!(result is null))
 			{
 				foreach (var pairResult in result.Results)
 				{
@@ -66,7 +62,7 @@ namespace SolidFlow
 						GetLine(pairResult.Vertex.Target, pairResult.EdgePolygon.GetBeginVertex(pairResult.EdgeIndex).Target) ??
 						GetLine(pairResult.Vertex.Target, pairResult.EdgePolygon.GetEndVertex(pairResult.EdgeIndex).Target) ??
 						pairResult.Edge.Target;
-					
+
 					var edgeCourse = (Mirror(edge, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
 					if (IsDeadSpeed(edgeCourse, edgeBody))
 					{
@@ -93,10 +89,8 @@ namespace SolidFlow
 						);
 					}
 				}
-
-				value -= result.Offset;
-				result = Dispatcher.Offset(value);
 			}
+			return result?.Offset;
 		}
 		private static Vector128 Mirror(LineFunction line, Vector128 vertex, Vector128 course)
 		{

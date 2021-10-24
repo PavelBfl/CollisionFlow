@@ -59,6 +59,13 @@ namespace SolidFlow
 			foreach (var item in RestFor)
 			{
 				item.RestOn.Remove(this);
+				if (!item.IsRest && item.Name != "Bod" && item.Name != "Bottom")
+				{
+					item.Course = new Course(
+						Vector128.Create(0, 0),
+						Vector128.Create(0, BodyDispatcher.GRAVITY)
+					);
+				}
 			}
 			RestFor.Clear();
 		}
@@ -79,7 +86,10 @@ namespace SolidFlow
 					Handler = Dispatcher.Add(builder.GetLines());
 					Handler.AttachetData = this;
 
-					ClearRest();
+					if (!Course.Equals(Course.Zero))
+					{
+						ClearRest();
+					}
 				}
 			}
 		}

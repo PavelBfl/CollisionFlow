@@ -12,9 +12,9 @@ using Track.Relation.Tracks;
 
 namespace Gui.Core
 {
-	public class BodyObjerver
+	public class BodyObserver
 	{
-		public BodyObjerver(Body body)
+		public BodyObserver(Body body)
 		{
 			Body = body ?? throw new ArgumentNullException(nameof(body));
 
@@ -32,10 +32,10 @@ namespace Gui.Core
 
 		public void Commit(double key)
 		{
-			Weight.AddTrack(key, Body.Weight);
-			Bounce.AddTrack(key, Body.Bounce);
+			Weight[key] = Body.Weight;
+			Bounce[key] = Body.Bounce;
 			Vertices.Add(key, Body.Handler.Vertices.Select(x => x.Target).ToArray());
-			Course.Add(key, Body.Course);
+			Course[key] = Body.Course;
 		}
 		public void Offset(double key)
 		{
@@ -79,7 +79,8 @@ namespace Gui.Core
 		private BodyDispatcher _bodyDispatcher;
 		private KeyboardState keyboardState;
 
-		private BodyObjerver[] bodyObservers;
+		private BodyObserver[] bodyObservers;
+		private Body player;
 
 		public GameCore()
 		{
@@ -95,8 +96,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 5;
-			const int COLUMNS_COUNT = 10;
+			const int ROWS_COUNT = 3;
+			const int COLUMNS_COUNT = 3;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -157,7 +158,20 @@ namespace Gui.Core
 			};
 			_bodyDispatcher.Bodies.Add(bod);
 
-			bodyObservers = _bodyDispatcher.Bodies.Select(x => new BodyObjerver(x)).ToArray();
+			player = new Body(_bodyDispatcher.Dispatcher, new Vector128[]
+			{
+				new Vector128(10, 250),
+				new Vector128(60, 250),
+				new Vector128(60, 299),
+				new Vector128(10, 299),
+			}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, BodyDispatcher.GRAVITY)))
+			{
+				Weight = 10,
+				Name = "Player",
+			};
+			_bodyDispatcher.Bodies.Add(player);
+
+			bodyObservers = _bodyDispatcher.Bodies.Select(x => new BodyObserver(x)).ToArray();
 
 			foreach (var bodyObserver in bodyObservers)
 			{
@@ -195,14 +209,42 @@ namespace Gui.Core
 			}
 			else
 			{
+				const double PLAYER_SPEED = 5;
+				const double JUMP_FORCE = 1;
 
-				_bodyDispatcher.Offset(STEP_SIZE);
-				timeLine += STEP_SIZE;
-
-				foreach (var bodyObserver in bodyObservers)
+				var xMove = 0d;
+				if (keyboardState.IsKeyDown(Keys.Left))
 				{
-					bodyObserver.Commit(timeLine);
-				} 
+					xMove = -PLAYER_SPEED;
+				}
+				else if (keyboardState.IsKeyDown(Keys.Right))
+				{
+					xMove = PLAYER_SPEED;
+				}
+
+				double? yMove = null;
+				if (keyboardState.IsKeyDown(Keys.Up))
+				{
+					yMove = -JUMP_FORCE;
+				}
+				player.Course = new Course(
+					Vector128.Create(xMove, yMove ?? player.Course.V.GetY()),
+					Vector128.Create(0, BodyDispatcher.GRAVITY)
+				);
+
+				var frameOffset = STEP_SIZE;
+				do
+				{
+					var result = _bodyDispatcher.Offset(STEP_SIZE);
+					var currentStep = result ?? frameOffset;
+					timeLine += currentStep;
+
+					foreach (var bodyObserver in bodyObservers)
+					{
+						bodyObserver.Commit(timeLine);
+					}
+					frameOffset -= currentStep;
+				} while (frameOffset > 0);
 			}
 			base.Update(gameTime);
 		}

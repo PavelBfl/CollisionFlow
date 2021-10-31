@@ -96,7 +96,7 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 1;
+			const int ROWS_COUNT = 0;
 			const int COLUMNS_COUNT = 1;
 			const double GLOBAL_OFFSET = 300;
 
@@ -165,11 +165,12 @@ namespace Gui.Core
 				new Vector128(60, 250),
 				new Vector128(60, 299),
 				new Vector128(10, 299),
-			}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, 0)))
+			}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, BodyDispatcher.DEFAULT_GRAVITY)))
 			{
 				Weight = 10,
+				Acceleration = BodyDispatcher.DEFAULT_GRAVITY,
 				Name = "Player",
-				Bounce = 0,
+				Bounce = 1,
 			};
 			_bodyDispatcher.Bodies.Add(player);
 
@@ -212,7 +213,7 @@ namespace Gui.Core
 			else
 			{
 				const double PLAYER_SPEED = 5;
-				const double JUMP_FORCE = 2;
+				const double JUMP_FORCE = 1;
 
 				var xMove = 0d;
 				if (keyboardState.IsKeyDown(Keys.Left))
@@ -225,26 +226,17 @@ namespace Gui.Core
 				}
 
 				double? yMove = null;
-				if (player.IsRest)
+				if (keyboardState.IsKeyDown(Keys.Up))
 				{
-					if (keyboardState.IsKeyDown(Keys.Up))
-					{
-						yMove = -JUMP_FORCE;
-						player.Acceleration = BodyDispatcher.DEFAULT_GRAVITY;
-					}
-					else
-					{
-						player.Acceleration = 0;
-					}
+					yMove = -JUMP_FORCE;
 				}
-				else
+				if (xMove != 0 || !(yMove is null))
 				{
-					player.Acceleration = BodyDispatcher.DEFAULT_GRAVITY;
+					player.Course = new Course(
+						Vector128.Create(xMove, yMove ?? player.Course.V.GetY()),
+						Vector128.Create(0, player.Acceleration)
+					);
 				}
-				player.Course = new Course(
-					Vector128.Create(xMove, yMove ?? player.Course.V.GetY()),
-					Vector128.Create(0, player.Acceleration)
-				);
 
 				var frameOffset = STEP_SIZE;
 				do

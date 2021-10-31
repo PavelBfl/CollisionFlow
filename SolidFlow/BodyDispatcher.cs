@@ -7,7 +7,7 @@ namespace SolidFlow
 {
 	public class BodyDispatcher
 	{
-		public const double GRAVITY = 0.03;
+		public const double DEFAULT_GRAVITY = 0.03;
 
 		private static bool IsDeadSpeed(Vector128 speed, Body body)
 		{
@@ -72,7 +72,7 @@ namespace SolidFlow
 					{
 						edgeBody.Course = new Course(
 							Vector128.Create(edgeCourse.X, edgeCourse.Y),
-							Vector128.Create(0, GRAVITY)
+							Vector128.Create(0, edgeBody.Acceleration)
 						);
 					}
 
@@ -85,7 +85,7 @@ namespace SolidFlow
 					{
 						vertexBody.Course = new Course(
 							Vector128.Create(vertexCourse.X, vertexCourse.Y),
-							Vector128.Create(0, GRAVITY)
+							Vector128.Create(0, vertexBody.Acceleration)
 						);
 					}
 				}

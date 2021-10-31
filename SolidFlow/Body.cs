@@ -37,6 +37,7 @@ namespace SolidFlow
 		public IPolygonHandler Handler { get; private set; }
 		public double Weight { get; set; } = 1;
 		public double Bounce { get; set; } = 0;
+		public double Acceleration { get; set; } = 0;
 
 		public HashSet<Body> RestOn { get; } = new HashSet<Body>();
 		private HashSet<Body> RestFor { get; } = new HashSet<Body>();
@@ -63,7 +64,7 @@ namespace SolidFlow
 				{
 					item.Course = new Course(
 						Vector128.Create(0, 0),
-						Vector128.Create(0, BodyDispatcher.GRAVITY)
+						Vector128.Create(0, Acceleration)
 					);
 				}
 			}

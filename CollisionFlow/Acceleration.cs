@@ -106,7 +106,7 @@ namespace CollisionFlow
 			var s = max - min;
 			// (a/2)t^2 + vt - s = 0
 			var d = (v * v) - 2 * a * (-s);
-			if (IsZero(d))
+			if (d == 0)
 			{
 				var result = -v / a;
 				return new TimeA(result);

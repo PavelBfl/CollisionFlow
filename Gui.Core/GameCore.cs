@@ -96,8 +96,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 3;
-			const int COLUMNS_COUNT = 3;
+			const int ROWS_COUNT = 1;
+			const int COLUMNS_COUNT = 1;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -116,10 +116,11 @@ namespace Gui.Core
 					var body = new Body(_bodyDispatcher.Dispatcher, points, 
 						new Course(
 							Vector128.Create(random.NextDouble() * SPEED_MAX, random.NextDouble() * SPEED_MAX),
-							Vector128.Create(0, BodyDispatcher.GRAVITY)
+							Vector128.Create(0, BodyDispatcher.DEFAULT_GRAVITY)
 						)
 					)
 					{
+						Acceleration = BodyDispatcher.DEFAULT_GRAVITY,
 						Bounce = 0.8,
 						Name = $"C:{iColumn};R:{iRow};V:{points.Length}",
 					};
@@ -164,10 +165,11 @@ namespace Gui.Core
 				new Vector128(60, 250),
 				new Vector128(60, 299),
 				new Vector128(10, 299),
-			}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, BodyDispatcher.GRAVITY)))
+			}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, 0)))
 			{
 				Weight = 10,
 				Name = "Player",
+				Bounce = 0,
 			};
 			_bodyDispatcher.Bodies.Add(player);
 
@@ -210,7 +212,7 @@ namespace Gui.Core
 			else
 			{
 				const double PLAYER_SPEED = 5;
-				const double JUMP_FORCE = 1;
+				const double JUMP_FORCE = 2;
 
 				var xMove = 0d;
 				if (keyboardState.IsKeyDown(Keys.Left))
@@ -223,13 +225,25 @@ namespace Gui.Core
 				}
 
 				double? yMove = null;
-				if (keyboardState.IsKeyDown(Keys.Up))
+				if (player.IsRest)
 				{
-					yMove = -JUMP_FORCE;
+					if (keyboardState.IsKeyDown(Keys.Up))
+					{
+						yMove = -JUMP_FORCE;
+						player.Acceleration = BodyDispatcher.DEFAULT_GRAVITY;
+					}
+					else
+					{
+						player.Acceleration = 0;
+					}
+				}
+				else
+				{
+					player.Acceleration = BodyDispatcher.DEFAULT_GRAVITY;
 				}
 				player.Course = new Course(
 					Vector128.Create(xMove, yMove ?? player.Course.V.GetY()),
-					Vector128.Create(0, BodyDispatcher.GRAVITY)
+					Vector128.Create(0, player.Acceleration)
 				);
 
 				var frameOffset = STEP_SIZE;

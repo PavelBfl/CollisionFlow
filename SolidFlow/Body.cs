@@ -11,12 +11,18 @@ namespace SolidFlow
 		public Vector128? Center { get; set; }
 		public string Name { get; set; }
 
+		private Body()
+		{
+			Acceleration.VectorChanged += AccelerationVectorChanged;
+		}
+
 		public Body(CollisionDispatcher dispatcher, IEnumerable<Vector128> verticies)
 			: this(dispatcher, verticies, Course.Zero)
 		{
 
 		}
 		public Body(CollisionDispatcher dispatcher, IEnumerable<Vector128> verticies, Course course)
+			: this()
 		{
 			Dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 			if (verticies is null)
@@ -33,11 +39,16 @@ namespace SolidFlow
 			Handler.AttachetData = this;
 		}
 
+		private void AccelerationVectorChanged(object sender, EventArgs e)
+		{
+			RefreshCourse();
+		}
+
 		public CollisionDispatcher Dispatcher { get; }
 		public IPolygonHandler Handler { get; private set; }
 		public double Weight { get; set; } = 1;
 		public double Bounce { get; set; } = 0;
-		public double Acceleration { get; set; } = 0;
+		public SpeedAccumulator Acceleration { get; } = new SpeedAccumulator();
 
 		public HashSet<Body> RestOn { get; } = new HashSet<Body>();
 		private HashSet<Body> RestFor { get; } = new HashSet<Body>();
@@ -62,19 +73,28 @@ namespace SolidFlow
 				item.RestOn.Remove(this);
 				if (!item.IsRest && item.Name != "Bod" && item.Name != "Bottom")
 				{
-					item.Course = new Course(
-						Vector128.Create(0, 0),
-						Vector128.Create(0, Acceleration)
-					);
+					item.RefreshCourse();
 				}
 			}
 			RestFor.Clear();
 		}
 
+		public Vector128 Speed
+		{
+			get => Handler.Edges[0].Course.V.ToVector128();
+			set => RefreshCourse(value);
+		}
+		private void RefreshCourse(Vector128? speed = null)
+		{
+			Course = new Course(
+				(speed ?? Speed).ToVector(),
+				Acceleration.Vector.ToVector()
+			);
+		}
 		public Course Course
 		{
 			get => Handler.Edges[0].Course;
-			set
+			private set
 			{
 				if (!Course.Equals(value))
 				{
@@ -108,5 +128,73 @@ namespace SolidFlow
 
 			ClearRest();
 		}
+	}
+
+	public class SpeedAccumulator
+	{
+		private HashSet<ISpeedHandler> Speeds { get; } = new HashSet<ISpeedHandler>();
+
+		public ISpeedHandler Add(double x, double y)
+		{
+			var pull = new Pull(this, new Vector128(x, y));
+			Speeds.Add(pull);
+			RefreshVector();
+			return pull;
+		}
+		public void Remove(ISpeedHandler pull)
+		{
+			Speeds.Remove(pull);
+			RefreshVector();
+		}
+
+		public Vector128 Vector
+		{
+			get
+			{
+				if (vector is null)
+				{
+					vector = Speeds.Aggregate(Vector128.Zero, (result, item) => new Vector128(result.X + item.Vector.X, result.Y + item.Vector.Y));
+				}
+				return vector.Value;
+			}
+		}
+		private Vector128? vector;
+
+		public event EventHandler VectorChanged;
+
+		private void RefreshVector()
+		{
+			vector = null;
+			VectorChanged?.Invoke(this, EventArgs.Empty);
+		}
+
+		private class Pull : ISpeedHandler
+		{
+			public Pull(SpeedAccumulator owner, Vector128 vector)
+			{
+				Owner = owner ?? throw new ArgumentNullException(nameof(owner));
+				Vector = vector;
+			}
+
+			public SpeedAccumulator Owner { get; }
+			public Vector128 Vector
+			{
+				get => vector;
+				set
+				{
+					if (!Vector.Equals(value))
+					{
+						vector = value;
+						Owner.RefreshVector();
+					}
+				}
+			}
+			private Vector128 vector;
+		}
+	}
+
+	public interface ISpeedHandler
+	{
+		Vector128 Vector { get; set; }
 	}
 }

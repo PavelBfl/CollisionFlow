@@ -96,8 +96,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 0;
-			const int COLUMNS_COUNT = 1;
+			const int ROWS_COUNT = 3;
+			const int COLUMNS_COUNT = 3;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -120,10 +120,10 @@ namespace Gui.Core
 						)
 					)
 					{
-						Acceleration = BodyDispatcher.DEFAULT_GRAVITY,
 						Bounce = 0.8,
 						Name = $"C:{iColumn};R:{iRow};V:{points.Length}",
 					};
+					body.Acceleration.Add(0, BodyDispatcher.DEFAULT_GRAVITY);
 					_bodyDispatcher.Bodies.Add(body);
 				}
 			}
@@ -168,10 +168,10 @@ namespace Gui.Core
 			}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, BodyDispatcher.DEFAULT_GRAVITY)))
 			{
 				Weight = 10,
-				Acceleration = BodyDispatcher.DEFAULT_GRAVITY,
 				Name = "Player",
 				Bounce = 1,
 			};
+			player.Acceleration.Add(0, BodyDispatcher.DEFAULT_GRAVITY);
 			_bodyDispatcher.Bodies.Add(player);
 
 			bodyObservers = _bodyDispatcher.Bodies.Select(x => new BodyObserver(x)).ToArray();
@@ -230,13 +230,8 @@ namespace Gui.Core
 				{
 					yMove = -JUMP_FORCE;
 				}
-				if (xMove != 0 || !(yMove is null))
-				{
-					player.Course = new Course(
-						Vector128.Create(xMove, yMove ?? player.Course.V.GetY()),
-						Vector128.Create(0, player.Acceleration)
-					);
-				}
+				
+				player.Speed = new Vector128(xMove, yMove ?? player.Course.V.GetY());
 
 				var frameOffset = STEP_SIZE;
 				do

@@ -70,10 +70,7 @@ namespace SolidFlow
 					}
 					else
 					{
-						edgeBody.Course = new Course(
-							Vector128.Create(edgeCourse.X, edgeCourse.Y),
-							Vector128.Create(0, edgeBody.Acceleration)
-						);
+						edgeBody.Speed = new Vector128(edgeCourse.X, edgeCourse.Y);
 					}
 
 					var vertexCourse = (Mirror(edge, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
@@ -83,10 +80,7 @@ namespace SolidFlow
 					}
 					else
 					{
-						vertexBody.Course = new Course(
-							Vector128.Create(vertexCourse.X, vertexCourse.Y),
-							Vector128.Create(0, vertexBody.Acceleration)
-						);
+						vertexBody.Speed = new Vector128(vertexCourse.X, vertexCourse.Y);
 					}
 				}
 			}

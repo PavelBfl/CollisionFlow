@@ -101,6 +101,10 @@ namespace CollisionFlow
 			First = first ?? throw new ArgumentNullException(nameof(first));
 			Second = second ?? throw new ArgumentNullException(nameof(second));
 			IsCollision = First.IsCollision(Second);
+			if (IsCollision)
+			{
+
+			}
 		}
 
 		public Polygon First { get; }

@@ -96,7 +96,7 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 3;
+			const int ROWS_COUNT = 0;
 			const int COLUMNS_COUNT = 3;
 			const double GLOBAL_OFFSET = 300;
 
@@ -169,7 +169,7 @@ namespace Gui.Core
 			{
 				Weight = 10,
 				Name = "Player",
-				Bounce = 1,
+				Bounce = 0.5,
 			};
 			player.Acceleration.Add(0, BodyDispatcher.DEFAULT_GRAVITY);
 			_bodyDispatcher.Bodies.Add(player);
@@ -212,7 +212,7 @@ namespace Gui.Core
 			}
 			else
 			{
-				const double PLAYER_SPEED = 5;
+				const double PLAYER_SPEED = 20;
 				const double JUMP_FORCE = 1;
 
 				var xMove = 0d;
@@ -232,6 +232,7 @@ namespace Gui.Core
 				}
 				
 				player.Speed = new Vector128(xMove, yMove ?? player.Course.V.GetY());
+				player.IsTremble = xMove != 0;
 
 				var frameOffset = STEP_SIZE;
 				do

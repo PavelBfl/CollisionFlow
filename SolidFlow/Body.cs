@@ -48,6 +48,7 @@ namespace SolidFlow
 		public IPolygonHandler Handler { get; private set; }
 		public double Weight { get; set; } = 1;
 		public double Bounce { get; set; } = 0;
+		public bool IsTremble { get; set; } = false;
 		public SpeedAccumulator Acceleration { get; } = new SpeedAccumulator();
 
 		public HashSet<Body> RestOn { get; } = new HashSet<Body>();
@@ -112,6 +113,22 @@ namespace SolidFlow
 						ClearRest();
 					}
 				}
+			}
+		}
+		public void Refresh()
+		{
+			var builder = new PolygonBuilder(Course);
+			foreach (var vertex in Handler.Vertices)
+			{
+				builder.Add(vertex.Target);
+			}
+			Dispatcher.Remove(Handler);
+			Handler = Dispatcher.Add(builder.GetLines());
+			Handler.AttachetData = this;
+
+			if (!Course.Equals(Course.Zero))
+			{
+				ClearRest();
 			}
 		}
 

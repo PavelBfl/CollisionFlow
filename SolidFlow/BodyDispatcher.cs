@@ -8,12 +8,25 @@ namespace SolidFlow
 	public class BodyDispatcher
 	{
 		public const double DEFAULT_GRAVITY = 0.03;
+		private const double MIN_SPEED = 0.001;
 
-		private static bool IsDeadSpeed(Vector128 speed, Body body)
+		private static bool IsDeadSpeed(Vector128 speed)
 		{
-			const double MIN_SPEED = 0.001;
-
 			return Math.Abs(speed.X) < MIN_SPEED && Math.Abs(speed.Y) < MIN_SPEED;
+		}
+
+		private static ulong trembleCounter = 0;
+		private static Vector128 TrembleSpeed()
+		{
+			trembleCounter++;
+			switch (trembleCounter % 4)
+			{
+				case 0: return new Vector128(MIN_SPEED, MIN_SPEED);
+				case 1: return new Vector128(-MIN_SPEED, -MIN_SPEED);
+				case 2: return new Vector128(MIN_SPEED, -MIN_SPEED);
+				case 3: return new Vector128(-MIN_SPEED, MIN_SPEED);
+				default: throw new InvalidOperationException();
+			}
 		}
 
 		public CollisionDispatcher Dispatcher { get; } = new CollisionDispatcher();
@@ -64,9 +77,17 @@ namespace SolidFlow
 						pairResult.Edge.Target;
 
 					var edgeCourse = (Mirror(edge, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
-					if (IsDeadSpeed(edgeCourse, edgeBody))
+					if (IsDeadSpeed(edgeCourse))
 					{
-						edgeBody.CreateRest(vertexBody);
+						if (edgeBody.IsTremble)
+						{
+							edgeBody.Speed = TrembleSpeed();
+							edgeBody.Refresh();
+						}
+						else
+						{
+							edgeBody.CreateRest(vertexBody); 
+						}
 					}
 					else
 					{
@@ -74,9 +95,17 @@ namespace SolidFlow
 					}
 
 					var vertexCourse = (Mirror(edge, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
-					if (IsDeadSpeed(vertexCourse, vertexBody))
+					if (IsDeadSpeed(vertexCourse))
 					{
-						vertexBody.CreateRest(edgeBody);
+						if (vertexBody.IsTremble)
+						{
+							vertexBody.Speed = TrembleSpeed();
+							vertexBody.Refresh();
+						}
+						else
+						{
+							vertexBody.CreateRest(edgeBody); 
+						}
 					}
 					else
 					{

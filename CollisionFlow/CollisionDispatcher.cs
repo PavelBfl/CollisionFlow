@@ -101,6 +101,17 @@ namespace CollisionFlow
 				{
 					polygon.Offset(offset);
 				}
+
+				foreach (var row in relations)
+				{
+					foreach (var cell in row)
+					{
+						if (cell.First.IsCollision(cell.Second))
+						{
+
+						}
+					}
+				}
 			}
 
 			if (min is null)

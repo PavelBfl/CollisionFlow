@@ -89,7 +89,7 @@ namespace SolidFlow
 		{
 			Course = new Course(
 				(speed ?? Speed).ToVector(),
-				Acceleration.Vector.ToVector()
+				Acceleration.GetVector(speed ?? Speed).ToVector()
 			);
 		}
 		public Course Course
@@ -151,9 +151,10 @@ namespace SolidFlow
 	{
 		private HashSet<ISpeedHandler> Speeds { get; } = new HashSet<ISpeedHandler>();
 
-		public ISpeedHandler Add(double x, double y)
+		public ISpeedHandler Add(double x, double y) => Add(x, y, double.PositiveInfinity, double.PositiveInfinity);
+		public ISpeedHandler Add(double x, double y, double xLimit, double yLimit)
 		{
-			var pull = new Pull(this, new Vector128(x, y));
+			var pull = new Pull(this, new Vector128(x, y), new Vector128(xLimit, yLimit));
 			Speeds.Add(pull);
 			RefreshVector();
 			return pull;
@@ -164,33 +165,38 @@ namespace SolidFlow
 			RefreshVector();
 		}
 
-		public Vector128 Vector
+		public Vector128 GetVector(Vector128 currentSpeed)
 		{
-			get
+			var x = 0d;
+			var y = 0d;
+			foreach (var speed in Speeds)
 			{
-				if (vector is null)
+				if (speed.Limit.X > Math.Abs(currentSpeed.X))
 				{
-					vector = Speeds.Aggregate(Vector128.Zero, (result, item) => new Vector128(result.X + item.Vector.X, result.Y + item.Vector.Y));
+					x += speed.Vector.X;
 				}
-				return vector.Value;
+				if (speed.Limit.Y > Math.Abs(currentSpeed.Y))
+				{
+					y += speed.Vector.Y;
+				}
 			}
+			return new Vector128(x, y);
 		}
-		private Vector128? vector;
 
 		public event EventHandler VectorChanged;
 
 		private void RefreshVector()
 		{
-			vector = null;
 			VectorChanged?.Invoke(this, EventArgs.Empty);
 		}
 
 		private class Pull : ISpeedHandler
 		{
-			public Pull(SpeedAccumulator owner, Vector128 vector)
+			public Pull(SpeedAccumulator owner, Vector128 vector, Vector128 limit)
 			{
 				Owner = owner ?? throw new ArgumentNullException(nameof(owner));
 				Vector = vector;
+				Limit = limit;
 			}
 
 			public SpeedAccumulator Owner { get; }
@@ -207,11 +213,26 @@ namespace SolidFlow
 				}
 			}
 			private Vector128 vector;
+
+			public Vector128 Limit
+			{
+				get => limit;
+				set
+				{
+					if (!limit.Equals(value))
+					{
+						limit = value;
+						Owner.RefreshVector();
+					}
+				}
+			}
+			private Vector128 limit;
 		}
 	}
 
 	public interface ISpeedHandler
 	{
 		Vector128 Vector { get; set; }
+		Vector128 Limit { get; set; }
 	}
 }

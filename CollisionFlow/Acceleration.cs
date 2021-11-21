@@ -76,6 +76,7 @@ namespace CollisionFlow
 	{
 		private static bool IsZero(double value) => Math.Abs(value) < 0.000000000001;
 
+		public static double GetTime(double v, double a, double expectationV) => (expectationV - v) / a;
 		public static TimeA? GetTime(double first, double vFirst, double aFirst, double second, double vSecond, double aSecond)
 		{
 			if (first < second)

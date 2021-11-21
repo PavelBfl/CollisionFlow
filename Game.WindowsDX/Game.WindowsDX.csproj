@@ -14,4 +14,10 @@
     <ProjectReference Include="..\Gui.Core\Gui.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <MonoGameContentReference Include="..\Gui.Core\Content\SampleTemplate.mgcb">
+      <Link>Content\SampleTemplate.mgcb</Link>
+    </MonoGameContentReference>
+  </ItemGroup>
+
 </Project>

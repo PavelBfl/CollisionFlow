@@ -129,4 +129,61 @@ namespace SolidFlow
 			);
 		}
 	}
+
+	public class CollisionSpace
+	{
+		public CollisionSpace()
+		{
+			Expectations = new SortedList<double, List<IFlowEvent>>(Comparer);
+		}
+
+		public IComparer<double> Comparer { get; } = Comparer<double>.Default;
+		public double Time { get; private set; } = 0;
+		private SortedList<double, List<IFlowEvent>> Expectations { get; }
+
+		public void AddExpectationOffset(IFlowEvent flowEvent, double offset)
+		{
+			var time = Time + offset;
+			if (!Expectations.TryGetValue(time, out var events))
+			{
+				events = new List<IFlowEvent>();
+				Expectations.Add(time, events);
+			}
+
+			events.Add(flowEvent);
+		}
+
+		public CollisionDispatcher CollisionDispatcher { get; } = new CollisionDispatcher();
+
+		private void ExpectationsHandle(double time)
+		{
+			while (Expectations.Any())
+			{
+				var key = Expectations.Keys[0];
+				if (Comparer.Compare(key, time) < 0)
+				{
+					var expectation = Expectations.Values[0];
+					Expectations.RemoveAt(0);
+
+					foreach (var flowEvent in expectation)
+					{
+						flowEvent.Handle();
+					}
+				}
+			}
+		}
+
+		public GroupCollisionResult Offset(double value)
+		{
+			Time += value;
+			ExpectationsHandle(Time);
+
+			return CollisionDispatcher.Offset(value);
+		}
+	}
+
+	public interface IFlowEvent
+	{
+		void Handle();
+	}
 }

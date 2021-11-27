@@ -16,12 +16,12 @@ namespace SolidFlow
 			Acceleration.VectorChanged += AccelerationVectorChanged;
 		}
 
-		public Body(CollisionDispatcher dispatcher, IEnumerable<Vector128> verticies)
+		public Body(CollisionSpace dispatcher, IEnumerable<Vector128> verticies)
 			: this(dispatcher, verticies, Course.Zero)
 		{
 
 		}
-		public Body(CollisionDispatcher dispatcher, IEnumerable<Vector128> verticies, Course course)
+		public Body(CollisionSpace dispatcher, IEnumerable<Vector128> verticies, Course course)
 			: this()
 		{
 			Dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
@@ -35,7 +35,7 @@ namespace SolidFlow
 			{
 				builder.Add(vertex);
 			}
-			Handler = Dispatcher.Add(builder.GetLines());
+			Handler = Dispatcher.CollisionDispatcher.Add(builder.GetLines());
 			Handler.AttachetData = this;
 		}
 
@@ -44,7 +44,7 @@ namespace SolidFlow
 			RefreshCourse();
 		}
 
-		public CollisionDispatcher Dispatcher { get; }
+		public CollisionSpace Dispatcher { get; }
 		public IPolygonHandler Handler { get; private set; }
 		public double Weight { get; set; } = 1;
 		public double Bounce { get; set; } = 0;
@@ -87,11 +87,74 @@ namespace SolidFlow
 		}
 		private void RefreshCourse(Vector128? speed = null)
 		{
+			var currentSpeed = speed ?? Speed;
+
+			var x = 0d;
+			var y = 0d;
+			var xLimits = new List<double>();
+			var yLimits = new List<double>();
+			foreach (var aSpeed in Acceleration.Speeds)
+			{
+				if (aSpeed.Limit.X > Math.Abs(currentSpeed.X))
+				{
+					if (!double.IsInfinity(aSpeed.Limit.X))
+					{
+						xLimits.Add(aSpeed.Limit.X);
+					}
+					x += aSpeed.Vector.X;
+				}
+				if (aSpeed.Limit.Y > Math.Abs(currentSpeed.Y))
+				{
+					if (!double.IsInfinity(aSpeed.Limit.Y))
+					{
+						yLimits.Add(aSpeed.Limit.Y);
+					}
+					y += aSpeed.Vector.Y;
+				}
+			}
+
+			double? time = null;
+			foreach (var xLimit in xLimits)
+			{
+				if (time is null)
+				{
+					time = CollisionFlow.Acceleration.GetTime(currentSpeed.X, x, xLimit);
+				}
+				else
+				{
+					time = Math.Min(time.Value, CollisionFlow.Acceleration.GetTime(currentSpeed.X, x, xLimit));
+				}
+			}
+			foreach (var yLimit in yLimits)
+			{
+				if (time is null)
+				{
+					time = CollisionFlow.Acceleration.GetTime(currentSpeed.Y, y, yLimit);
+				}
+				else
+				{
+					time = Math.Min(time.Value, CollisionFlow.Acceleration.GetTime(currentSpeed.Y, y, yLimit));
+				}
+			}
+
+			if (!(LimitEvent is null))
+			{
+				Dispatcher.Remove(LimitEvent);
+				LimitEvent = null;
+			}
+			if (!(time is null))
+			{
+				LimitEvent = new FlowEvent(this);
+				Dispatcher.AddExpectationOffset(LimitEvent, time.Value);
+			}
+
 			Course = new Course(
-				(speed ?? Speed).ToVector(),
-				Acceleration.GetVector(speed ?? Speed).ToVector()
+				currentSpeed.ToVector(),
+				Vector128.Create(x, y)
 			);
 		}
+		private FlowEvent LimitEvent { get; set; }
+
 		public Course Course
 		{
 			get => Handler.Edges[0].Course;
@@ -104,8 +167,8 @@ namespace SolidFlow
 					{
 						builder.Add(vertex.Target);
 					}
-					Dispatcher.Remove(Handler);
-					Handler = Dispatcher.Add(builder.GetLines());
+					Dispatcher.CollisionDispatcher.Remove(Handler);
+					Handler = Dispatcher.CollisionDispatcher.Add(builder.GetLines());
 					Handler.AttachetData = this;
 
 					if (!Course.Equals(Course.Zero))
@@ -122,8 +185,8 @@ namespace SolidFlow
 			{
 				builder.Add(vertex.Target);
 			}
-			Dispatcher.Remove(Handler);
-			Handler = Dispatcher.Add(builder.GetLines());
+			Dispatcher.CollisionDispatcher.Remove(Handler);
+			Handler = Dispatcher.CollisionDispatcher.Add(builder.GetLines());
 			Handler.AttachetData = this;
 
 			if (!Course.Equals(Course.Zero))
@@ -139,17 +202,32 @@ namespace SolidFlow
 			{
 				builder.Add(vertex);
 			}
-			Dispatcher.Remove(Handler);
-			Handler = Dispatcher.Add(builder.GetLines());
+			Dispatcher.CollisionDispatcher.Remove(Handler);
+			Handler = Dispatcher.CollisionDispatcher.Add(builder.GetLines());
 			Handler.AttachetData = this;
 
 			ClearRest();
+		}
+
+		private class FlowEvent : IFlowEvent
+		{
+			public FlowEvent(Body owner)
+			{
+				Owner = owner ?? throw new ArgumentNullException(nameof(owner));
+			}
+
+			public Body Owner { get; }
+
+			public void Handle()
+			{
+				Owner.RefreshCourse();
+			}
 		}
 	}
 
 	public class SpeedAccumulator
 	{
-		private HashSet<ISpeedHandler> Speeds { get; } = new HashSet<ISpeedHandler>();
+		public HashSet<ISpeedHandler> Speeds { get; } = new HashSet<ISpeedHandler>();
 
 		public ISpeedHandler Add(double x, double y) => Add(x, y, double.PositiveInfinity, double.PositiveInfinity);
 		public ISpeedHandler Add(double x, double y, double xLimit, double yLimit)

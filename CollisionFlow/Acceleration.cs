@@ -13,6 +13,15 @@ namespace CollisionFlow
 		{
 			V = v;
 			A = a;
+			if (
+				Math.Abs(V.GetX()) > 1000000 ||
+				Math.Abs(V.GetY()) > 1000000 ||
+				Math.Abs(A.GetX()) > 1000000 ||
+				Math.Abs(A.GetY()) > 1000000
+			)
+			{
+
+			}
 		}
 		public Vector<double> V { get; }
 		public Vector<double> A { get; }

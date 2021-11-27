@@ -81,6 +81,7 @@ namespace Gui.Core
 
 		private BodyObserver[] bodyObservers;
 		private Body player;
+		private ISpeedHandler playerControl;
 
 		public GameCore()
 		{
@@ -172,6 +173,7 @@ namespace Gui.Core
 				Bounce = 0.5,
 			};
 			player.Acceleration.Add(0, BodyDispatcher.DEFAULT_GRAVITY);
+			playerControl = player.Acceleration.Add(0, 0);
 			_bodyDispatcher.Bodies.Add(player);
 
 			bodyObservers = _bodyDispatcher.Bodies.Select(x => new BodyObserver(x)).ToArray();
@@ -230,8 +232,10 @@ namespace Gui.Core
 				{
 					yMove = -JUMP_FORCE;
 				}
-				
-				player.Speed = new Vector128(xMove, yMove ?? player.Course.V.GetY());
+
+				playerControl.Vector = new Vector128(xMove, yMove ?? player.Course.V.GetY());
+				playerControl.Limit = new Vector128(Math.Abs(xMove), double.PositiveInfinity);
+				//player.Speed = new Vector128(xMove, yMove ?? player.Course.V.GetY());
 				player.IsTremble = xMove != 0;
 
 				var frameOffset = STEP_SIZE;

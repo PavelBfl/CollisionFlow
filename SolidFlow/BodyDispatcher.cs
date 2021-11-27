@@ -29,7 +29,7 @@ namespace SolidFlow
 			}
 		}
 
-		public CollisionDispatcher Dispatcher { get; } = new CollisionDispatcher();
+		public CollisionSpace Dispatcher { get; } = new CollisionSpace();
 		public List<Body> Bodies { get; } = new List<Body>();
 
 		private static bool IsNear(Vector128 main, Vector128 other)
@@ -151,6 +151,22 @@ namespace SolidFlow
 			}
 
 			events.Add(flowEvent);
+		}
+		public void Remove(IFlowEvent flowEvent)
+		{
+			if (flowEvent is null)
+			{
+				throw new ArgumentNullException(nameof(flowEvent));
+			}
+
+			foreach (var expection in Expectations.ToArray())
+			{
+				expection.Value.Remove(flowEvent);
+				if (!expection.Value.Any())
+				{
+					Expectations.Remove(expection.Key);
+				}
+			}
 		}
 
 		public CollisionDispatcher CollisionDispatcher { get; } = new CollisionDispatcher();

@@ -233,7 +233,7 @@ namespace Gui.Core
 					yMove = -JUMP_FORCE;
 				}
 
-				playerControl.Vector = new Vector128(xMove, yMove ?? player.Course.V.GetY());
+				playerControl.Vector = new Vector128(xMove, yMove ?? playerControl.Vector.Y);
 				playerControl.Limit = new Vector128(Math.Abs(xMove), double.PositiveInfinity);
 				//player.Speed = new Vector128(xMove, yMove ?? player.Course.V.GetY());
 				player.IsTremble = xMove != 0;

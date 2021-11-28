@@ -186,6 +186,10 @@ namespace SolidFlow
 						flowEvent.Handle();
 					}
 				}
+				else
+				{
+					return;
+				}
 			}
 		}
 

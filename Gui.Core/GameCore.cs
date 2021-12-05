@@ -83,6 +83,8 @@ namespace Gui.Core
 		private Body player;
 		private ISpeedHandler playerControl;
 
+		private SpriteFont font;
+
 		public GameCore()
 		{
 			_graphics = new GraphicsDeviceManager(this);
@@ -162,10 +164,10 @@ namespace Gui.Core
 
 			player = new Body(_bodyDispatcher.Dispatcher, new Vector128[]
 			{
-				new Vector128(10, 250),
-				new Vector128(60, 250),
-				new Vector128(60, 299),
-				new Vector128(10, 299),
+				new Vector128(10 + 000, 250),
+				new Vector128(60 + 000, 250),
+				new Vector128(60 + 000, 299),
+				new Vector128(10 + 000, 299),
 			}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, BodyDispatcher.DEFAULT_GRAVITY)))
 			{
 				Weight = 10,
@@ -192,6 +194,8 @@ namespace Gui.Core
 
 			Pixel = new Texture2D(GraphicsDevice, 1, 1);
 			Pixel.SetData(new[] { Color.White });
+
+			font = Content.Load<SpriteFont>("Debug");
 
 			base.LoadContent();
 		}
@@ -295,6 +299,9 @@ namespace Gui.Core
 					);
 				}
 			}
+
+			_spriteBatch.DrawString(font, $"FPS: {TimeSpan.FromSeconds(1).TotalMilliseconds / gameTime.ElapsedGameTime.TotalMilliseconds:0.00}", Vector2.Zero, Color.White);
+
 			_spriteBatch.End();
 
 			base.Draw(gameTime);

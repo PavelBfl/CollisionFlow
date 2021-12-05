@@ -62,6 +62,8 @@ namespace CollisionFlow
 			}
 		}
 
+		protected virtual double Planning(double offset) => offset;
+
 		public GroupCollisionResult Offset(double value)
 		{
 			var resultMin = new List<(CollisionData Data, Relation Relation)>();
@@ -88,35 +90,35 @@ namespace CollisionFlow
 			}
 
 			var offset = min ?? value;
-			if (!NumberUnitComparer.Instance.IsZero(offset))
+
+			var offsetPlanning = Planning(offset);
+			if (offsetPlanning < 0 || offset < offsetPlanning)
+			{
+				throw new InvalidOperationException();
+			}
+			
+			if (!NumberUnitComparer.Instance.IsZero(offsetPlanning))
 			{
 				foreach (var row in relations)
 				{
 					foreach (var cell in row)
 					{
-						cell.Step(offset);
+						cell.Step(offsetPlanning);
 					}
 				}
 				foreach (var polygon in polygons)
 				{
-					polygon.Offset(offset);
-				}
-
-				foreach (var row in relations)
-				{
-					foreach (var cell in row)
-					{
-						if (cell.First.IsCollision(cell.Second))
-						{
-
-						}
-					}
+					polygon.Offset(offsetPlanning);
 				}
 			}
 
 			if (min is null)
 			{
 				return null;
+			}
+			else if (offsetPlanning < offset)
+			{
+				return new GroupCollisionResult(Enumerable.Empty<CollisionData>(), offsetPlanning);
 			}
 			else
 			{

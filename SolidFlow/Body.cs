@@ -166,6 +166,14 @@ namespace SolidFlow
 			{
 				if (!Course.Equals(value))
 				{
+					if (Math.Abs(value.V.GetX() - 1.07) < 0.004)
+					{
+
+					}
+					else if (Math.Abs(value.V.GetX() + 1.07) < 0.004)
+					{
+					
+					}
 					var builder = new PolygonBuilder(value);
 					foreach (var vertex in Handler.Vertices)
 					{

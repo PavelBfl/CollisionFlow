@@ -231,18 +231,18 @@ namespace Gui.Core
 					xMove = PLAYER_SPEED;
 				}
 
-				double? yMove = null;
 				if (keyboardState.IsKeyDown(Keys.Up))
 				{
-					yMove = -JUMP_FORCE;
+					player.Speed = new Vector128(player.Speed.X, -JUMP_FORCE);
 				}
 
-				playerControl.Vector = new Vector128(xMove, yMove ?? playerControl.Vector.Y);
+				playerControl.Vector = new Vector128(xMove, playerControl.Vector.Y);
 				playerControl.Limit = new Vector128(Math.Abs(xMove), double.PositiveInfinity);
-				//player.Speed = new Vector128(xMove, yMove ?? player.Course.V.GetY());
+
 				player.IsTremble = xMove != 0;
 
 				var frameOffset = STEP_SIZE;
+				changesPerFrame = 0;
 				do
 				{
 					var result = _bodyDispatcher.Offset(STEP_SIZE);
@@ -254,10 +254,12 @@ namespace Gui.Core
 						bodyObserver.Commit(timeLine);
 					}
 					frameOffset -= currentStep;
+					changesPerFrame++;
 				} while (frameOffset > 0);
 			}
 			base.Update(gameTime);
 		}
+		private int changesPerFrame = 0;
 
 		private static Vector2 GetCenter(Body body)
 		{
@@ -301,6 +303,8 @@ namespace Gui.Core
 			}
 
 			_spriteBatch.DrawString(font, $"FPS: {TimeSpan.FromSeconds(1).TotalMilliseconds / gameTime.ElapsedGameTime.TotalMilliseconds:0.00}", Vector2.Zero, Color.White);
+			_spriteBatch.DrawString(font, $"CPF: {changesPerFrame}", new Vector2(0, 14), Color.White);
+			_spriteBatch.DrawString(font, $"COURSE: V=({player.Course.V.GetX():0.00},{player.Course.V.GetY():0.00}); A=({player.Course.A.GetX():0.00},{player.Course.A.GetY():0.00})", new Vector2(0, 14 * 2), Color.White);
 
 			_spriteBatch.End();
 

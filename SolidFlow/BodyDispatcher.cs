@@ -27,6 +27,24 @@ namespace SolidFlow
 				default: throw new InvalidOperationException();
 			}
 		}
+		private static Vector128 TrembleSpeed(Vector128 vector)
+		{
+			return new Vector128(
+				TrembleSpeed(vector.X),
+				TrembleSpeed(vector.Y)
+			);
+		}
+		private static double TrembleSpeed(double value)
+		{
+			if (Math.Abs(value) < MIN_SPEED)
+			{
+				return value < 0 ? -MIN_SPEED : MIN_SPEED;
+			}
+			else
+			{
+				return value;
+			}
+		}
 
 		public CollisionSpace Dispatcher { get; } = new CollisionSpace();
 		public List<Body> Bodies { get; } = new List<Body>();
@@ -47,6 +65,7 @@ namespace SolidFlow
 			}
 			return null;
 		}
+
 		public double? Offset(double value)
 		{
 			var result = Dispatcher.Offset(value);
@@ -76,6 +95,10 @@ namespace SolidFlow
 						pairResult.Edge.Target;
 
 					var edgeCourse = (Mirror(edge, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
+					if (edgeBody.IsTremble)
+					{
+						edgeCourse = TrembleSpeed(edgeCourse);
+					}
 					if (IsDeadSpeed(edgeCourse))
 					{
 						if (edgeBody.IsTremble)
@@ -94,6 +117,10 @@ namespace SolidFlow
 					}
 
 					var vertexCourse = (Mirror(edge, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
+					if (vertexBody.IsTremble)
+					{
+						vertexCourse = TrembleSpeed(vertexCourse);
+					}
 					if (IsDeadSpeed(vertexCourse))
 					{
 						if (vertexBody.IsTremble)

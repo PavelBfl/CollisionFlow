@@ -101,10 +101,6 @@ namespace CollisionFlow
 			First = first ?? throw new ArgumentNullException(nameof(first));
 			Second = second ?? throw new ArgumentNullException(nameof(second));
 			IsCollision = First.IsCollision(Second);
-			if (IsCollision)
-			{
-
-			}
 		}
 
 		public Polygon First { get; }
@@ -157,6 +153,8 @@ namespace CollisionFlow
 			}
 		}
 
+		private const double TIME_EPSILON = 0.0000001;
+		private static bool IsTimeZero(double time) => Math.Abs(time) < TIME_EPSILON;
 		private RelationResult GetMinResult()
 		{
 			var checker = new MinChecker();
@@ -167,8 +165,8 @@ namespace CollisionFlow
 					checker.Result = collision;
 				}
 
-				var prevTime = AddSteps(checker.Result, -1);
-				if (prevTime < 0 || NumberUnitComparer.Instance.IsZero(prevTime))
+				var prevTime = checker.Result.Offset - TIME_EPSILON;
+				if (prevTime < 0 || IsTimeZero(prevTime))
 				{
 					checker.Result.Offset = 0;
 					return checker.Result;
@@ -176,8 +174,8 @@ namespace CollisionFlow
 			}
 			if (checker.Result != null)
 			{
-				var prevTime = AddSteps(checker.Result, -1);
-				if (prevTime < 0 || NumberUnitComparer.Instance.IsZero(prevTime))
+				var prevTime = checker.Result.Offset - TIME_EPSILON;
+				if (prevTime < 0 || IsTimeZero(prevTime))
 				{
 					prevTime = 0;
 				}

@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Linq;
+using Flowing.Mutate;
 
 namespace CollisionFlow.Polygons
 {
 	class CommonPolygon : Polygon
 	{
-		public CommonPolygon(IEnumerable<Moved<LineFunction, Course>> edges)
+		public CommonPolygon(IEnumerable<Mutated<LineFunction, Course>> edges)
 		{
 			if (edges is null)
 			{
@@ -17,8 +18,8 @@ namespace CollisionFlow.Polygons
 			bounds = new Rect(Verticies.Select(x => x.Target));
 		}
 
-		public override Moved<LineFunction, Course>[] Edges { get; }
-		public override Moved<Vector128, Course>[] Verticies { get; }
+		public override Mutated<LineFunction, Course>[] Edges { get; }
+		public override Mutated<Vector128, Course>[] Verticies { get; }
 
 		private Rect bounds;
 		public override Rect Bounds => bounds;

@@ -1,19 +1,21 @@
-﻿namespace CollisionFlow
+﻿using Flowing.Mutate;
+
+namespace CollisionFlow
 {
 	public static class Moved
 	{
-		public static Moved<TTarget, TCourse> Create<TTarget, TCourse>(TTarget target, TCourse course) => new Moved<TTarget, TCourse>(target, course);
+		public static Mutated<TTarget, TCourse> Create<TTarget, TCourse>(TTarget target, TCourse course) => new Mutated<TTarget, TCourse>(target, course);
 
-		public static Moved<LineFunction, Vector128> Offset(this Moved<LineFunction, Vector128> moved, double value)
+		public static Mutated<LineFunction, Vector128> Offset(this Mutated<LineFunction, Vector128> moved, double value)
 			=> moved.SetTarget(moved.Target.OffsetByVector(new Vector128(moved.Course.ToVector() * value)));
 
-		public static Moved<Vector128, Vector128> Offset(this Moved<Vector128, Vector128> moved, double value)
+		public static Mutated<Vector128, Vector128> Offset(this Mutated<Vector128, Vector128> moved, double value)
 			=> moved.SetTarget(new Vector128(moved.Target.ToVector() + moved.Course.ToVector() * value));
 
-		public static Moved<double, double> Offset(this Moved<double, double> moved, double value)
+		public static Mutated<double, double> Offset(this Mutated<double, double> moved, double value)
 			=> moved.SetTarget(moved.Target + moved.Course * value);
 
-		public static Moved<Vector128, Course> Offset(this Moved<Vector128, Course> moved, double value)
+		public static Mutated<Vector128, Course> Offset(this Mutated<Vector128, Course> moved, double value)
 			=> Moved.Create(
 				new Vector128(
 					Acceleration.Offset(value, moved.Target.X, moved.Course.V.GetX(), moved.Course.A.GetX()),

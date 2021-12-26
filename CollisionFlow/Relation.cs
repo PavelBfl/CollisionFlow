@@ -261,7 +261,7 @@ namespace CollisionFlow
 			}
 		}
 
-		private static bool InRange(double time, LineState state, Moved<Vector128, Course> begin, Moved<Vector128, Course> end, Moved<Vector128, Course> freePoin)
+		private static bool InRange(double time, LineState state, Mutated<Vector128, Course> begin, Mutated<Vector128, Course> end, Mutated<Vector128, Course> freePoin)
 		{
 			var beginOffset = begin.Course.Offset(begin.Target.ToVector(), time);
 			var endOffset = end.Course.Offset(end.Target.ToVector(), time);
@@ -288,7 +288,7 @@ namespace CollisionFlow
 				return false;
 			}
 		}
-		private static TimeA? GetTime(Moved<LineFunction, Course> line, Moved<Vector128, Course> freePoin)
+		private static TimeA? GetTime(Mutated<LineFunction, Course> line, Mutated<Vector128, Course> freePoin)
 		{
 			var freeLine = line.Target.OffsetToPoint(freePoin.Target);
 			var freeV = freeLine.GetCourseOffset(freePoin.Course.V.ToVector128());
@@ -302,7 +302,7 @@ namespace CollisionFlow
 				line.Target.Offset, lineV, lineA
 			);
 		}
-		public static double? GetTime(Moved<double, double> point1, Moved<double, double> point2)
+		public static double? GetTime(Mutated<double, double> point1, Mutated<double, double> point2)
 		{
 			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);
 

@@ -16,10 +16,10 @@ namespace CollisionFlow
 
 		public IPolygonHandler EdgePolygon { get; }
 		public int EdgeIndex { get; }
-		public Moved<LineFunction, Course> Edge => EdgePolygon.Edges[EdgeIndex];
+		public Mutated<LineFunction, Course> Edge => EdgePolygon.Edges[EdgeIndex];
 		public IPolygonHandler VertexPolygon { get; }
 		public int VertexIndex { get; }
-		public Moved<Vector128, Course> Vertex => VertexPolygon.Vertices[VertexIndex];
+		public Mutated<Vector128, Course> Vertex => VertexPolygon.Vertices[VertexIndex];
 	}
 	public class CollisionResult
 	{
@@ -34,10 +34,10 @@ namespace CollisionFlow
 
 		public IPolygonHandler EdgePolygon { get; }
 		public int EdgeIndex { get; }
-		public Moved<LineFunction, Course> Edge => EdgePolygon.Edges[EdgeIndex];
+		public Mutated<LineFunction, Course> Edge => EdgePolygon.Edges[EdgeIndex];
 		public IPolygonHandler VertexPolygon { get; }
 		public int VertexIndex { get; }
-		public Moved<Vector128, Course> Vertex => VertexPolygon.Vertices[VertexIndex];
+		public Mutated<Vector128, Course> Vertex => VertexPolygon.Vertices[VertexIndex];
 		public double Offset { get; set; }
 		public bool? IsCollision { get; set; }
 

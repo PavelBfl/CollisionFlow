@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Linq;
+using Flowing.Mutate;
 
 namespace CollisionFlow.Polygons
 {
@@ -10,7 +11,7 @@ namespace CollisionFlow.Polygons
 		{
 			Course = course;
 			var edgesInstance = edges?.ToArray() ?? throw new ArgumentNullException(nameof(edges));
-			Edges = new Moved<LineFunction, Course>[edgesInstance.Length];
+			Edges = new Mutated<LineFunction, Course>[edgesInstance.Length];
 			for (int i = 0; i < edgesInstance.Length; i++)
 			{
 				Edges[i] = Moved.Create(edgesInstance[i], Course);
@@ -20,8 +21,8 @@ namespace CollisionFlow.Polygons
 		}
 
 		public Course Course { get; }
-		public override Moved<LineFunction, Course>[] Edges { get; }
-		public override Moved<Vector128, Course>[] Verticies { get; }
+		public override Mutated<LineFunction, Course>[] Edges { get; }
+		public override Mutated<Vector128, Course>[] Verticies { get; }
 
 		private Rect bounds;
 		public override Rect Bounds => bounds;

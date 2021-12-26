@@ -1,14 +1,15 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Linq;
+using Flowing.Mutate;
 
 namespace CollisionFlow.Polygons
 {
 	abstract class Polygon : IPolygonHandler
 	{
-		protected static Moved<Vector128, Course>[] GetVerticies(Moved<LineFunction, Course>[] edges)
+		protected static Mutated<Vector128, Course>[] GetVerticies(Mutated<LineFunction, Course>[] edges)
 		{
-			var vertices = new Moved<Vector128, Course>[edges.Length];
+			var vertices = new Mutated<Vector128, Course>[edges.Length];
 			var prevIndex = edges.Length - 1;
 			for (var index = 0; index < edges.Length; index++)
 			{
@@ -34,7 +35,7 @@ namespace CollisionFlow.Polygons
 			return vertices;
 		}
 
-		public static Polygon Create(IEnumerable<Moved<LineFunction, Course>> edges)
+		public static Polygon Create(IEnumerable<Mutated<LineFunction, Course>> edges)
 		{
 			if (edges is null)
 			{
@@ -60,8 +61,8 @@ namespace CollisionFlow.Polygons
 
 		public int GlobalIndex { get; set; }
 
-		public abstract Moved<LineFunction, Course>[] Edges { get; }
-		public abstract Moved<Vector128, Course>[] Verticies { get; }
+		public abstract Mutated<LineFunction, Course>[] Edges { get; }
+		public abstract Mutated<Vector128, Course>[] Verticies { get; }
 		public abstract Rect Bounds { get; }
 		public virtual void Offset(double time)
 		{
@@ -92,11 +93,11 @@ namespace CollisionFlow.Polygons
 			}
 		}
 
-		public Moved<Vector128, Course> GetBeginVertex(int edgeIndex) => Verticies[edgeIndex];
-		public Moved<Vector128, Course> GetEndVertex(int edgeIndex) => Verticies[edgeIndex + 1 < Verticies.Length ? edgeIndex + 1 : 0];
+		public Mutated<Vector128, Course> GetBeginVertex(int edgeIndex) => Verticies[edgeIndex];
+		public Mutated<Vector128, Course> GetEndVertex(int edgeIndex) => Verticies[edgeIndex + 1 < Verticies.Length ? edgeIndex + 1 : 0];
 
-		IReadOnlyList<Moved<LineFunction, Course>> IPolygonHandler.Edges => Edges;
-		IReadOnlyList<Moved<Vector128, Course>> IPolygonHandler.Vertices => Verticies;
+		IReadOnlyList<Mutated<LineFunction, Course>> IPolygonHandler.Edges => Edges;
+		IReadOnlyList<Mutated<Vector128, Course>> IPolygonHandler.Vertices => Verticies;
 
 		public object AttachetData { get; set; }
 

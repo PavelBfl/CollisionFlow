@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Flowing.Mutate;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -57,8 +58,8 @@ namespace CollisionFlow.Polygons
 			}
 		}
 
-		private List<Moved<Vector128, Course>> Points { get; } = new List<Moved<Vector128, Course>>();
-		private Moved<Vector128, Course> GetLast()
+		private List<Mutated<Vector128, Course>> Points { get; } = new List<Mutated<Vector128, Course>>();
+		private Mutated<Vector128, Course> GetLast()
 		{
 			return Points.Count > 0 ? Points[Points.Count - 1] : throw new InvalidOperationException();
 		}
@@ -106,7 +107,7 @@ namespace CollisionFlow.Polygons
 			return result;
 		}
 
-		public IEnumerable<Moved<LineFunction, Course>> GetLines()
+		public IEnumerable<Mutated<LineFunction, Course>> GetLines()
 		{
 			if (Points.Count < 3)
 			{

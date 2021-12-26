@@ -28,12 +28,7 @@ namespace CollisionFlow
 		}
 
 		public bool Equals(Course other)
-		{
-			return UnitComparer.Position.Equals(V.GetX(), other.V.GetX()) &&
-				UnitComparer.Position.Equals(V.GetY(), other.V.GetY()) &&
-				UnitComparer.Position.Equals(A.GetX(), other.A.GetX()) &&
-				UnitComparer.Position.Equals(A.GetY(), other.A.GetY());
-		}
+			=> UnitComparer.VectorPosition.Equals(V, other.V) && UnitComparer.VectorPosition.Equals(A, other.A);
 
 		public Course Offset(double time) => new Course(V + A * time, A);
 

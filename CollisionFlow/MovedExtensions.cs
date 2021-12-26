@@ -15,13 +15,10 @@ namespace CollisionFlow
 		public static Mutated<double, double> Offset(this Mutated<double, double> moved, double value)
 			=> moved.SetTarget(moved.Target + moved.Course * value);
 
-		public static Mutated<Vector128, Course> Offset(this Mutated<Vector128, Course> moved, double value)
+		public static Mutated<Vector128, Course> Offset(this Mutated<Vector128, Course> moved, double time)
 			=> Moved.Create(
-				new Vector128(
-					Acceleration.Offset(value, moved.Target.X, moved.Course.V.GetX(), moved.Course.A.GetX()),
-					Acceleration.Offset(value, moved.Target.Y, moved.Course.V.GetY(), moved.Course.A.GetY())
-				),
-				moved.Course.Offset(value)
+				moved.Course.Offset(moved.Target.ToVector(), time).ToVector128(),
+				moved.Course.Offset(time)
 			);
 
 		public static Rect Offset(this Rect rect, Vector128 course) => new Rect(

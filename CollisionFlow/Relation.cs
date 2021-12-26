@@ -297,10 +297,9 @@ namespace CollisionFlow
 			var lineV = line.Target.GetCourseOffset(line.Course.V.ToVector128());
 			var lineA = line.Target.GetCourseOffset(line.Course.A.ToVector128());
 
-			return Acceleration.GetTime(
-				freeLine.Offset, freeV, freeA,
-				line.Target.Offset, lineV, lineA
-			);
+			var freeMutated = Moved.Create(freeLine.Offset, new CourseA(freeV, freeA));
+			var lineMutated = Moved.Create(line.Target.Offset, new CourseA(lineV, lineA));
+			return freeMutated.GetTimeCollision(lineMutated);
 		}
 		public static double? GetTime(Mutated<double, double> point1, Mutated<double, double> point2)
 		{

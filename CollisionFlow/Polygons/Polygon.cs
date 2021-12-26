@@ -69,12 +69,10 @@ namespace CollisionFlow.Polygons
 			for (int i = 0; i < Edges.Length; i++)
 			{
 				var edge = Edges[i];
-				var offset = Acceleration.Offset(
-					time,
-					edge.Target.Offset,
+				var offset = new CourseA(
 					edge.Target.GetCourseOffset(edge.Course.V.ToVector128()),
 					edge.Target.GetCourseOffset(edge.Course.A.ToVector128())
-				);
+				).OffsetValue(edge.Target.Offset, time);
 				var line = new LineFunction(edge.Target.Slope, offset);
 				var course = edge.Course.Offset(time);
 
@@ -84,8 +82,8 @@ namespace CollisionFlow.Polygons
 			{
 				var vertex = Verticies[i];
 				var point = new Vector128(
-					Acceleration.Offset(time, vertex.Target.X, vertex.Course.V.GetX(), vertex.Course.A.GetX()),
-					Acceleration.Offset(time, vertex.Target.Y, vertex.Course.V.GetY(), vertex.Course.A.GetY())
+					new CourseA(vertex.Course.V.GetX(), vertex.Course.A.GetX()).OffsetValue(vertex.Target.X, time),
+					new CourseA(vertex.Course.V.GetY(), vertex.Course.A.GetY()).OffsetValue(vertex.Target.Y, time)
 				);
 				var course = vertex.Course.Offset(time);
 

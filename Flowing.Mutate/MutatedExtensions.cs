@@ -6,20 +6,20 @@ namespace Flowing.Mutate
 {
 	public static class MutatedExtensions
 	{
-		public static TimeA? GetTimeCollision(this Mutated<double, CourseA> main, Mutated<double, CourseA> other, INumberUnitComparer timeComparer)
+		public static TimeA? GetTimeCollision(this Mutated<double, CourseA> main, Mutated<double, CourseA> other)
 		{
 			if (main.Target < other.Target)
 			{
-				return GetTimeMinMaxCollision(main, other, timeComparer);
+				return GetTimeMinMaxCollision(main, other);
 			}
 			else
 			{
-				return GetTimeMinMaxCollision(other, main, timeComparer);
+				return GetTimeMinMaxCollision(other, main);
 			}
 		}
 
 		private static bool IsZero(double value) => Math.Abs(value) < 0.000000000001;
-		private static TimeA? GetTimeMinMaxCollision(Mutated<double, CourseA> min, Mutated<double, CourseA> max, INumberUnitComparer timeComparer)
+		private static TimeA? GetTimeMinMaxCollision(Mutated<double, CourseA> min, Mutated<double, CourseA> max)
 		{
 			var v = min.Course.V - max.Course.V;
 			var a = min.Course.A - max.Course.A;
@@ -30,7 +30,7 @@ namespace Flowing.Mutate
 			}
 			else if (IsZero(a))
 			{
-				var time = GetTimeCollision(min.SetCourse(min.Course.V), max.SetCourse(max.Course.V), timeComparer);
+				var time = GetTimeCollision(min.SetCourse(min.Course.V), max.SetCourse(max.Course.V));
 
 				return time is null ? new TimeA?() : new TimeA(time.Value);
 			}
@@ -57,7 +57,7 @@ namespace Flowing.Mutate
 			}
 		}
 
-		public static double? GetTimeCollision(Mutated<double, double> point1, Mutated<double, double> point2, INumberUnitComparer timeComparer)
+		public static double? GetTimeCollision(Mutated<double, double> point1, Mutated<double, double> point2)
 		{
 			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);
 
@@ -66,7 +66,7 @@ namespace Flowing.Mutate
 			{
 				var distance = max.Target - min.Target;
 				var localTime = distance / speed;
-				return timeComparer.InRange(localTime) ? localTime : new double?();
+				return UnitComparer.Time.InRange(localTime) ? localTime : new double?();
 			}
 			else
 			{

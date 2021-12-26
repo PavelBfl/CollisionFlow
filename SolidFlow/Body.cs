@@ -1,5 +1,6 @@
 ﻿using CollisionFlow;
 using CollisionFlow.Polygons;
+using Flowing.Mutate;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -116,12 +117,12 @@ namespace SolidFlow
 			double? time = null;
 			foreach (var xLimit in xLimits)
 			{
-				var localTime = CollisionFlow.Acceleration.GetTime(currentSpeed.X, x, xLimit);
+				var localTime = new CourseA(currentSpeed.X, x).GetTime(xLimit);
 				if (localTime > 0)
 				{
 					time = time is null ? localTime : Math.Min(time.Value, localTime);
 				}
-				localTime = CollisionFlow.Acceleration.GetTime(currentSpeed.X, x, -xLimit);
+				localTime = new CourseA(currentSpeed.X, x).GetTime(-xLimit);
 				if (localTime > 0)
 				{
 					time = time is null ? localTime : Math.Min(time.Value, localTime);
@@ -129,12 +130,12 @@ namespace SolidFlow
 			}
 			foreach (var yLimit in yLimits)
 			{
-				var localTime = CollisionFlow.Acceleration.GetTime(currentSpeed.Y, y, yLimit);
+				var localTime = new CourseA(currentSpeed.Y, y).GetTime(yLimit);
 				if (localTime > 0)
 				{
 					time = time is null ? localTime : Math.Min(time.Value, localTime);
 				}
-				localTime = CollisionFlow.Acceleration.GetTime(currentSpeed.Y, y, -yLimit);
+				localTime = new CourseA(currentSpeed.Y, y).GetTime(-yLimit);
 				if (localTime > 0)
 				{
 					time = time is null ? localTime : Math.Min(time.Value, localTime);

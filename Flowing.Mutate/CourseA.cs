@@ -34,9 +34,16 @@ namespace Flowing.Mutate
 		/// <param name="expectationV">Ожидаемое значение скорости</param>
 		/// <returns>Значение времени через которое значение <see cref="V"/> сравняется с <paramref name="expectationV"/>, значение времени может быть отрицательным</returns>
 		public double GetTime(double expectationV) => (expectationV - V) / A;
+		/// <summary>
+		/// Изменить значение на определённое время
+		/// </summary>
+		/// <param name="time">Время на которое необходимо изменить значение</param>
+		/// <param name="value">Изменяемое значение</param>
+		/// <returns>Изменённое значение</returns>
+		public double OffsetValue(double time, double value) => value + V * time + (A * time * time) / 2;
 
-		public bool Equals(CourseA other) => V == other.V && A == other.A;
+		public bool Equals(CourseA other) => UnitComparer.Position.Equals(V, other.V) && UnitComparer.Position.Equals(A, other.A);
 		public override bool Equals(object obj) => obj is CourseA other ? Equals(other) : false;
-		public override int GetHashCode() => V.GetHashCode() ^ A.GetHashCode();
+		public override int GetHashCode() => UnitComparer.Position.GetHashCode(V) ^ UnitComparer.Position.GetHashCode(A);
 	}
 }

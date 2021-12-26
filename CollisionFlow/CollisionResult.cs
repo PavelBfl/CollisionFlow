@@ -1,4 +1,5 @@
 ﻿using CollisionFlow.Polygons;
+using Flowing.Mutate;
 using System;
 
 namespace CollisionFlow
@@ -42,7 +43,7 @@ namespace CollisionFlow
 
 		public void Step(double value)
 		{
-			var compare = NumberUnitComparer.Instance.Compare(Offset, value);
+			var compare = UnitComparer.Time.Compare(Offset, value);
 			if (compare < 0)
 			{
 				throw new InvalidCollisiopnException();

@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Flowing.Mutate;
+using System;
 
 namespace CollisionFlow
 {
 	public struct Range
 	{
-		public static Range Auto(double first, double second) => NumberUnitComparer.Instance.Compare(first, second) < 0 ? new Range(first, second) : new Range(second, first);
+		public static Range Auto(double first, double second) => UnitComparer.Position.Compare(first, second) < 0 ? new Range(first, second) : new Range(second, first);
 
 		public Range(double min, double max)
 		{
-			if (NumberUnitComparer.Instance.Compare(min, max) > 0)
+			if (UnitComparer.Position.Compare(min, max) > 0)
 			{
 				throw new InvalidOperationException();
 			}
@@ -22,19 +23,19 @@ namespace CollisionFlow
 
 		public bool Contains(double value)
 		{
-			return NumberUnitComparer.Instance.Compare(Min, value) < 0 && NumberUnitComparer.Instance.Compare(value, Max) <= 0;
+			return UnitComparer.Position.Compare(Min, value) < 0 && UnitComparer.Position.Compare(value, Max) <= 0;
 		}
 		public bool ContainsExEx(double value)
 		{
-			return NumberUnitComparer.Instance.Compare(Min, value) < 0 && NumberUnitComparer.Instance.Compare(value, Max) < 0;
+			return UnitComparer.Position.Compare(Min, value) < 0 && UnitComparer.Position.Compare(value, Max) < 0;
 		}
 		public bool Contains(Range range)
 		{
-			return NumberUnitComparer.Instance.Compare(Min, range.Min) < 0 && NumberUnitComparer.Instance.Compare(range.Max, Max) <= 0;
+			return UnitComparer.Position.Compare(Min, range.Min) < 0 && UnitComparer.Position.Compare(range.Max, Max) <= 0;
 		}
 		public bool Intersect(Range range)
 		{
-			return NumberUnitComparer.Instance.Compare(Min, range.Max) < 0 && NumberUnitComparer.Instance.Compare(range.Min, Max) < 0;
+			return UnitComparer.Position.Compare(Min, range.Max) < 0 && UnitComparer.Position.Compare(range.Min, Max) < 0;
 		}
 	}
 }

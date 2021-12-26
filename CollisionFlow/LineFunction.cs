@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Flowing.Mutate;
+using System;
 using System.Numerics;
 
 namespace CollisionFlow
@@ -21,7 +22,7 @@ namespace CollisionFlow
 			{
 				return LineState.Vectical;
 			}
-			else if (NumberUnitComparer.Instance.Equals(slope, 0))
+			else if (UnitComparer.Position.Equals(slope, 0))
 			{
 				return LineState.Horisontal;
 			}
@@ -33,16 +34,16 @@ namespace CollisionFlow
 
 		public LineFunction(Vector128 begin, Vector128 end)
 		{
-			if (NumberUnitComparer.Instance.Equals(begin.X, end.X) && NumberUnitComparer.Instance.Equals(begin.Y, end.Y))
+			if (UnitComparer.Position.Equals(begin.X, end.X) && UnitComparer.Position.Equals(begin.Y, end.Y))
 			{
 				throw new InvalidOperationException();
 			}
-			else if (NumberUnitComparer.Instance.Equals(begin.X, end.X))
+			else if (UnitComparer.Position.Equals(begin.X, end.X))
 			{
 				Slope = double.PositiveInfinity;
 				Offset = begin.X;
 			}
-			else if (NumberUnitComparer.Instance.Equals(begin.Y, end.Y))
+			else if (UnitComparer.Position.Equals(begin.Y, end.Y))
 			{
 				Slope = 0;
 				Offset = begin.Y;

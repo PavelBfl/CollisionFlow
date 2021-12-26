@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Flowing.Mutate;
+using System;
 using System.Numerics;
 
 namespace CollisionFlow
@@ -41,13 +42,13 @@ namespace CollisionFlow
 
 		public bool Equals(Vector128 other)
 		{
-			return NumberUnitComparer.Instance.Equals(X ,other.X) && NumberUnitComparer.Instance.Equals(Y, other.Y);
+			return UnitComparer.Position.Equals(X ,other.X) && UnitComparer.Position.Equals(Y, other.Y);
 		}
 		public override bool Equals(object obj)
 		{
 			return obj is Vector128 other && Equals(other);
 		}
-		public override int GetHashCode() => NumberUnitComparer.Instance.GetHashCode(X) ^ NumberUnitComparer.Instance.GetHashCode(Y);
+		public override int GetHashCode() => UnitComparer.Position.GetHashCode(X) ^ UnitComparer.Position.GetHashCode(Y);
 
 		public override string ToString()
 		{

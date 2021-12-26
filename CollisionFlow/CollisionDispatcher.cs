@@ -3,6 +3,7 @@ using System.Text;
 using System;
 using System.Linq;
 using CollisionFlow.Polygons;
+using Flowing.Mutate;
 
 namespace CollisionFlow
 {
@@ -82,7 +83,7 @@ namespace CollisionFlow
 				{
 					min = item.Data.Offset;
 				}
-				else if (!NumberUnitComparer.Instance.Equals(min.Value, item.Data.Offset))
+				else if (!UnitComparer.Time.Equals(min.Value, item.Data.Offset))
 				{
 					break;
 				}
@@ -97,7 +98,7 @@ namespace CollisionFlow
 				throw new InvalidOperationException();
 			}
 			
-			if (!NumberUnitComparer.Instance.IsZero(offsetPlanning))
+			if (!UnitComparer.Time.IsZero(offsetPlanning))
 			{
 				foreach (var row in relations)
 				{

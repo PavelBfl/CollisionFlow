@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Flowing.Mutate;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -28,10 +29,10 @@ namespace CollisionFlow
 
 		public bool Equals(Course other)
 		{
-			return NumberUnitComparer.Instance.Equals(V.GetX(), other.V.GetX()) &&
-				NumberUnitComparer.Instance.Equals(V.GetY(), other.V.GetY()) &&
-				NumberUnitComparer.Instance.Equals(A.GetX(), other.A.GetX()) &&
-				NumberUnitComparer.Instance.Equals(A.GetY(), other.A.GetY());
+			return UnitComparer.Position.Equals(V.GetX(), other.V.GetX()) &&
+				UnitComparer.Position.Equals(V.GetY(), other.V.GetY()) &&
+				UnitComparer.Position.Equals(A.GetX(), other.A.GetX()) &&
+				UnitComparer.Position.Equals(A.GetY(), other.A.GetY());
 		}
 
 		public Course Offset(double time) => new Course(V + A * time, A);

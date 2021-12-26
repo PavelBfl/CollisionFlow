@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using CollisionFlow.Polygons;
+using Flowing.Mutate;
 
 namespace CollisionFlow
 {
@@ -153,8 +154,6 @@ namespace CollisionFlow
 			}
 		}
 
-		private const double TIME_EPSILON = 0.0000001;
-		private static bool IsTimeZero(double time) => Math.Abs(time) < TIME_EPSILON;
 		private RelationResult GetMinResult()
 		{
 			var checker = new MinChecker();
@@ -165,8 +164,8 @@ namespace CollisionFlow
 					checker.Result = collision;
 				}
 
-				var prevTime = checker.Result.Offset - TIME_EPSILON;
-				if (prevTime < 0 || IsTimeZero(prevTime))
+				var prevTime = UnitComparer.Time.Decrement(checker.Result.Offset);
+				if (UnitComparer.Time.Compare(prevTime, 0) <= 0)
 				{
 					checker.Result.Offset = 0;
 					return checker.Result;
@@ -174,8 +173,8 @@ namespace CollisionFlow
 			}
 			if (checker.Result != null)
 			{
-				var prevTime = checker.Result.Offset - TIME_EPSILON;
-				if (prevTime < 0 || IsTimeZero(prevTime))
+				var prevTime = UnitComparer.Time.Decrement(checker.Result.Offset);
+				if (UnitComparer.Time.Compare(prevTime, 0) <= 0)
 				{
 					prevTime = 0;
 				}
@@ -190,9 +189,9 @@ namespace CollisionFlow
 
 			var length = Math.Abs(vector.X) > Math.Abs(vector.Y) ? vector.X : vector.Y;
 
-			var timeStep = length >= NumberUnitComparer.Instance.Epsilon ?
-				NumberUnitComparer.Instance.Epsilon / length :
-				NumberUnitComparer.Instance.Epsilon;
+			var timeStep = length >= UnitComparer.Position.Epsilon ?
+				UnitComparer.Position.Epsilon / length :
+				UnitComparer.Position.Epsilon;
 
 			return result.Offset + steps * timeStep;
 		}
@@ -273,11 +272,11 @@ namespace CollisionFlow
 		}
 		private static bool Contains(double first, double second, double value)
 		{
-			if (NumberUnitComparer.Instance.InRange(first) && NumberUnitComparer.Instance.InRange(second))
+			if (UnitComparer.Position.InRange(first) && UnitComparer.Position.InRange(second))
 			{
-				if (NumberUnitComparer.Instance.Equals(first, second))
+				if (UnitComparer.Position.Equals(first, second))
 				{
-					return NumberUnitComparer.Instance.Equals(first, value);
+					return UnitComparer.Position.Equals(first, value);
 				}
 				else
 				{
@@ -312,7 +311,7 @@ namespace CollisionFlow
 			{
 				var distance = max.Target - min.Target;
 				var localOffset = distance / speed;
-				return NumberUnitComparer.Instance.InRange(localOffset) ? localOffset : new double?();
+				return UnitComparer.Time.InRange(localOffset) ? localOffset : new double?();
 			}
 			else
 			{

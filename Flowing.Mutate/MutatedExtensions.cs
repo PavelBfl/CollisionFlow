@@ -4,22 +4,22 @@ using System.Text;
 
 namespace Flowing.Mutate
 {
-	public static class MovedExtensions
+	public static class MutatedExtensions
 	{
-		public static TimeA? GetTimeCollision(this Moved<double, CourseA> main, Moved<double, CourseA> other)
+		public static TimeA? GetTimeCollision(this Mutated<double, CourseA> main, Mutated<double, CourseA> other, INumberUnitComparer timeComparer)
 		{
 			if (main.Target < other.Target)
 			{
-				return GetTimeMinMaxCollision(main, other);
+				return GetTimeMinMaxCollision(main, other, timeComparer);
 			}
 			else
 			{
-				return GetTimeMinMaxCollision(other, main);
+				return GetTimeMinMaxCollision(other, main, timeComparer);
 			}
 		}
 
 		private static bool IsZero(double value) => Math.Abs(value) < 0.000000000001;
-		private static TimeA? GetTimeMinMaxCollision(Moved<double, CourseA> min, Moved<double, CourseA> max)
+		private static TimeA? GetTimeMinMaxCollision(Mutated<double, CourseA> min, Mutated<double, CourseA> max, INumberUnitComparer timeComparer)
 		{
 			var v = min.Course.V - max.Course.V;
 			var a = min.Course.A - max.Course.A;
@@ -30,7 +30,7 @@ namespace Flowing.Mutate
 			}
 			else if (IsZero(a))
 			{
-				var time = GetTimeCollision(new Moved<double, double>(min.Target, min.Course.V), new Moved<double, double>(max.Target, max.Course.V));
+				var time = GetTimeCollision(min.SetCourse(min.Course.V), max.SetCourse(max.Course.V), timeComparer);
 
 				return time is null ? new TimeA?() : new TimeA(time.Value);
 			}
@@ -57,7 +57,7 @@ namespace Flowing.Mutate
 			}
 		}
 
-		public static double? GetTimeCollision(Moved<double, double> point1, Moved<double, double> point2)
+		public static double? GetTimeCollision(Mutated<double, double> point1, Mutated<double, double> point2, INumberUnitComparer timeComparer)
 		{
 			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);
 
@@ -65,30 +65,13 @@ namespace Flowing.Mutate
 			if (speed > 0)
 			{
 				var distance = max.Target - min.Target;
-				var localOffset = distance / speed;
-				return NumberUnitComparer.Instance.InRange(localOffset) ? localOffset : new double?();
+				var localTime = distance / speed;
+				return timeComparer.InRange(localTime) ? localTime : new double?();
 			}
 			else
 			{
 				return null;
 			}
 		}
-	}
-
-	public struct TimeA
-	{
-		public TimeA(double result)
-			: this(result, result)
-		{
-
-		}
-		public TimeA(double result1, double result2)
-		{
-			Result1 = result1;
-			Result2 = result2;
-		}
-
-		public double Result1 { get; }
-		public double Result2 { get; }
 	}
 }

@@ -13,14 +13,14 @@ namespace Flowing.Mutate
 		public NumberUnitComparer(double epsilon)
 			: this(long.MinValue / epsilon, long.MaxValue / epsilon, epsilon)
 		{
-
+			
 		}
 
 		public double Min { get; }
 		public double Max { get; }
 		public double Epsilon { get; }
 
-		private long GetUnit(double value) => (long)Math.Round(value / Epsilon);
+		private long GetUnit(double value) => (long)(value / Epsilon + (value < 0 ? -0.5 : 0.5));
 
 		public bool InRange(double value) => Min < value && value < Max;
 

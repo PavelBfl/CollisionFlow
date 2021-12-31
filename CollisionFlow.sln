@@ -15,6 +15,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Game.WindowsDX", "Game.Wind
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flowing.Mutate", "Flowing.Mutate\Flowing.Mutate.csproj", "{75C218EC-4595-42BD-8FA4-F59EFE5A2F40}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{0E820CF7-21D2-4D49-A799-331591546D19}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flowing.Mutate.Test", "Test\Flowing.Mutate.Test\Flowing.Mutate.Test.csproj", "{90CAF7FF-E09F-47C9-8A68-46C4E891FFBA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,9 +49,16 @@ Global
 		{75C218EC-4595-42BD-8FA4-F59EFE5A2F40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{75C218EC-4595-42BD-8FA4-F59EFE5A2F40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{75C218EC-4595-42BD-8FA4-F59EFE5A2F40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90CAF7FF-E09F-47C9-8A68-46C4E891FFBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90CAF7FF-E09F-47C9-8A68-46C4E891FFBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90CAF7FF-E09F-47C9-8A68-46C4E891FFBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90CAF7FF-E09F-47C9-8A68-46C4E891FFBA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{90CAF7FF-E09F-47C9-8A68-46C4E891FFBA} = {0E820CF7-21D2-4D49-A799-331591546D19}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7DC42A7D-3074-40F9-A693-B91FB21FC57C}

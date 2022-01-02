@@ -135,5 +135,10 @@ namespace CollisionFlow
 		{
 			return CommonPolygon.IsCollision(polygon1, polygon2);
 		}
+
+		public override string ToString()
+		{
+			return $"P: {polygons.Count}; V: {polygons.Select(x => x.Verticies.Length).Sum()}";
+		}
 	}
 }

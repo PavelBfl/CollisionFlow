@@ -99,8 +99,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 0;
-			const int COLUMNS_COUNT = 3;
+			const int ROWS_COUNT = 10;
+			const int COLUMNS_COUNT = 10;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);

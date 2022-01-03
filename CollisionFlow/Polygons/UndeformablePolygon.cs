@@ -20,7 +20,7 @@ namespace CollisionFlow.Polygons
 			bounds = new Rect(Verticies.Select(x => x.Target));
 		}
 
-		public Course Course { get; }
+		public Course Course { get; private set; }
 		public override Mutated<LineFunction, Course>[] Edges { get; }
 		public override Mutated<Vector128, Course>[] Verticies { get; }
 
@@ -31,6 +31,7 @@ namespace CollisionFlow.Polygons
 		{
 			base.Offset(time);
 			bounds = Course.Offset(bounds, time);
+			Course = Course.Offset(time);
 		}
 	}
 }

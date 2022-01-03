@@ -27,6 +27,9 @@ namespace CollisionFlow
 			return new Course(V, Vector128.Create(x, y));
 		}
 
+		public CourseA GetX() => new CourseA(V.GetX(), A.GetX());
+		public CourseA GetY() => new CourseA(V.GetY(), A.GetY());
+
 		public bool Equals(Course other)
 			=> UnitComparer.VectorPosition.Equals(V, other.V) && UnitComparer.VectorPosition.Equals(A, other.A);
 

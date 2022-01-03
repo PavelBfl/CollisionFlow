@@ -150,6 +150,11 @@ namespace CollisionFlow
 			}
 			else
 			{
+				if (First is UndeformablePolygon undeformableFirst && Second is UndeformablePolygon undeformableSecond)
+				{
+					var result = GetWaitResult(undeformableFirst, undeformableSecond, offset);
+					return result ?? GetMinResult();
+				}
 				return GetMinResult();
 			}
 		}
@@ -215,6 +220,78 @@ namespace CollisionFlow
 			else
 			{
 				return RangeCompare.Over;
+			}
+		}		
+		private static RelationResult GetWaitResult(UndeformablePolygon mainPolygon, UndeformablePolygon otherPolygon, double time)
+		{
+			switch (Compare(mainPolygon.Bounds.Horisontal, otherPolygon.Bounds.Horisontal))
+			{
+				case RangeCompare.Equals:
+					switch (Compare(mainPolygon.Bounds.Vertical, otherPolygon.Bounds.Vertical))
+					{
+						case RangeCompare.Equals: return null;
+						case RangeCompare.Less:
+							return GetFlatResult(
+								new Mutated<double, CourseA>(mainPolygon.Bounds.Top, mainPolygon.Course.GetY()),
+								new Mutated<double, CourseA>(otherPolygon.Bounds.Bottom, otherPolygon.Course.GetY()),
+								time
+							);
+						case RangeCompare.Over:
+							return GetFlatResult(
+								new Mutated<double, CourseA>(otherPolygon.Bounds.Top, otherPolygon.Course.GetY()),
+								new Mutated<double, CourseA>(mainPolygon.Bounds.Bottom, mainPolygon.Course.GetY()),
+								time
+							);
+						default: throw new InvalidOperationException();
+					}
+				case RangeCompare.Less:
+					return GetFlatResult(
+						new Mutated<double, CourseA>(mainPolygon.Bounds.Right, mainPolygon.Course.GetX()),
+						new Mutated<double, CourseA>(otherPolygon.Bounds.Left, otherPolygon.Course.GetX()),
+						time
+					);
+				case RangeCompare.Over:
+					return GetFlatResult(
+						new Mutated<double, CourseA>(otherPolygon.Bounds.Right, otherPolygon.Course.GetX()),
+						new Mutated<double, CourseA>(mainPolygon.Bounds.Left, mainPolygon.Course.GetX()),
+						time
+					);
+				default: throw new InvalidOperationException();
+			}
+		}
+		private static RelationResult GetFlatResult(Mutated<double, CourseA> main, Mutated<double, CourseA> other, double time)
+		{
+			if (main.GetTimeCollision(other) is TimeA collisionTime)
+			{
+				double? waitTime = null;
+				if (collisionTime.Result1 > 0)
+				{
+					waitTime = collisionTime.Result1;
+				}
+				if (collisionTime.Result2 > 0 && collisionTime.Result2 > collisionTime.Result1)
+				{
+					waitTime = collisionTime.Result2;
+				}
+
+				if (waitTime.HasValue && waitTime.Value > time)
+				{
+					if (waitTime.Value > 100000000)
+					{
+						return InfinitResult.Instance;
+					}
+					else
+					{
+						return new WaitResult(waitTime.Value); 
+					}
+				}
+				else
+				{
+					return null;
+				}
+			}
+			else
+			{
+				return InfinitResult.Instance;
 			}
 		}
 
@@ -301,6 +378,7 @@ namespace CollisionFlow
 			var lineMutated = Moved.Create(line.Target.Offset, new CourseA(lineV, lineA));
 			return freeMutated.GetTimeCollision(lineMutated);
 		}
+		[Obsolete]
 		public static double? GetTime(Mutated<double, double> point1, Mutated<double, double> point2)
 		{
 			var (min, max) = point1.Target < point2.Target ? (point1, point2) : (point2, point1);

@@ -70,15 +70,25 @@ namespace CollisionFlow
 			var resultMin = new List<(CollisionData Data, Relation Relation)>();
 			double? min = null;
 
-			var pResult = relations
-				//.AsParallel()
-				.SelectMany(x => x)
-				.Select(x => (Data: x.GetResult(value), Relation: x))
-				.Where(x => x.Data != null && x.Data.Offset < value)
-				.OrderBy(x => x.Data.Offset);
-
-			foreach (var item in pResult)
+			var pResult = new List<(OffsetResult Data, Relation Relation)>();
+			for (int i = 0; i < relations.Count; i++)
 			{
+				var relationsRow = relations[i];
+				for (int j = 0; j < relationsRow.Count; j++)
+				{
+					var relation = relationsRow[j];
+					var data = relation.GetResult(value);
+					if (data != null && data.Offset < value)
+					{
+						pResult.Add((data, relation));
+					}
+				}
+			}
+			pResult.Sort((x, y) => Comparer<double>.Default.Compare(x.Data.Offset, y.Data.Offset));
+
+			for (int i = 0; i < pResult.Count; i++)
+			{
+				var item = pResult[i];
 				if (min is null)
 				{
 					min = item.Data.Offset;

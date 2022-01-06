@@ -1,5 +1,6 @@
 ﻿using Flowing.Mutate;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace CollisionFlow
@@ -12,17 +13,21 @@ namespace CollisionFlow
 	}
 	public struct LineFunction
 	{
-		public static LineFunction AsVerticalUp(double offset) => new LineFunction(double.PositiveInfinity, offset);
-		public static LineFunction AsVerticalDown(double offset) => new LineFunction(double.NegativeInfinity, offset);
-		public static LineFunction AsHorisontal(double offset) => new LineFunction(0, offset);
+		private static IEqualityComparer<double> DefaultComparer { get; } = new NumberUnitComparer(0.00000000001);
+		private static IEqualityComparer<double> GetComparer(IEqualityComparer<double> customComparer)
+			=> customComparer ?? DefaultComparer;
 
-		private static LineState GetState(double slope)
+		public static LineFunction AsVerticalUp(double offset, IEqualityComparer<double> comparer) => new LineFunction(double.PositiveInfinity, offset, comparer);
+		public static LineFunction AsVerticalDown(double offset, IEqualityComparer<double> comparer) => new LineFunction(double.NegativeInfinity, offset, comparer);
+		public static LineFunction AsHorisontal(double offset, IEqualityComparer<double> comparer) => new LineFunction(0, offset, comparer);
+
+		private static LineState GetState(double slope, IEqualityComparer<double> comparer)
 		{
 			if (double.IsInfinity(slope))
 			{
 				return LineState.Vectical;
 			}
-			else if (UnitComparer.Position.Equals(slope, 0))
+			else if (comparer.Equals(slope, 0))
 			{
 				return LineState.Horisontal;
 			}
@@ -32,18 +37,20 @@ namespace CollisionFlow
 			}
 		}
 
-		public LineFunction(Vector128 begin, Vector128 end)
+		public LineFunction(Vector128 begin, Vector128 end, IEqualityComparer<double> comparer = null)
 		{
-			if (UnitComparer.Position.Equals(begin.X, end.X) && UnitComparer.Position.Equals(begin.Y, end.Y))
+			comparer = GetComparer(comparer);
+
+			if (comparer.Equals(begin.X, end.X) && comparer.Equals(begin.Y, end.Y))
 			{
 				throw new InvalidOperationException();
 			}
-			else if (UnitComparer.Position.Equals(begin.X, end.X))
+			else if (comparer.Equals(begin.X, end.X))
 			{
 				Slope = double.PositiveInfinity;
 				Offset = begin.X;
 			}
-			else if (UnitComparer.Position.Equals(begin.Y, end.Y))
+			else if (comparer.Equals(begin.Y, end.Y))
 			{
 				Slope = 0;
 				Offset = begin.Y;
@@ -56,13 +63,13 @@ namespace CollisionFlow
 				Slope = difference.GetY() / difference.GetX();
 				Offset = begin.Y - (begin.X * Slope); 
 			}
-			State = GetState(Slope);
+			State = GetState(Slope, comparer);
 		}
-		public LineFunction(double slope, double offset)
+		public LineFunction(double slope, double offset, IEqualityComparer<double> comparer = null)
 		{
 			Slope = slope;
 			Offset = offset;
-			State = GetState(Slope);
+			State = GetState(Slope, GetComparer(comparer));
 		}
 
 		public double Slope { get; }
@@ -152,34 +159,34 @@ namespace CollisionFlow
 			return (y - Offset) / Slope;
 		}
 
-		public LineFunction Perpendicular()
+		public LineFunction Perpendicular(IEqualityComparer<double> comparer = null)
 		{
-			return new LineFunction(-1 / Slope, Offset);
+			return new LineFunction(-1 / Slope, Offset, comparer);
 		}
-		public LineFunction OffsetToPoint(Vector128 point)
+		public LineFunction OffsetToPoint(Vector128 point, IEqualityComparer<double> comparer = null)
 		{
 			if (IsVerticalUp())
 			{
-				return AsVerticalUp(point.X);
+				return AsVerticalUp(point.X, comparer);
 			}
 			else if (IsVerticalDown())
 			{
-				return AsVerticalDown(point.X);
+				return AsVerticalDown(point.X, comparer);
 			}
 			else if (IsHorizontal())
 			{
-				return AsHorisontal(point.Y);
+				return AsHorisontal(point.Y, comparer);
 			}
 			else
 			{
 				var newY = GetY(point.X);
 				var difference = point.Y - newY;
-				return new LineFunction(Slope, Offset + difference);
+				return new LineFunction(Slope, Offset + difference, comparer);
 			}
 		}
-		public LineFunction OffsetByVector(Vector128 vector)
+		public LineFunction OffsetByVector(Vector128 vector, IEqualityComparer<double> comparer = null)
 		{
-			return new LineFunction(Slope, Offset + GetCourseOffset(vector));
+			return new LineFunction(Slope, Offset + GetCourseOffset(vector), comparer);
 		}
 		public double GetCourseOffset(Vector128 vector)
 		{

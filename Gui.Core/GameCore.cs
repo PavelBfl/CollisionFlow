@@ -99,7 +99,7 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 10;
+			const int ROWS_COUNT = 15;
 			const int COLUMNS_COUNT = 10;
 			const double GLOBAL_OFFSET = 300;
 
@@ -162,21 +162,21 @@ namespace Gui.Core
 			};
 			_bodyDispatcher.Bodies.Add(bod);
 
-			player = new Body(_bodyDispatcher.Dispatcher, new Vector128[]
-			{
-				new Vector128(10 + 000, 250),
-				new Vector128(60 + 000, 250),
-				new Vector128(60 + 000, 299),
-				new Vector128(10 + 000, 299),
-			}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, BodyDispatcher.DEFAULT_GRAVITY)))
-			{
-				Weight = 10,
-				Name = "Player",
-				Bounce = 0.5,
-			};
-			player.Acceleration.Add(0, BodyDispatcher.DEFAULT_GRAVITY);
-			playerControl = player.Acceleration.Add(0, 0);
-			_bodyDispatcher.Bodies.Add(player);
+			//player = new Body(_bodyDispatcher.Dispatcher, new Vector128[]
+			//{
+			//	new Vector128(10 + 000, 250),
+			//	new Vector128(60 + 000, 250),
+			//	new Vector128(60 + 000, 299),
+			//	new Vector128(10 + 000, 299),
+			//}, new Course(Vector128.Zero.ToVector(), Vector128.Create(0, BodyDispatcher.DEFAULT_GRAVITY)))
+			//{
+			//	Weight = 10,
+			//	Name = "Player",
+			//	Bounce = 0.5,
+			//};
+			//player.Acceleration.Add(0, BodyDispatcher.DEFAULT_GRAVITY);
+			//playerControl = player.Acceleration.Add(0, 0);
+			//_bodyDispatcher.Bodies.Add(player);
 
 			bodyObservers = _bodyDispatcher.Bodies.Select(x => new BodyObserver(x)).ToArray();
 
@@ -221,25 +221,25 @@ namespace Gui.Core
 				const double PLAYER_SPEED = 20;
 				const double JUMP_FORCE = 1;
 
-				var xMove = 0d;
-				if (keyboardState.IsKeyDown(Keys.Left))
-				{
-					xMove = -PLAYER_SPEED;
-				}
-				else if (keyboardState.IsKeyDown(Keys.Right))
-				{
-					xMove = PLAYER_SPEED;
-				}
+				//var xMove = 0d;
+				//if (keyboardState.IsKeyDown(Keys.Left))
+				//{
+				//	xMove = -PLAYER_SPEED;
+				//}
+				//else if (keyboardState.IsKeyDown(Keys.Right))
+				//{
+				//	xMove = PLAYER_SPEED;
+				//}
 
-				if (keyboardState.IsKeyDown(Keys.Up))
-				{
-					player.Speed = new Vector128(player.Speed.X, -JUMP_FORCE);
-				}
+				//if (keyboardState.IsKeyDown(Keys.Up))
+				//{
+				//	player.Speed = new Vector128(player.Speed.X, -JUMP_FORCE);
+				//}
 
-				playerControl.Vector = new Vector128(xMove, playerControl.Vector.Y);
-				playerControl.Limit = new Vector128(Math.Abs(xMove), double.PositiveInfinity);
+				//playerControl.Vector = new Vector128(xMove, playerControl.Vector.Y);
+				//playerControl.Limit = new Vector128(Math.Abs(xMove), double.PositiveInfinity);
 
-				player.IsTremble = xMove != 0;
+				//player.IsTremble = xMove != 0;
 
 				var frameOffset = STEP_SIZE;
 				changesPerFrame = 0;
@@ -256,10 +256,17 @@ namespace Gui.Core
 					frameOffset -= currentStep;
 					changesPerFrame++;
 				} while (frameOffset > 0);
+				changesPerFrameCount += changesPerFrame;
+				framesCount++;
+				changesPerFrameMax = Math.Max(changesPerFrameMax, changesPerFrame);
 			}
 			base.Update(gameTime);
 		}
 		private int changesPerFrame = 0;
+		private int changesPerFrameMax = 0;
+
+		private int changesPerFrameCount = 0;
+		private int framesCount = 0;
 
 		private static Vector2 GetCenter(Body body)
 		{
@@ -303,8 +310,8 @@ namespace Gui.Core
 			}
 
 			_spriteBatch.DrawString(font, $"FPS: {TimeSpan.FromSeconds(1).TotalMilliseconds / gameTime.ElapsedGameTime.TotalMilliseconds:0.00}", Vector2.Zero, Color.White);
-			_spriteBatch.DrawString(font, $"CPF: {changesPerFrame}", new Vector2(0, 14), Color.White);
-			_spriteBatch.DrawString(font, $"COURSE: V=({player.Course.V.GetX():0.00},{player.Course.V.GetY():0.00}); A=({player.Course.A.GetX():0.00},{player.Course.A.GetY():0.00})", new Vector2(0, 14 * 2), Color.White);
+			_spriteBatch.DrawString(font, $"CPF: {changesPerFrame}; Max:{changesPerFrameMax}; Avg:{(double)changesPerFrameCount / framesCount:#.##}", new Vector2(0, 14), Color.White);
+			//_spriteBatch.DrawString(font, $"COURSE: V=({player.Course.V.GetX():0.00},{player.Course.V.GetY():0.00}); A=({player.Course.A.GetX():0.00},{player.Course.A.GetY():0.00})", new Vector2(0, 14 * 2), Color.White);
 
 			_spriteBatch.End();
 

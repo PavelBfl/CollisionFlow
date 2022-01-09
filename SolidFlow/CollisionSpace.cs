@@ -58,10 +58,14 @@ namespace SolidFlow
 					{
 						flowEvent.Handle();
 					}
-					Time += key;
-					return key;
+
+					var step = key - Time;
+					Time = key;
+					return step;
 				}
 			}
+
+			Time += offset;
 			return offset;
 		}
 	}

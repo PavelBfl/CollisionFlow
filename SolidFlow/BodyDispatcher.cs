@@ -66,6 +66,23 @@ namespace SolidFlow
 			return null;
 		}
 
+		private static double GetSpeedWithoutTremble(double origin)
+			=> Math.Abs(origin) <= MIN_SPEED ? 0 : origin;
+		private static Vector128 GetCourseWithoutTremble(Body body)
+		{
+			if (body.IsTremble)
+			{
+				return new Vector128(
+					GetSpeedWithoutTremble(body.Course.V.GetX()),
+					GetSpeedWithoutTremble(body.Course.V.GetY())
+				);
+			}
+			else
+			{
+				return body.Course.V.ToVector128();
+			}
+		}
+
 		public double? Offset(double value)
 		{
 			var result = Dispatcher.Offset(value);
@@ -77,8 +94,10 @@ namespace SolidFlow
 					var edgeBody = (Body)pairResult.EdgePolygon.AttachetData;
 					var vertexBody = (Body)pairResult.VertexPolygon.AttachetData;
 
-					var coefficientX = 2 * (edgeBody.Weight * edgeBody.Course.V.GetX() + vertexBody.Weight * vertexBody.Course.V.GetX()) / (edgeBody.Weight + vertexBody.Weight);
-					var coefficientY = 2 * (edgeBody.Weight * edgeBody.Course.V.GetY() + vertexBody.Weight * vertexBody.Course.V.GetY()) / (edgeBody.Weight + vertexBody.Weight);
+					var edgeCourseWithoutTremble = GetCourseWithoutTremble(edgeBody);
+					var vertecCourseWithoutTremble = GetCourseWithoutTremble(vertexBody);
+					var coefficientX = 2 * (edgeBody.Weight * edgeCourseWithoutTremble.X + vertexBody.Weight * vertecCourseWithoutTremble.X) / (edgeBody.Weight + vertexBody.Weight);
+					var coefficientY = 2 * (edgeBody.Weight * edgeCourseWithoutTremble.Y + vertexBody.Weight * vertecCourseWithoutTremble.Y) / (edgeBody.Weight + vertexBody.Weight);
 
 					var edgeV = new Vector128(
 						coefficientX - edgeBody.Course.V.GetX(),

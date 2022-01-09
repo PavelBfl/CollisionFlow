@@ -103,6 +103,11 @@ namespace CollisionFlow
 			var offset = min ?? value;
 
 			var offsetPlanning = Planning(offset);
+
+			if (UnitComparer.Time.IsZero(offsetPlanning))
+			{
+				offsetPlanning = 0;
+			}
 			if (offsetPlanning < 0 || offset < offsetPlanning)
 			{
 				throw new InvalidOperationException();

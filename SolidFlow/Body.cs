@@ -115,15 +115,16 @@ namespace SolidFlow
 			}
 
 			double? time = null;
+			const double LOCAL_TIME_EPSILON = 0.000000001;
 			foreach (var xLimit in xLimits)
 			{
 				var localTime = new CourseA(currentSpeed.X, x).GetTime(xLimit);
-				if (localTime > 0)
+				if (localTime > LOCAL_TIME_EPSILON)
 				{
 					time = time is null ? localTime : Math.Min(time.Value, localTime);
 				}
 				localTime = new CourseA(currentSpeed.X, x).GetTime(-xLimit);
-				if (localTime > 0)
+				if (localTime > LOCAL_TIME_EPSILON)
 				{
 					time = time is null ? localTime : Math.Min(time.Value, localTime);
 				}
@@ -131,12 +132,12 @@ namespace SolidFlow
 			foreach (var yLimit in yLimits)
 			{
 				var localTime = new CourseA(currentSpeed.Y, y).GetTime(yLimit);
-				if (localTime > 0)
+				if (localTime > LOCAL_TIME_EPSILON)
 				{
 					time = time is null ? localTime : Math.Min(time.Value, localTime);
 				}
 				localTime = new CourseA(currentSpeed.Y, y).GetTime(-yLimit);
-				if (localTime > 0)
+				if (localTime > LOCAL_TIME_EPSILON)
 				{
 					time = time is null ? localTime : Math.Min(time.Value, localTime);
 				}

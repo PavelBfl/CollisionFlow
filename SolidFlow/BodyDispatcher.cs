@@ -70,17 +70,10 @@ namespace SolidFlow
 			=> Math.Abs(origin) <= MIN_SPEED ? 0 : origin;
 		private static Vector128 GetCourseWithoutTremble(Body body)
 		{
-			if (body.IsTremble)
-			{
-				return new Vector128(
-					GetSpeedWithoutTremble(body.Course.V.GetX()),
-					GetSpeedWithoutTremble(body.Course.V.GetY())
-				);
-			}
-			else
-			{
-				return body.Course.V.ToVector128();
-			}
+			return new Vector128(
+				GetSpeedWithoutTremble(body.Course.V.GetX()),
+				GetSpeedWithoutTremble(body.Course.V.GetY())
+			);
 		}
 
 		public double? Offset(double value)
@@ -114,48 +107,12 @@ namespace SolidFlow
 						pairResult.Edge.Target;
 
 					var edgeCourse = (Mirror(edge, pairResult.Vertex.Target, edgeV).ToVector() * edgeBody.Bounce).ToVector128();
-					if (edgeBody.IsTremble)
-					{
-						edgeCourse = TrembleSpeed(edgeCourse);
-					}
-					if (IsDeadSpeed(edgeCourse))
-					{
-						if (edgeBody.IsTremble)
-						{
-							edgeBody.Speed = TrembleSpeed();
-							edgeBody.Refresh();
-						}
-						else
-						{
-							edgeBody.CreateRest(vertexBody); 
-						}
-					}
-					else
-					{
-						edgeBody.Speed = new Vector128(edgeCourse.X, edgeCourse.Y);
-					}
+					edgeCourse = TrembleSpeed(edgeCourse);
+					edgeBody.Speed = new Vector128(edgeCourse.X, edgeCourse.Y);
 
 					var vertexCourse = (Mirror(edge, pairResult.Vertex.Target, vertexV).ToVector() * vertexBody.Bounce).ToVector128();
-					if (vertexBody.IsTremble)
-					{
-						vertexCourse = TrembleSpeed(vertexCourse);
-					}
-					if (IsDeadSpeed(vertexCourse))
-					{
-						if (vertexBody.IsTremble)
-						{
-							vertexBody.Speed = TrembleSpeed();
-							vertexBody.Refresh();
-						}
-						else
-						{
-							vertexBody.CreateRest(edgeBody); 
-						}
-					}
-					else
-					{
-						vertexBody.Speed = new Vector128(vertexCourse.X, vertexCourse.Y);
-					}
+					vertexCourse = TrembleSpeed(vertexCourse);
+					vertexBody.Speed = new Vector128(vertexCourse.X, vertexCourse.Y);
 				}
 			}
 			return result?.Offset;

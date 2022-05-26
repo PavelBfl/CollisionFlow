@@ -49,37 +49,7 @@ namespace SolidFlow
 		public IPolygonHandler Handler { get; private set; }
 		public double Weight { get; set; } = 1;
 		public double Bounce { get; set; } = 0;
-		public bool IsTremble { get; set; } = false;
 		public SpeedAccumulator Acceleration { get; } = new SpeedAccumulator();
-
-		public HashSet<Body> RestOn { get; } = new HashSet<Body>();
-		private HashSet<Body> RestFor { get; } = new HashSet<Body>();
-
-		public bool IsRest => RestOn.Any();
-		public void CreateRest(Body body)
-		{
-			Course = Course.Zero;
-			RestOn.Add(body);
-			body.RestFor.Add(this);
-		}
-
-		private void ClearRest()
-		{
-			foreach (var item in RestOn)
-			{
-				item.RestFor.Remove(this);
-			}
-			RestOn.Clear();
-			foreach (var item in RestFor)
-			{
-				item.RestOn.Remove(this);
-				if (!item.IsRest && item.Name != "Bod" && item.Name != "Bottom")
-				{
-					item.RefreshCourse();
-				}
-			}
-			RestFor.Clear();
-		}
 
 		public Vector128 Speed
 		{
@@ -176,11 +146,6 @@ namespace SolidFlow
 					Dispatcher.Remove(Handler);
 					Handler = Dispatcher.Add(builder.GetLines());
 					Handler.AttachetData = this;
-
-					if (!Course.Equals(Course.Zero))
-					{
-						ClearRest();
-					}
 				}
 			}
 		}
@@ -194,11 +159,6 @@ namespace SolidFlow
 			Dispatcher.Remove(Handler);
 			Handler = Dispatcher.Add(builder.GetLines());
 			Handler.AttachetData = this;
-
-			if (!Course.Equals(Course.Zero))
-			{
-				ClearRest();
-			}
 		}
 
 		public void SetPolygon(IEnumerable<Vector128> vertices, Course course)
@@ -211,8 +171,6 @@ namespace SolidFlow
 			Dispatcher.Remove(Handler);
 			Handler = Dispatcher.Add(builder.GetLines());
 			Handler.AttachetData = this;
-
-			ClearRest();
 		}
 
 		private class FlowEvent : IFlowEvent

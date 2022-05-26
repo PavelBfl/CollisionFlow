@@ -99,8 +99,8 @@ namespace Gui.Core
 			const double WEIGHT_MAX = 10;
 			const double HEIGHT_MAX = 10;
 			const double SPEED_MAX = 0;
-			const int ROWS_COUNT = 1;
-			const int COLUMNS_COUNT = 1;
+			const int ROWS_COUNT = 5;
+			const int COLUMNS_COUNT = 5;
 			const double GLOBAL_OFFSET = 300;
 
 			var random = new Random(1);
@@ -239,8 +239,6 @@ namespace Gui.Core
 				playerControl.Vector = new Vector128(xMove, playerControl.Vector.Y);
 				playerControl.Limit = new Vector128(Math.Abs(xMove), double.PositiveInfinity);
 
-				player.IsTremble = xMove != 0;
-
 				var frameOffset = STEP_SIZE;
 				changesPerFrame = 0;
 				do
@@ -296,17 +294,6 @@ namespace Gui.Core
 					1
 				);
 				var bodyCenter = GetCenter(body);
-				foreach (var rest in body.RestOn)
-				{
-					var restCenter = GetCenter(rest);
-					DrawLine(
-						_spriteBatch,
-						bodyCenter,
-						restCenter,
-						Color.Green,
-						1
-					);
-				}
 			}
 
 			_spriteBatch.DrawString(font, $"FPS: {TimeSpan.FromSeconds(1).TotalMilliseconds / gameTime.ElapsedGameTime.TotalMilliseconds:0.00}", Vector2.Zero, Color.White);

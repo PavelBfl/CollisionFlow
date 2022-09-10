@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace SolidFlow
 {
+	[Obsolete]
 	public class SpeedAccumulator
 	{
 		public HashSet<ISpeedHandler> Speeds { get; } = new HashSet<ISpeedHandler>();

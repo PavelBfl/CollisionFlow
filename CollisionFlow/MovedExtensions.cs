@@ -21,6 +21,12 @@ namespace CollisionFlow
 				moved.Course.Offset(time)
 			);
 
+		public static Mutated<double, CourseA> Offset(this Mutated<double, CourseA> mutated, double time)
+			=> Create(
+				mutated.Course.OffsetValue(mutated.Target, time),
+				mutated.Course.Offset(time)
+			);
+
 		public static Rect Offset(this Rect rect, Vector128 course) => new Rect(
 			left: rect.Left + course.X,
 			right: rect.Right + course.X,

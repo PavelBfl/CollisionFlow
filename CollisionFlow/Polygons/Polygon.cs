@@ -7,9 +7,9 @@ namespace CollisionFlow.Polygons
 {
 	abstract class Polygon : IPolygonHandler
 	{
-		protected static Mutated<Vector128, Course>[] GetVerticies(Mutated<LineFunction, Course>[] edges)
+		protected static Mutated<Vector2<double>, Vector2<CourseA>>[] GetVerticies(Mutated<LineFunction, Vector2<CourseA>>[] edges)
 		{
-			var vertices = new Mutated<Vector128, Course>[edges.Length];
+			var vertices = new Mutated<Vector2<double>, Vector2<CourseA>>[edges.Length];
 			var prevIndex = edges.Length - 1;
 			for (var index = 0; index < edges.Length; index++)
 			{
@@ -18,24 +18,24 @@ namespace CollisionFlow.Polygons
 
 				var currentPoint = prevLine.Target.Crossing(currentLine.Target);
 
-				var prevLineOffsetV = prevLine.Target.OffsetByVector(prevLine.Course.V.ToVector128());
-				var currentLineOffsetV = currentLine.Target.OffsetByVector(currentLine.Course.V.ToVector128());
+				var prevLineOffsetV = prevLine.Target.OffsetByVector(prevLine.Course.GetV());
+				var currentLineOffsetV = currentLine.Target.OffsetByVector(currentLine.Course.GetV());
 				var v = prevLineOffsetV.Crossing(currentLineOffsetV).ToVector() - currentPoint.ToVector();
 
-				var prevLineOffsetA = prevLine.Target.OffsetByVector(prevLine.Course.A.ToVector128());
-				var currentLineOffsetA = currentLine.Target.OffsetByVector(currentLine.Course.A.ToVector128());
+				var prevLineOffsetA = prevLine.Target.OffsetByVector(prevLine.Course.GetA());
+				var currentLineOffsetA = currentLine.Target.OffsetByVector(currentLine.Course.GetA());
 				var a = prevLineOffsetA.Crossing(currentLineOffsetA).ToVector() - currentPoint.ToVector();
 
 				vertices[index] = Moved.Create(
 					currentPoint,
-					new Course(v, a)
+					new Vector2<CourseA>(new CourseA(v.GetX(), a.GetX()), new CourseA(v.GetY(), a.GetY()))
 				);
 				prevIndex = index;
 			}
 			return vertices;
 		}
 
-		public static Polygon Create(IEnumerable<Mutated<LineFunction, Course>> edges)
+		public static Polygon Create(IEnumerable<Mutated<LineFunction, Vector2<CourseA>>> edges)
 		{
 			if (edges is null)
 			{
@@ -44,7 +44,7 @@ namespace CollisionFlow.Polygons
 			try
 			{
 				var course = edges.Select(x => x.Course).Distinct().Single();
-				if (course.Equals(Vector128.Zero))
+				if (course.Equals(Vector2Builder.Create(CourseA.Zero)))
 				{
 					return new StaticPolygon(edges.Select(x => x.Target));
 				}
@@ -61,8 +61,8 @@ namespace CollisionFlow.Polygons
 
 		public int GlobalIndex { get; set; }
 
-		public abstract Mutated<LineFunction, Course>[] Edges { get; }
-		public abstract Mutated<Vector128, Course>[] Verticies { get; }
+		public abstract Mutated<LineFunction, Vector2<CourseA>>[] Edges { get; }
+		public abstract Vector2<Mutated<double, CourseA>>[] Verticies { get; }
 		public abstract Rect Bounds { get; }
 		public virtual void Offset(double time)
 		{
@@ -91,11 +91,11 @@ namespace CollisionFlow.Polygons
 			}
 		}
 
-		public Mutated<Vector128, Course> GetBeginVertex(int edgeIndex) => Verticies[edgeIndex];
-		public Mutated<Vector128, Course> GetEndVertex(int edgeIndex) => Verticies[edgeIndex + 1 < Verticies.Length ? edgeIndex + 1 : 0];
+		public Vector2<Mutated<double, CourseA>> GetBeginVertex(int edgeIndex) => Verticies[edgeIndex];
+		public Vector2<Mutated<double, CourseA>> GetEndVertex(int edgeIndex) => Verticies[edgeIndex + 1 < Verticies.Length ? edgeIndex + 1 : 0];
 
-		IReadOnlyList<Mutated<LineFunction, Course>> IPolygonHandler.Edges => Edges;
-		IReadOnlyList<Mutated<Vector128, Course>> IPolygonHandler.Vertices => Verticies;
+		IReadOnlyList<Mutated<LineFunction, Vector2<CourseA>>> IPolygonHandler.Edges => Edges;
+		IReadOnlyList<Vector2<Mutated<double, CourseA>>> IPolygonHandler.Vertices => Verticies;
 
 		public object AttachetData { get; set; }
 

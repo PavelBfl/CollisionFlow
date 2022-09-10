@@ -37,7 +37,7 @@ namespace CollisionFlow
 			}
 		}
 
-		public LineFunction(Vector128 begin, Vector128 end, IEqualityComparer<double> comparer = null)
+		public LineFunction(Vector2<double> begin, Vector2<double> end, IEqualityComparer<double> comparer = null)
 		{
 			comparer = GetComparer(comparer);
 
@@ -86,16 +86,16 @@ namespace CollisionFlow
 				default: throw new InvalidCollisiopnException();
 			}
 		}
-		public Vector128 GetVector()
+		public Vector2<double> GetVector()
 		{
 			switch (State)
 			{
 				case LineState.None:
-					var begin = Vector128.Create(0, GetY(0));
-					var end = Vector128.Create(1, GetY(1));
-					return new Vector128(end - begin).ToNormal();
-				case LineState.Vectical: return new Vector128(0, 1);
-				case LineState.Horisontal: return new Vector128(1, 0);
+					var begin = VectorExtensions.Create2d(0, GetY(0));
+					var end = VectorExtensions.Create2d(1, GetY(1));
+					return (end - begin).ToVector2().ToNormal();
+				case LineState.Vectical: return Vector2Builder.Create(0d, 1d);
+				case LineState.Horisontal: return Vector2Builder.Create(1d, 0d);
 				default: throw new InvalidCollisiopnException();
 			}
 		}
@@ -163,7 +163,7 @@ namespace CollisionFlow
 		{
 			return new LineFunction(-1 / Slope, Offset, comparer);
 		}
-		public LineFunction OffsetToPoint(Vector128 point, IEqualityComparer<double> comparer = null)
+		public LineFunction OffsetToPoint(Vector2<double> point, IEqualityComparer<double> comparer = null)
 		{
 			if (IsVerticalUp())
 			{
@@ -184,11 +184,11 @@ namespace CollisionFlow
 				return new LineFunction(Slope, Offset + difference, comparer);
 			}
 		}
-		public LineFunction OffsetByVector(Vector128 vector, IEqualityComparer<double> comparer = null)
+		public LineFunction OffsetByVector(Vector2<double> vector, IEqualityComparer<double> comparer = null)
 		{
 			return new LineFunction(Slope, Offset + GetCourseOffset(vector), comparer);
 		}
-		public double GetCourseOffset(Vector128 vector)
+		public double GetCourseOffset(Vector2<double> vector)
 		{
 			switch (State)
 			{
@@ -199,7 +199,7 @@ namespace CollisionFlow
 			}
 		}
 
-		public Vector128 Crossing(LineFunction lineFunction)
+		public Vector2<double> Crossing(LineFunction lineFunction)
 		{
 			if (IsParalel(lineFunction))
 			{
@@ -208,16 +208,16 @@ namespace CollisionFlow
 
 			if (State == LineState.Vectical)
 			{
-				return new Vector128(Offset, lineFunction.GetY(Offset));
+				return Vector2Builder.Create(Offset, lineFunction.GetY(Offset));
 			}
 			else if (lineFunction.State == LineState.Vectical)
 			{
-				return new Vector128(lineFunction.Offset, GetY(lineFunction.Offset));
+				return Vector2Builder.Create(lineFunction.Offset, GetY(lineFunction.Offset));
 			}
 			else
 			{
 				var x = (Offset - lineFunction.Offset) / (lineFunction.Slope - Slope);
-				return new Vector128(x, GetY(x));
+				return Vector2Builder.Create(x, GetY(x));
 			}
 		}
 	}

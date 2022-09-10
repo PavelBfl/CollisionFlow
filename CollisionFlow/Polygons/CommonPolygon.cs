@@ -7,7 +7,7 @@ namespace CollisionFlow.Polygons
 {
 	class CommonPolygon : Polygon
 	{
-		public CommonPolygon(IEnumerable<Mutated<LineFunction, Course>> edges)
+		public CommonPolygon(IEnumerable<Mutated<LineFunction, Vector2<CourseA>>> edges)
 		{
 			if (edges is null)
 			{
@@ -18,8 +18,8 @@ namespace CollisionFlow.Polygons
 			bounds = new Rect(Verticies.Select(x => x.Target));
 		}
 
-		public override Mutated<LineFunction, Course>[] Edges { get; }
-		public override Mutated<Vector128, Course>[] Verticies { get; }
+		public override Mutated<LineFunction, Vector2<CourseA>>[] Edges { get; }
+		public override Vector2<Mutated<double, CourseA>>[] Verticies { get; }
 
 		private Rect bounds;
 		public override Rect Bounds => bounds;

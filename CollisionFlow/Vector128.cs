@@ -4,6 +4,7 @@ using System.Numerics;
 
 namespace CollisionFlow
 {
+	[Obsolete]
 	public struct Vector128 : IEquatable<Vector128>
 	{
 		private const int X_INDEX = 0;

@@ -14,7 +14,8 @@ namespace SolidFlow
 
 		private Body()
 		{
-			Acceleration.VectorChanged += AccelerationVectorChanged;
+			Acceleration.X.Changed += AccelerationVectorChanged;
+			Acceleration.Y.Changed += AccelerationVectorChanged;
 		}
 
 		public Body(CollisionSpace dispatcher, IEnumerable<Vector128> verticies)
@@ -49,7 +50,8 @@ namespace SolidFlow
 		public IPolygonHandler Handler { get; private set; }
 		public double Weight { get; set; } = 1;
 		public double Bounce { get; set; } = 0;
-		public SpeedAccumulator Acceleration { get; } = new SpeedAccumulator();
+
+		public Vector2<CourseLimit> Acceleration { get; } = new Vector2<CourseLimit>();
 
 		public Vector128 Speed
 		{
@@ -118,7 +120,8 @@ namespace SolidFlow
 				Dispatcher.Remove(LimitEvent);
 				LimitEvent = null;
 			}
-			if (!(time is null))
+			var time = Acceleration.GetNextTime();
+			if (!double.IsInfinity(time))
 			{
 				LimitEvent = new FlowEvent(this);
 				Dispatcher.AddExpectationOffset(LimitEvent, time.Value);

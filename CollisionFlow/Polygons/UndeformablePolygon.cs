@@ -7,7 +7,7 @@ namespace CollisionFlow.Polygons
 {
 	class UndeformablePolygon : Polygon
 	{
-		public UndeformablePolygon(IEnumerable<LineFunction> edges, Course course)
+		public UndeformablePolygon(IEnumerable<LineFunction> edges, Vector2<CourseA> course)
 		{
 			Course = course;
 			var edgesInstance = edges?.ToArray() ?? throw new ArgumentNullException(nameof(edges));
@@ -20,9 +20,9 @@ namespace CollisionFlow.Polygons
 			bounds = new Rect(Verticies.Select(x => x.Target));
 		}
 
-		public Course Course { get; private set; }
-		public override Mutated<LineFunction, Course>[] Edges { get; }
-		public override Mutated<Vector128, Course>[] Verticies { get; }
+		public Vector2<CourseA> Course { get; private set; }
+		public override Mutated<LineFunction, Vector2<CourseA>>[] Edges { get; }
+		public override Mutated<Vector2<double>, Vector2<CourseA>>[] Verticies { get; }
 
 		private Rect bounds;
 		public override Rect Bounds => bounds;

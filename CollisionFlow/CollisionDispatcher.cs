@@ -14,7 +14,7 @@ namespace CollisionFlow
 		private readonly List<Polygon> polygons = new List<Polygon>();
 		public IEnumerable<IPolygonHandler> Polygons => polygons;
 
-		public IPolygonHandler Add(IEnumerable<Mutated<LineFunction, Course>> lines)
+		public IPolygonHandler Add(IEnumerable<Mutated<LineFunction, Vector2<CourseA>>> lines)
 		{
 			var polygon = Polygon.Create(lines);
 			polygon.GlobalIndex = polygons.Count;

@@ -19,7 +19,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{0E820CF7-2
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flowing.Mutate.Test", "Test\Flowing.Mutate.Test\Flowing.Mutate.Test.csproj", "{90CAF7FF-E09F-47C9-8A68-46C4E891FFBA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollisionFlow.Benchmark.Test", "Test\CollisionFlow.Benchmark.Test\CollisionFlow.Benchmark.Test.csproj", "{DE08FE85-57DB-4DD6-AE70-59F4CA234F47}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CollisionFlow.Benchmark.Test", "Test\CollisionFlow.Benchmark.Test\CollisionFlow.Benchmark.Test.csproj", "{DE08FE85-57DB-4DD6-AE70-59F4CA234F47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flowing.Limited", "Flowing.Limited\Flowing.Limited.csproj", "{7C207D4F-0D83-454F-9508-B54606F38016}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +61,10 @@ Global
 		{DE08FE85-57DB-4DD6-AE70-59F4CA234F47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE08FE85-57DB-4DD6-AE70-59F4CA234F47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE08FE85-57DB-4DD6-AE70-59F4CA234F47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C207D4F-0D83-454F-9508-B54606F38016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C207D4F-0D83-454F-9508-B54606F38016}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C207D4F-0D83-454F-9508-B54606F38016}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C207D4F-0D83-454F-9508-B54606F38016}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -7,49 +7,9 @@ using SolidFlow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Track.Relation;
-using Track.Relation.Tracks;
 
 namespace Gui.Core
 {
-	public class BodyObserver
-	{
-		public BodyObserver(Body body)
-		{
-			Body = body ?? throw new ArgumentNullException(nameof(body));
-
-			Weight = new SortedList<double, double>();
-			Bounce = new SortedList<double, double>();
-			Vertices = new ArrayTrack<double, Vector128>(body.Handler.Vertices.Count, null);
-			Course = new SortedList<double, Course>();
-		}
-
-		public Body Body { get; }
-		public SortedList<double, double> Weight { get; }
-		public SortedList<double, double> Bounce { get; }
-		public ArrayTrack<double, Vector128> Vertices { get; }
-		public SortedList<double, Course> Course { get; }
-
-		public void Commit(double key)
-		{
-			Weight[key] = Body.Weight;
-			Bounce[key] = Body.Bounce;
-			Vertices.Add(key, Body.Handler.Vertices.Select(x => x.Target).ToArray());
-			Course[key] = Body.Course;
-		}
-		public void Offset(double key)
-		{
-			Body.Weight = Weight.GetValueTrack(key);
-			Weight.RemoveTrack(key);
-			Body.Bounce = Bounce.GetValueTrack(key);
-			Bounce.RemoveTrack(key);
-
-			Vertices.TryGetValue(key, out var certices);
-			Vertices.Remove(key);
-			Body.SetPolygon(certices, Course.GetValueTrack(key));
-			Course.RemoveTrack(key);
-		}
-	}
 	public class GameCore : Game
 	{
 		public static Texture2D Pixel { get; private set; }
@@ -79,7 +39,6 @@ namespace Gui.Core
 		private BodyDispatcher _bodyDispatcher;
 		private KeyboardState keyboardState;
 
-		private BodyObserver[] bodyObservers;
 		private Body player;
 		private ISpeedHandler playerControl;
 
@@ -178,13 +137,6 @@ namespace Gui.Core
 			playerControl = player.Acceleration.Add(0, 0);
 			_bodyDispatcher.Bodies.Add(player);
 
-			bodyObservers = _bodyDispatcher.Bodies.Select(x => new BodyObserver(x)).ToArray();
-
-			foreach (var bodyObserver in bodyObservers)
-			{
-				bodyObserver.Commit(timeLine);
-			}
-
 			base.Initialize();
 		}
 
@@ -208,13 +160,6 @@ namespace Gui.Core
 			if (keyboardState.IsKeyDown(Keys.LeftShift))
 			{
 				timeLine -= STEP_SIZE;
-				if (timeLine >= 0)
-				{
-					foreach (var bodyObserver in bodyObservers)
-					{
-						bodyObserver.Offset(timeLine);
-					} 
-				}
 			}
 			else
 			{
@@ -247,10 +192,6 @@ namespace Gui.Core
 					var currentStep = result ?? frameOffset;
 					timeLine += currentStep;
 
-					foreach (var bodyObserver in bodyObservers)
-					{
-						bodyObserver.Commit(timeLine);
-					}
 					frameOffset -= currentStep;
 					changesPerFrame++;
 				} while (frameOffset > 0);

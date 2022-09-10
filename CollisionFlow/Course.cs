@@ -6,6 +6,7 @@ using System.Text;
 
 namespace CollisionFlow
 {
+	[Obsolete]
 	public struct Course : IEquatable<Course>
 	{
 		public static Course Zero { get; } = new Course(Vector<double>.Zero, Vector<double>.Zero);

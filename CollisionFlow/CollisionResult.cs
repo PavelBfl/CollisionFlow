@@ -19,7 +19,7 @@ namespace CollisionFlow
 		public Mutated<LineFunction, Vector2<CourseA>> Edge => EdgePolygon.Edges[EdgeIndex];
 		public IPolygonHandler VertexPolygon { get; }
 		public int VertexIndex { get; }
-		public Mutated<Vector128, Vector2<CourseA>> Vertex => VertexPolygon.Vertices[VertexIndex];
+		public Vector2<Mutated<double, CourseA>> Vertex => VertexPolygon.Vertices[VertexIndex];
 	}
 	public class CollisionResult
 	{
@@ -37,7 +37,7 @@ namespace CollisionFlow
 		public Mutated<LineFunction, Vector2<CourseA>> Edge => EdgePolygon.Edges[EdgeIndex];
 		public IPolygonHandler VertexPolygon { get; }
 		public int VertexIndex { get; }
-		public Mutated<Vector128, Vector2<CourseA>> Vertex => VertexPolygon.Vertices[VertexIndex];
+		public Vector2<Mutated<double, CourseA>> Vertex => VertexPolygon.Vertices[VertexIndex];
 		public double Offset { get; set; }
 		public bool? IsCollision { get; set; }
 

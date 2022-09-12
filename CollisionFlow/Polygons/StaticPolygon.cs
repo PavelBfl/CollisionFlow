@@ -13,13 +13,13 @@ namespace CollisionFlow.Polygons
 			{
 				throw new ArgumentNullException(nameof(edges));
 			}
-			Edges = edges.Select(x => Moved.Create(x, Course.Zero)).ToArray();
+			Edges = edges.Select(x => Moved.Create(x, Vector2Extensions.CourseZero)).ToArray();
 			Verticies = GetVerticies(Edges);
-			Bounds = new Rect(Verticies.Select(x => x.Target));
+			Bounds = new Rect(Verticies.Select(x => x.GetTarget()));
 		}
 
-		public override Mutated<LineFunction, Course>[] Edges { get; }
-		public override Mutated<Vector128, Course>[] Verticies { get; }
+		public override Mutated<LineFunction, Vector2<CourseA>>[] Edges { get; }
+		public override Vector2<Mutated<double, CourseA>>[] Verticies { get; }
 		public override Rect Bounds { get; }
 
 		public override void Offset(double value)

@@ -15,7 +15,7 @@ namespace CollisionFlow.Polygons
 			}
 			Edges = edges?.ToArray() ?? throw new ArgumentNullException(nameof(edges));
 			Verticies = GetVerticies(Edges);
-			bounds = new Rect(Verticies.Select(x => x.Target));
+			bounds = new Rect(Verticies.Select(x => x.GetTarget()));
 		}
 
 		public override Mutated<LineFunction, Vector2<CourseA>>[] Edges { get; }
@@ -27,7 +27,7 @@ namespace CollisionFlow.Polygons
 		public override void Offset(double value)
 		{
 			base.Offset(value);
-			bounds = new Rect(Verticies.Select(x => x.Target));
+			bounds = new Rect(Verticies.Select(x => x.GetTarget()));
 		}
 	}
 }

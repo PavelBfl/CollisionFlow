@@ -7,9 +7,9 @@ namespace CollisionFlow.Polygons
 {
 	abstract class Polygon : IPolygonHandler
 	{
-		protected static Mutated<Vector2<double>, Vector2<CourseA>>[] GetVerticies(Mutated<LineFunction, Vector2<CourseA>>[] edges)
+		protected static Vector2<Mutated<double, CourseA>>[] GetVerticies(Mutated<LineFunction, Vector2<CourseA>>[] edges)
 		{
-			var vertices = new Mutated<Vector2<double>, Vector2<CourseA>>[edges.Length];
+			var vertices = new Vector2<Mutated<double, CourseA>>[edges.Length];
 			var prevIndex = edges.Length - 1;
 			for (var index = 0; index < edges.Length; index++)
 			{
@@ -26,9 +26,9 @@ namespace CollisionFlow.Polygons
 				var currentLineOffsetA = currentLine.Target.OffsetByVector(currentLine.Course.GetA());
 				var a = prevLineOffsetA.Crossing(currentLineOffsetA).ToVector() - currentPoint.ToVector();
 
-				vertices[index] = Moved.Create(
-					currentPoint,
-					new Vector2<CourseA>(new CourseA(v.GetX(), a.GetX()), new CourseA(v.GetY(), a.GetY()))
+				vertices[index] = Vector2Builder.Create(
+					Moved.Create(currentPoint.X, new CourseA(v.GetX(), a.GetX())),
+					Moved.Create(currentPoint.Y, new CourseA(v.GetY(), a.GetY()))
 				);
 				prevIndex = index;
 			}
@@ -70,8 +70,8 @@ namespace CollisionFlow.Polygons
 			{
 				var edge = Edges[i];
 				var offset = new CourseA(
-					edge.Target.GetCourseOffset(edge.Course.V.ToVector128()),
-					edge.Target.GetCourseOffset(edge.Course.A.ToVector128())
+					edge.Target.GetCourseOffset(edge.Course.GetV()),
+					edge.Target.GetCourseOffset(edge.Course.GetA())
 				).OffsetValue(edge.Target.Offset, time);
 				var line = new LineFunction(edge.Target.Slope, offset);
 				var course = edge.Course.Offset(time);
@@ -81,13 +81,11 @@ namespace CollisionFlow.Polygons
 			for (int i = 0; i < Verticies.Length; i++)
 			{
 				var vertex = Verticies[i];
-				var point = new Vector128(
-					new CourseA(vertex.Course.V.GetX(), vertex.Course.A.GetX()).OffsetValue(vertex.Target.X, time),
-					new CourseA(vertex.Course.V.GetY(), vertex.Course.A.GetY()).OffsetValue(vertex.Target.Y, time)
-				);
-				var course = vertex.Course.Offset(time);
 
-				Verticies[i] = Moved.Create(point, course);
+				Verticies[i] = Vector2Builder.Create(
+					vertex.X.Offset(time),
+					vertex.Y.Offset(time)
+				);
 			}
 		}
 
@@ -112,8 +110,8 @@ namespace CollisionFlow.Polygons
 			}
 
 			return IsCollision(
-				Verticies.Select(x => x.Target),
-				other.Verticies.Select(x => x.Target)
+				Verticies.Select(x => x.GetTarget()),
+				other.Verticies.Select(x => x.GetTarget())
 			);
 		}
 
@@ -123,7 +121,7 @@ namespace CollisionFlow.Polygons
 			var range2 = Range.Auto(begin2, end2);
 			return range1.Intersect(range2);
 		}
-		private static bool IsCrossing(Vector128 begin1, Vector128 end1, Vector128 begin2, Vector128 end2)
+		private static bool IsCrossing(Vector2<double> begin1, Vector2<double> end1, Vector2<double> begin2, Vector2<double> end2)
 		{
 			if (!IsCrossing(begin1.X, end1.X, begin2.X, end2.X) || !IsCrossing(begin1.Y, end1.Y, begin2.Y, end2.Y))
 			{
@@ -132,7 +130,7 @@ namespace CollisionFlow.Polygons
 
 			return IsCrossingTo(begin1, end1, begin2, end2) && IsCrossingTo(begin2, end2, begin1, end1);
 		}
-		private static bool IsCrossingTo(Vector128 mainBegin1, Vector128 mainEnd1, Vector128 subBegin2, Vector128 subEnd2)
+		private static bool IsCrossingTo(Vector2<double> mainBegin1, Vector2<double> mainEnd1, Vector2<double> subBegin2, Vector2<double> subEnd2)
 		{
 			var line = new LineFunction(mainBegin1, mainEnd1);
 			var projectLine = line.Perpendicular();
@@ -146,7 +144,7 @@ namespace CollisionFlow.Polygons
 				Range.Auto(projectBegin.X, projectEnd.X).ContainsExEx(projectPoint.X) :
 				Range.Auto(projectBegin.Y, projectEnd.Y).ContainsExEx(projectPoint.Y);
 		}
-		private static bool IsContainsPoint(IEnumerable<Vector128> polygon, Vector128 point)
+		private static bool IsContainsPoint(IEnumerable<Vector2<double>> polygon, Vector2<double> point)
 		{
 			var result = false;
 			var polygonInstance = polygon.ToArray();
@@ -166,7 +164,7 @@ namespace CollisionFlow.Polygons
 			}
 			return result;
 		}
-		public static bool IsCollision(IEnumerable<Vector128> polygon1, IEnumerable<Vector128> polygon2)
+		public static bool IsCollision(IEnumerable<Vector2<double>> polygon1, IEnumerable<Vector2<double>> polygon2)
 		{
 			var polygon1Instance = polygon1?.ToArray() ?? throw new ArgumentNullException(nameof(polygon1));
 			if (polygon1Instance.Length < 3)

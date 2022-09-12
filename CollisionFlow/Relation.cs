@@ -190,7 +190,7 @@ namespace CollisionFlow
 		}
 		private static double AddSteps(OffsetResult result, int steps)
 		{
-			var vector = (result.CollisionData.Vertex.Course.V - result.CollisionData.Edge.Course.V).ToVector128();
+			var vector = (result.CollisionData.Vertex.GetCource().GetV().ToVector() - result.CollisionData.Edge.Course.GetV().ToVector()).ToVector2();
 
 			var length = Math.Abs(vector.X) > Math.Abs(vector.Y) ? vector.X : vector.Y;
 
@@ -232,28 +232,28 @@ namespace CollisionFlow
 						case RangeCompare.Equals: return null;
 						case RangeCompare.Less:
 							return GetFlatResult(
-								new Mutated<double, CourseA>(mainPolygon.Bounds.Top, mainPolygon.Course.GetY()),
-								new Mutated<double, CourseA>(otherPolygon.Bounds.Bottom, otherPolygon.Course.GetY()),
+								new Mutated<double, CourseA>(mainPolygon.Bounds.Top, mainPolygon.Course.Y),
+								new Mutated<double, CourseA>(otherPolygon.Bounds.Bottom, otherPolygon.Course.Y),
 								time
 							);
 						case RangeCompare.Over:
 							return GetFlatResult(
-								new Mutated<double, CourseA>(otherPolygon.Bounds.Top, otherPolygon.Course.GetY()),
-								new Mutated<double, CourseA>(mainPolygon.Bounds.Bottom, mainPolygon.Course.GetY()),
+								new Mutated<double, CourseA>(otherPolygon.Bounds.Top, otherPolygon.Course.Y),
+								new Mutated<double, CourseA>(mainPolygon.Bounds.Bottom, mainPolygon.Course.Y),
 								time
 							);
 						default: throw new InvalidOperationException();
 					}
 				case RangeCompare.Less:
 					return GetFlatResult(
-						new Mutated<double, CourseA>(mainPolygon.Bounds.Right, mainPolygon.Course.GetX()),
-						new Mutated<double, CourseA>(otherPolygon.Bounds.Left, otherPolygon.Course.GetX()),
+						new Mutated<double, CourseA>(mainPolygon.Bounds.Right, mainPolygon.Course.X),
+						new Mutated<double, CourseA>(otherPolygon.Bounds.Left, otherPolygon.Course.X),
 						time
 					);
 				case RangeCompare.Over:
 					return GetFlatResult(
-						new Mutated<double, CourseA>(otherPolygon.Bounds.Right, otherPolygon.Course.GetX()),
-						new Mutated<double, CourseA>(mainPolygon.Bounds.Left, mainPolygon.Course.GetX()),
+						new Mutated<double, CourseA>(otherPolygon.Bounds.Right, otherPolygon.Course.X),
+						new Mutated<double, CourseA>(mainPolygon.Bounds.Left, mainPolygon.Course.X),
 						time
 					);
 				default: throw new InvalidOperationException();
@@ -338,14 +338,14 @@ namespace CollisionFlow
 			}
 		}
 
-		private static bool InRange(double time, LineState state, Mutated<Vector128, Course> begin, Mutated<Vector128, Course> end, Mutated<Vector128, Course> freePoin)
+		private static bool InRange(double time, LineState state, Vector2<Mutated<double, CourseA>> begin, Vector2<Mutated<double, CourseA>> end, Vector2<Mutated<double, CourseA>> freePoin)
 		{
-			var beginOffset = begin.Course.Offset(begin.Target.ToVector(), time);
-			var endOffset = end.Course.Offset(end.Target.ToVector(), time);
-			var freePointOffset = freePoin.Course.Offset(freePoin.Target.ToVector(), time);
+			var beginOffset = begin.Offset(time).GetTarget();
+			var endOffset = end.Offset(time).GetTarget();
+			var freePointOffset = freePoin.Offset(time).GetTarget();
 			return state == LineState.Horisontal ?
-				Contains(beginOffset.GetX(), endOffset.GetX(), freePointOffset.GetX()) :
-				Contains(beginOffset.GetY(), endOffset.GetY(), freePointOffset.GetY());
+				Contains(beginOffset.X, endOffset.X, freePointOffset.X) :
+				Contains(beginOffset.Y, endOffset.Y, freePointOffset.Y);
 		}
 		private static bool Contains(double first, double second, double value)
 		{
@@ -365,14 +365,14 @@ namespace CollisionFlow
 				return false;
 			}
 		}
-		private static TimeA? GetTime(Mutated<LineFunction, Course> line, Mutated<Vector128, Course> freePoin)
+		private static TimeA? GetTime(Mutated<LineFunction, Vector2<CourseA>> line, Vector2<Mutated<double, CourseA>> freePoin)
 		{
-			var freeLine = line.Target.OffsetToPoint(freePoin.Target);
-			var freeV = freeLine.GetCourseOffset(freePoin.Course.V.ToVector128());
-			var freeA = freeLine.GetCourseOffset(freePoin.Course.A.ToVector128());
+			var freeLine = line.Target.OffsetToPoint(freePoin.GetTarget());
+			var freeV = freeLine.GetCourseOffset(freePoin.GetCource().GetV());
+			var freeA = freeLine.GetCourseOffset(freePoin.GetCource().GetA());
 
-			var lineV = line.Target.GetCourseOffset(line.Course.V.ToVector128());
-			var lineA = line.Target.GetCourseOffset(line.Course.A.ToVector128());
+			var lineV = line.Target.GetCourseOffset(line.Course.GetV());
+			var lineA = line.Target.GetCourseOffset(line.Course.GetA());
 
 			var freeMutated = Moved.Create(freeLine.Offset, new CourseA(freeV, freeA));
 			var lineMutated = Moved.Create(line.Target.Offset, new CourseA(lineV, lineA));

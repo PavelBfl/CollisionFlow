@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Flowing.Mutate;
 
 namespace CollisionFlow
 {
@@ -10,7 +11,7 @@ namespace CollisionFlow
 		public static Rect CreateLeftTop(double x, double y, double width, double height)
 			=> new Rect(x, x + width, y, y - height);
 
-		public Rect(Vector128 begin, Vector128 end)
+		public Rect(Vector2<double> begin, Vector2<double> end)
 		{
 			Left = Math.Min(begin.X, end.X);
 			Right = Math.Max(begin.X, end.X);
@@ -24,7 +25,7 @@ namespace CollisionFlow
 			Top = top;
 			Bottom = bottom;
 		}
-		public Rect(IEnumerable<Vector128> vectors)
+		public Rect(IEnumerable<Vector2<double>> vectors)
 		{
 			if (vectors is null)
 			{
@@ -48,7 +49,7 @@ namespace CollisionFlow
 			top: Math.Max(Top, rect.Top),
 			bottom: Math.Min(Bottom, rect.Bottom)
 		);
-		public Rect Union(Vector128 vector) => new Rect(
+		public Rect Union(Vector2<double> vector) => new Rect(
 			left: Math.Min(Left, vector.X),
 			right: Math.Max(Right, vector.X),
 			top: Math.Max(Top, vector.Y),
@@ -57,7 +58,7 @@ namespace CollisionFlow
 		public Range Horisontal => new Range(Left, Right);
 		public Range Vertical => new Range(Bottom, Top);
 
-		public bool Contains(Vector128 vector)
+		public bool Contains(Vector2<double> vector)
 		{
 			return Horisontal.Contains(vector.X) && Vertical.Contains(vector.Y);
 		}

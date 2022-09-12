@@ -146,7 +146,7 @@ namespace CollisionFlow
 			}
 		}
 
-		public static bool IsCollision(IEnumerable<Vector128> polygon1, IEnumerable<Vector128> polygon2)
+		public static bool IsCollision(IEnumerable<Vector2<double>> polygon1, IEnumerable<Vector2<double>> polygon2)
 		{
 			return CommonPolygon.IsCollision(polygon1, polygon2);
 		}
